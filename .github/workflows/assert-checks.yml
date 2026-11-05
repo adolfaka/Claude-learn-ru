@@ -1,0 +1,46 @@
+name: Assert checks
+
+# Its job runs only in the template repository itself; in a copy made with
+# "Use this template" the job is skipped. It proves that every check fails on
+# main, where no exercise is done, and passes on the solutions branch.
+# Merge into main and solutions, never squash or rebase: on solutions, .practice/a-1-worktrees.txt, .practice/a-5-runs.json and .practice/a-capstone-worktrees.txt name commits by their SHA.
+on:
+  push:
+    branches: [main, solutions]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assert:
+    if: github.event.repository.is_template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+      # Beginner lesson 1 checks the installed CLI, without signing in.
+      - name: Install the guide's Claude Code baseline
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.308
+          claude --version
+      - name: Run the tests
+        run: npm test
+      # The checks' own tests stay out of `npm test`, which Learners run.
+      # This suite also runs on solutions. Fixtures must establish the exercise
+      # state each test needs rather than inherit it from the checkout.
+      - name: Run the checks' own tests
+        run: npm run test:checks
+      - name: Every check fails on main
+        run: |
+          git worktree add "$RUNNER_TEMP/main" origin/main
+          node checks/run.mjs all --assert fail --dir "$RUNNER_TEMP/main"
+      - name: Every check passes on solutions
+        run: |
+          git worktree add "$RUNNER_TEMP/solutions" origin/solutions
+          node checks/run.mjs all --assert pass --dir "$RUNNER_TEMP/solutions"
