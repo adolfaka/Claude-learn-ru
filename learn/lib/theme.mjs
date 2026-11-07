@@ -40,11 +40,11 @@ const ASCII_GLYPHS = {
 
 // One job each. ASCII mode drops some and spells others out.
 const EMOJI = {
-  wave: ['👋', ''], terminal: ['💻', '[TERMINAL]'], claude: ['💬', '[CLAUDE CODE]'], watch: ['👀', '[..]'],
-  verified: ['✅', '[ok]'], guess: ['🤔', '?'], hint: ['💡', 'Hint:'], goal: ['🎯', 'Goal:'], safety: ['🔒', 'Safety:'],
-  self: ['🙋', '[you]'], level: ['🚀', '>>'], fire: ['🔥', '**'], party: ['🎉', '***'], badge: ['🏅', '[badge]'],
-  cup: ['🏆', '[cup]'], map: ['🧭', ''], broken: ['🚧', '[!!]'], editor: ['📝', '[EDITOR]'], browser: ['🌐', '[BROWSER]'],
-  payoff: ['🏁', '[win]'], read: ['📖', '[read]'],
+  wave: ['👋', ''], terminal: ['💻', '[ТЕРМИНАЛ]'], claude: ['💬', '[CLAUDE CODE]'], watch: ['👀', '[..]'],
+  verified: ['✅', '[ok]'], guess: ['🤔', '?'], hint: ['💡', 'Подсказка:'], goal: ['🎯', 'Цель:'], safety: ['🔒', 'Осторожно:'],
+  self: ['🙋', '[вы]'], level: ['🚀', '>>'], fire: ['🔥', '**'], party: ['🎉', '***'], badge: ['🏅', '[значок]'],
+  cup: ['🏆', '[кубок]'], map: ['🧭', ''], broken: ['🚧', '[!!]'], editor: ['📝', '[РЕДАКТОР]'], browser: ['🌐', '[БРАУЗЕР]'],
+  payoff: ['🏁', '[цель]'], read: ['📖', '[читать]'],
 };
 
 export function theme(caps) {
@@ -77,9 +77,9 @@ export function theme(caps) {
 }
 
 export const TIER_STYLE = {
-  guided: { label: 'GUIDED', stars: [1, 3], bg: 'guidedBg', tint: 'guided', fgOnBg: 'white', on: 'dot', off: 'dotOff' },
-  hinted: { label: 'HINTED', stars: [2, 3], bg: 'hintedBg', tint: 'hinted', fgOnBg: 'white', on: 'diamond', off: 'diamondOff' },
-  challenge: { label: 'CHALLENGE', stars: [3, 3], bg: 'challengeBg', tint: 'challenge', fgOnBg: 'black', on: 'star', off: 'starOff' },
+  guided: { label: 'С ПОМОЩЬЮ', stars: [1, 3], bg: 'guidedBg', tint: 'guided', fgOnBg: 'white', on: 'dot', off: 'dotOff' },
+  hinted: { label: 'ПОДСКАЗКИ', stars: [2, 3], bg: 'hintedBg', tint: 'hinted', fgOnBg: 'white', on: 'diamond', off: 'diamondOff' },
+  challenge: { label: 'ИСПЫТАНИЕ', stars: [3, 3], bg: 'challengeBg', tint: 'challenge', fgOnBg: 'black', on: 'star', off: 'starOff' },
 };
 
 // A tier's label and stars. While a level-up lands, `landing` draws the stars

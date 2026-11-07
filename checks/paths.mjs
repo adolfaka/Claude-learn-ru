@@ -64,4 +64,4 @@ const TEST_CLASS = /[a-z0-9](Tests?|Spec)\.(java|kt|scala|groovy|cs|swift|php)$/
 
 export const isTestFile = (path) => TEST_PATH.test(path) || TEST_CLASS.test(path);
 
-export const TEST_NAMES = 'files in a test/, tests/, spec/ or __tests__/ folder, or named like links.test.js, links_test.go, test_links.py or LinksTest.java';
+export const TEST_NAMES = 'файлы в папке test/, tests/, spec/ или __tests__/ либо с именами вроде links.test.js, links_test.go, test_links.py или LinksTest.java';

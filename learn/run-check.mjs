@@ -24,22 +24,22 @@ const fail = (error) => {
 };
 if (process.argv[2] === '--probe') {
   const [, name, dir, ...args] = process.argv.slice(2);
-  if (!dir || !existsSync(resolve(dir))) fail(`no such folder: ${dir}`);
+  if (!dir || !existsSync(resolve(dir))) fail(`нет такой папки: ${dir}`);
   let out;
   try {
     out = runProbe(openRepo(resolve(dir)), name, args);
   } catch (error) {
-    fail(`The probe could not run: ${error.message.split('\n')[0]}`);
+    fail(`Проба не смогла запуститься: ${error.message.split('\n')[0]}`);
   }
   console.log(JSON.stringify({ probe: name, pass: out.pass, hint: out.hint ?? '', evidence: out.evidence ?? null, state: out.state }));
 } else checkItems(...process.argv.slice(2));
 
 function checkItems(lesson, dir, ...indexes) {
-  if (!lessons[lesson]) fail(`no check for "${lesson}"`);
-  if (!dir || !existsSync(resolve(dir))) fail(`no such folder: ${dir}`);
+  if (!lessons[lesson]) fail(`нет проверки для «${lesson}»`);
+  if (!dir || !existsSync(resolve(dir))) fail(`нет такой папки: ${dir}`);
   const { items } = lessons[lesson];
   const wanted = indexes.length ? indexes.map(Number) : items.map((_, i) => i);
-  if (wanted.some((i) => !Number.isInteger(i) || !items[i])) fail(`no item ${indexes.join(' ')} in ${lesson}`);
+  if (wanted.some((i) => !Number.isInteger(i) || !items[i])) fail(`в ${lesson} нет пункта ${indexes.join(' ')}`);
 
   const repo = openRepo(resolve(dir));
   const results = wanted.map((index, k) => {
@@ -49,7 +49,7 @@ function checkItems(lesson, dir, ...indexes) {
     try {
       outcome = item.check(repo);
     } catch (error) {
-      outcome = `The check could not run: ${error.message}`;
+      outcome = `Проверка не смогла запуститься: ${error.message}`;
     }
     return { index, text: item.text, local: Boolean(item.local), pass: outcome === true, hint: outcome === true ? '' : outcome };
   });

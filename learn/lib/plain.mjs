@@ -11,11 +11,11 @@ export function plainProgress(course, results, saved, { root, dirs = {} } = {}) 
   const lines = [C.plainIntro, ''];
   for (const l of course) {
     const r = results[l.id];
-    const done = saved?.lessons?.[l.id]?.complete ? ' (done in the app)' : '';
+    const done = saved?.lessons?.[l.id]?.complete ? C.plainDone : '';
     const ran = r?.items?.filter((i) => !i.slow) ?? [];
     const slow = (r?.items?.length ?? 0) - ran.length;
-    const checked = !r && pinOf(l) === 'new copy' ? C.newCopyPlain : r?.error ? `the check could not run: ${r.error}`
-      : `${ran.filter((i) => i.pass).length} of ${ran.length} check items pass${slow ? ` (npm run check -- ${l.id} also runs ${slow} slower one${slow === 1 ? '' : 's'})` : ''}`;
+    const checked = !r && pinOf(l) === 'new copy' ? C.newCopyPlain : r?.error ? C.plainBroken(r.error)
+      : `${C.plainItems(ran.filter((i) => i.pass).length, ran.length)}${slow ? C.plainSlow(l.id, slow) : ''}`;
     const where = r && dirs[l.id] && dirs[l.id] !== root ? C.plainIn(dirs[l.id]) : '';
     lines.push(`${lessonLabel(l.id).padEnd(4)} ${titleOf(l)}: ${checked}${done}${where}`);
     if (done && ran.some((i) => !i.pass)) lines.push(`     ${C.plainChanged}`);

@@ -21,7 +21,7 @@ const PNG = Buffer.from('89504e470d0a1a0a', 'hex');
 function binaryOf(buf) {
   if ((buf[0] === 0xff && buf[1] === 0xfe) || !buf.subarray(0, 8000).includes(0)) return null;
   if (buf.length >= 24 && buf.subarray(0, 8).equals(PNG) && buf.toString('latin1', 12, 16) === 'IHDR') return C.pngImage(buf.readUInt32BE(16), buf.readUInt32BE(20));
-  return C.binaryData(buf.length < 1024 ? `${buf.length} bytes` : `${Math.round(buf.length / 1024)} KB`);
+  return C.binaryData(buf.length < 1024 ? C.bytes(buf.length) : C.kilobytes(Math.round(buf.length / 1024)));
 }
 
 // Text from the learner's file as one screen row, at most `max` columns:

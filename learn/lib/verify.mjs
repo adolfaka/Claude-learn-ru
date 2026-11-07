@@ -52,7 +52,7 @@ export function runCheck(dir, lesson, items, { slow = false, onRunning = () => {
         if (out.error) return resolve({ error: out.error });
         resolve({ items: [...out.items, ...placeholders].sort((a, b) => a.index - b.index) });
       } catch {
-        resolve({ error: error ? (error.killed ? 'it took too long' : error.message.split('\n')[0]) : 'it printed something unexpected' });
+        resolve({ error: error ? (error.killed ? 'она шла слишком долго' : error.message.split('\n')[0]) : 'она вывела что-то неожиданное' });
       }
     }));
     // The clock starts with the child, and again as each item starts.
@@ -88,7 +88,7 @@ export function runProbe(dir, name, args, { limit = ITEM_LIMIT } = {}) {
         const out = JSON.parse(stdout.trim().split('\n').pop());
         resolve(out.error ? { error: out.error } : { pass: out.pass, hint: out.hint, evidence: out.evidence, state: out.state });
       } catch {
-        resolve({ error: error ? (error.killed ? 'it took too long' : error.message.split('\n')[0]) : 'it printed something unexpected' });
+        resolve({ error: error ? (error.killed ? 'она шла слишком долго' : error.message.split('\n')[0]) : 'она вывела что-то неожиданное' });
       }
     }));
   });
@@ -129,11 +129,11 @@ export function gitStatus(dir, { files = false, head = false } = {}) {
   });
 }
 
-const NOT_A_REPO = 'this folder is not a git repository';
+const NOT_A_REPO = 'эта папка — не git-репозиторий';
 export function gitReady(dir) {
   return new Promise((resolve) => {
     execFile('git', ['rev-parse', '--is-inside-work-tree'], { cwd: dir, env: childEnv(), windowsHide: true, timeout: 30_000 }, (error) => {
-      resolve(error ? (error.code === 'ENOENT' ? 'git is not installed' : error.killed ? 'git did not answer in time' : NOT_A_REPO) : null);
+      resolve(error ? (error.code === 'ENOENT' ? 'git не установлен' : error.killed ? 'git не ответил вовремя' : NOT_A_REPO) : null);
     });
   });
 }

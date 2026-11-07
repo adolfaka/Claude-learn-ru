@@ -4,367 +4,413 @@
 // A celebration praises the work, not how it was done: a string a
 // celebration shows goes on CELEBRATIONS in checks/test/learn-content.test.mjs.
 
+// Russian plural form: pl(1, 'шаг', 'шага', 'шагов') → 'шаг'; 3 → 'шага'; 5, 11, 12 → 'шагов'.
+export function pl(n, one, few, many) {
+  const lastTwo = Math.abs(n) % 100;
+  const last = lastTwo % 10;
+  if (lastTwo > 10 && lastTwo < 20) return many;
+  if (last === 1) return one;
+  if (last >= 2 && last <= 4) return few;
+  return many;
+}
+
 // One name for each thing the app's words talk about. The copy test rejects
 // an older name, or a second way to describe the tiers.
 export const TERMS = {
-  practiceCopy: 'practice copy',
+  practiceCopy: 'учебная копия',
   // The copy of the template a-5 and the Advanced capstone have the learner make.
-  newCopy: 'new copy',
+  newCopy: 'новая копия',
   // Where a later level's lessons happen (ticket 86): the practice copy by
   // default, or another folder, such as one of the learner's own projects.
-  workFolder: 'work folder',
-  yourRepository: 'your repository',
-  tierHelp: { guided: 'every command shown', hinted: 'the goal, hints if you ask', challenge: 'just the goal' },
+  workFolder: 'рабочая папка',
+  yourRepository: 'ваш репозиторий',
+  tierHelp: { guided: 'показана каждая команда', hinted: 'цель, подсказки по запросу', challenge: 'только цель' },
   // The guide's level names, by the folder of a lesson's page.
-  levels: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+  levels: { beginner: 'Начальный', intermediate: 'Средний', advanced: 'Продвинутый' },
+  // The same names in the genitive, before «уровня»: «путь начального уровня».
+  levelsGen: { beginner: 'начального', intermediate: 'среднего', advanced: 'продвинутого' },
   // A level's index page, docs/<level>/README.md, as the guide's README
   // links it: "Level index".
-  levelIndex: 'level index',
+  levelIndex: 'оглавление уровня',
 };
 
+// A level's name, as C.levels gives it, in the genitive: 'Средний' → 'среднего'.
+// A name that is no level's comes back lower-cased.
+const levelGen = (level) => {
+  const key = Object.keys(TERMS.levels).find((k) => TERMS.levels[k] === level);
+  return key ? TERMS.levelsGen[key] : String(level ?? '').toLowerCase();
+};
+
+// What a badge, a lesson's `badge:` id, is called on screen.
+export const BADGES = {
+  Explorer: 'Исследователь', Planner: 'Планировщик', Builder: 'Строитель', Navigator: 'Штурман', Keeper: 'Хранитель',
+  Beginner: 'Начальный уровень', Crafter: 'Мастер', Organizer: 'Организатор', Tuner: 'Настройщик', Guardian: 'Страж',
+  Enforcer: 'Блюститель', Delegator: 'Делегатор', Connector: 'Связной', Curator: 'Куратор', Intermediate: 'Средний уровень',
+  Brancher: 'Ветвитель', Orchestrator: 'Дирижёр', Automator: 'Автоматизатор', Scripter: 'Сценарист', Strategist: 'Стратег',
+  Steward: 'Распорядитель', Warden: 'Смотритель', Advanced: 'Продвинутый уровень',
+};
+export const badgeName = (name) => BADGES[name] ?? name;
+
+// "a, b или c": names joined for a sentence.
+const either = (names) => (names.length > 1 ? `${names.slice(0, -1).join(', ')} или ${names.at(-1)}` : names[0]);
+const andMore = (shown, more) => `${shown}${more ? ` и ещё ${more}` : ''}`;
+const files = (n) => pl(n, 'файл изменён', 'файла изменены', 'файлов изменено');
+
 export const C = {
-  appName: 'Claude Code practice',
+  appName: 'Практика Claude Code',
   levels: TERMS.levels,
-  levelPath: (level) => `${level} path`,
-  pathLabel: (level, done, total) => `${C.levelPath(level)} · ${done} of ${total} done`,
-  pathHint: 'each stop a little harder',
-  hi: (name) => `Hi ${name || 'there'}! Let's learn Claude Code by using it.`,
-  pip1: `I'm Pip. I watch your ${TERMS.practiceCopy} and light up`,
-  pip2: 'the moment a step works.',
+  levelPath: (level) => `Путь ${levelGen(level)} уровня`,
+  pathLabel: (level, done, total) => `${C.levelPath(level)} · пройдено ${done} из ${total}`,
+  pathHint: 'каждая остановка чуть сложнее',
+  hi: (name) => `Привет, ${name || 'друг'}! Давайте изучать Claude Code, работая в нём.`,
+  pip1: 'Я Pip. Я слежу за вашей учебной копией и загораюсь',
+  pip2: 'в ту секунду, когда шаг получился.',
   // A lesson may use more than one other window (ticket 103), so the
   // welcome promises none in particular.
-  twoWindows: 'You use this window beside one or more terminals:',
-  thisWindow: 'this window',
-  thisWindowLines: ['one step at a time,', 'checks your work'],
-  otherWindow: 'your terminals',
-  otherWindowLines: ['where you type commands', 'and run Claude Code', '(this app checks them)'],
-  openSecond: 'Open a second terminal now, in this same folder:',
-  comeBack: 'Then come back here and press enter.',
+  twoWindows: 'Это окно работает рядом с одним или несколькими терминалами:',
+  thisWindow: 'это окно',
+  thisWindowLines: ['один шаг за раз,', 'проверяет работу'],
+  otherWindow: 'ваши терминалы',
+  otherWindowLines: ['где вы вводите команды', 'и запускаете Claude Code', '(их проверяет это окно)'],
+  openSecond: 'Откройте сейчас второй терминал в этой же папке:',
+  comeBack: 'Потом вернитесь сюда и нажмите enter.',
   // The boot frame, while git answers the first questions at start.
-  askingGit: 'Asking git about this folder…',
-  gitBroken: (error) => `git isn't working here: ${error}. This isn't your work: install git, then start this app again.`,
+  askingGit: 'Спрашиваю git об этой папке…',
+  gitBroken: (error) => `git здесь не работает: ${error}. Ваша работа тут ни при чём: установите git и запустите приложение снова.`,
 
-  whyLead: 'Why:',
-  youllBeAble: "You'll be able to",
-  helpShrinks: 'The help shrinks each time a skill comes back:',
+  whyLead: 'Зачем:',
+  youllBeAble: 'После урока вы сможете',
+  helpShrinks: 'Подсказок меньше всякий раз, когда навык встречается снова:',
   tierHelp: TERMS.tierHelp,
-  startLesson: (n) => `Start lesson ${n}`,
-  startCapstone: 'Start the capstone',
-  lessHelp: "I've used Claude Code before: give me less help",
-  steps: (n) => `${n} steps`,
-  stepOf: (n, m) => `step ${n} of ${m}`,
+  startLesson: (n) => `Начать урок ${n}`,
+  startCapstone: 'Начать итоговый проект',
+  lessHelp: 'Я уже работал с Claude Code: дайте меньше подсказок',
+  steps: (n) => `${n} ${pl(n, 'шаг', 'шага', 'шагов')}`,
+  stepOf: (n, m) => `шаг ${n} из ${m}`,
 
-  where: { terminal: 'in your other terminal', claude: 'in Claude Code', 'claude-2': 'in your second Claude Code', shell: 'in a terminal beside Claude Code', editor: 'in your editor', browser: 'in your browser', predict: 'guess first', ask: 'quick question', type: 'from memory', self: 'self-check' },
+  where: { terminal: 'в другом терминале', claude: 'в Claude Code', 'claude-2': 'во втором Claude Code', shell: 'в терминале рядом с Claude Code', editor: 'в редакторе', browser: 'в браузере', predict: 'сначала угадайте', ask: 'быстрый вопрос', type: 'по памяти', self: 'самопроверка' },
   // A lesson that numbers its terminals as its page does (ticket 103).
-  terminalN: (n) => `in terminal ${n}`,
+  terminalN: (n) => `в терминале ${n}`,
   // A long wait's card, where the page gives no words for it (ticket 103):
   // about the app, never about how long the run takes.
-  waitLong: 'No hurry: this card waits for as long as it takes.',
+  waitLong: 'Не спешите: эта карточка подождёт сколько нужно.',
   // The box a long wait offers a warm-up in (ticket 150). It scores nothing.
-  whileItRuns: 'While it runs',
-  whileNotScored: 'not scored',
-  whilePress: 'Press its number to answer.',
-  terminalInFolder: 'in a terminal',
-  warmup: (n, level) => `Warm-up from ${level ? `${level} lesson` : 'lesson'} ${n}`,
-  warmupIndex: (level) => `Warm-up from the ${level} ${TERMS.levelIndex}`,
+  whileItRuns: 'Пока идёт запуск',
+  whileNotScored: 'без оценки',
+  whilePress: 'Нажмите номер ответа.',
+  terminalInFolder: 'в терминале',
+  warmup: (n, level) => (level ? `Разминка из урока ${n} ${levelGen(level)} уровня` : `Разминка из урока ${n}`),
+  warmupIndex: (level) => `Разминка из оглавления ${levelGen(level)} уровня`,
   // A wrong pick shows its because at once, but a typed warm-up with no hint
   // (Intermediate's, 137) shows the lesson's words only after a second try,
   // and since 194 this line goes on whichever warm-up a learner meets first:
   // so "follow", not "at once".
-  warmupWhy: "A warm-up brings back an earlier lesson from memory. A wrong answer is fine: the lesson's words follow.",
+  warmupWhy: 'Разминка возвращает к прошлому уроку: ответьте по памяти. Ошибиться не страшно: следом покажутся слова урока.',
   // A warm-up from a level index quotes that page, not a lesson (ticket
   // 178): these take the place of the words of the same name around it.
   fromIndex: {
-    warmupWhy: `A warm-up asks one question from memory. A wrong answer is fine: the ${TERMS.levelIndex}'s words follow.`,
-    why: `Why this matters, in the ${TERMS.levelIndex}'s words:`,
-    trueOfElse: `That's true of something else. The ${TERMS.levelIndex} says:`,
-    theAnswer: `The answer, in the ${TERMS.levelIndex}'s words:`,
-    fixFirst: `That's the fix, in the ${TERMS.levelIndex}'s words:`,
-    stillStuck: `Still stuck? Press p for the ${TERMS.levelIndex} and the Stuck link.`,
-    codeMore: `More lines are on the ${TERMS.levelIndex}: press p.`,
-    codeWide: (dots) => `A line that ends in ${dots} goes on past the edge: press p for the ${TERMS.levelIndex}.`,
-    pageTitle: `The ${TERMS.levelIndex}`,
+    warmupWhy: 'Разминка задаёт один вопрос по памяти. Ошибиться не страшно: следом покажутся слова оглавления уровня.',
+    why: 'Почему это важно, словами оглавления уровня:',
+    trueOfElse: 'Это верно для другого. В оглавлении уровня сказано:',
+    theAnswer: 'Ответ словами оглавления уровня:',
+    fixFirst: 'Вот исправление словами оглавления уровня:',
+    stillStuck: 'Всё ещё не получается? Нажмите p: откроется оглавление уровня и ссылка «Застряли».',
+    codeMore: 'Остальные строки — в оглавлении уровня: нажмите p.',
+    codeWide: (dots) => `Строка, которая кончается на ${dots}, уходит за край: нажмите p, чтобы открыть оглавление уровня.`,
+    pageTitle: 'Оглавление уровня',
   },
-  warmups: (n) => `${n} warm-up${n === 1 ? '' : 's'} first`,
-  done: 'DONE',
-  doneWhen: 'Done when ',
-  noCommands: 'No commands this time.',
+  warmups: (n) => `сначала ${n} ${pl(n, 'разминка', 'разминки', 'разминок')}`,
+  done: 'ГОТОВО',
+  // Before an expect line, and the opening of a lesson's "Done when" say
+  // line (content.mjs reads both spellings).
+  doneWhen: 'Готово, когда ',
+  noCommands: 'В этот раз без команд.',
   // An optional step's card (ticket 102): the lesson file's words for when
   // to skip it, then the key.
-  optional: (when) => `Optional. ${when} Press x to skip it.`,
-  doneEachPart: "You've done each part before.",
-  watching: (what) => [`Watching `, what, ". I'll turn green the moment it's right."],
-  staleWatch: (what) => [`Watching `, what, ". It's from an earlier step: I'll turn green once it changes."],
-  stalePush: (what) => ['Watching ', what, ": everything here is already pushed, so I'll turn green after your next push."],
-  fileEmpty: (path) => `${path} has no line in it yet.`,
+  optional: (when) => `Необязательный шаг. ${when} Нажмите x, чтобы пропустить его.`,
+  doneEachPart: 'Каждую часть вы уже делали.',
+  watching: (what) => ['Слежу за ', what, '. Загорюсь зелёным, как только всё будет верно.'],
+  staleWatch: (what) => ['Слежу за ', what, '. Это осталось с прошлого шага: загорюсь зелёным, когда это изменится.'],
+  stalePush: (what) => ['Слежу за ', what, ': всё здесь уже отправлено, поэтому загорюсь зелёным после вашего следующего push.'],
+  fileEmpty: (path) => `В ${path} пока нет ни одной строки.`,
   // What a file holds, for a beat that reads it (ticket 87): the not-yet lines.
-  noFile: (path) => `${path} is not there yet.`,
-  noMatch: (glob) => `No file matches ${glob} yet.`,
-  notText: (path, what) => `${path} is not a text file yet: it holds ${what}.`,
-  notJson: (path, error) => `${path} does not parse as JSON yet (${error}).`,
-  noKey: (path, key) => `${path} has no ${key} yet.`,
-  noLine: (path) => `${path} has no line like that yet.`,
+  noFile: (path) => `${path} пока нет.`,
+  noMatch: (glob) => `Пока нет файла, подходящего под ${glob}.`,
+  notText: (path, what) => `${path} пока не текстовый файл: в нём ${what}.`,
+  notJson: (path, error) => `${path} пока не читается как JSON (${error}).`,
+  noKey: (path, key) => `В ${path} пока нет ${key}.`,
+  noLine: (path) => `В ${path} пока нет такой строки.`,
   // A fresh match on a file that only grew reads only what was added.
-  noNewLine: (path) => `${path} has no new line like that yet.`,
-  stillHas: (path, line) => `${path} still has: ${line}`,
-  notValue: (path, key, found, value) => `${path} has ${key} ${found}, not ${value}, yet.`,
+  noNewLine: (path) => `В ${path} пока нет новой такой строки.`,
+  stillHas: (path, line) => `В ${path} всё ещё есть: ${line}`,
+  notValue: (path, key, found, value) => `В ${path} ${key} пока ${found}, а не ${value}.`,
   // A binary file's evidence: its kind and size, never its bytes.
-  pngImage: (w, h) => `a PNG image, ${w} x ${h}`,
-  binaryData: (size) => `binary data, ${size}`,
-  andMore: (line, n) => `${line} and ${n} more line${n === 1 ? '' : 's'}`,
-  slowWait: 'Part of this check takes a while, so it runs only when you ask: press r when you are ready.',
-  doneBefore: { hinted: "You've done this before, so you get the goal: press h for hints.", challenge: "You've done this before, so you get just the goal." },
-  watchingGit: 'Watching ',
-  gitClean: 'no changes so far',
+  pngImage: (w, h) => `картинка PNG, ${w} x ${h}`,
+  binaryData: (size) => `двоичные данные, ${size}`,
+  andMore: (line, n) => `${line} и ещё ${n} ${pl(n, 'строка', 'строки', 'строк')}`,
+  slowWait: 'Часть этой проверки идёт долго, поэтому она запускается только по вашей просьбе: нажмите r, когда будете готовы.',
+  doneBefore: { hinted: 'Вы это уже делали, поэтому показана цель: подсказки по клавише h.', challenge: 'Вы это уже делали, поэтому показана только цель.' },
+  watchingGit: 'Слежу за ',
+  gitClean: 'пока нет изменений',
   // `under`: the paths a git-clean beat names, where it names some (ticket 88).
-  gitCleanUnder: (under) => `no changes under ${under} so far`,
-  gitDirty: (n) => `git status lists ${n} change${n === 1 ? '' : 's'}:`,
+  gitCleanUnder: (under) => `пока нет изменений в ${under}`,
+  gitDirty: (n) => `git status показывает ${n} ${pl(n, 'изменение', 'изменения', 'изменений')}:`,
   // A look at part of the tree has git list each file, where git status
   // alone lists a new folder whole: these lines name files, not git status.
-  changedUnder: (n, under) => `${n} file${n === 1 ? '' : 's'} changed under ${under}:`,
+  changedUnder: (n, under) => `${n} ${files(n)} в ${under}:`,
   // A git-clean scope that is one file, and the one change (r27 E13).
-  fileUncommitted: (path) => `${path} has uncommitted changes.`,
-  checking: (what) => (what ? `Checking ${what}…` : 'Checking…'),
+  fileUncommitted: (path) => `В ${path} есть незакоммиченные изменения.`,
+  checking: (what) => (what ? `Проверяю ${what}…` : 'Проверяю…'),
   // How far a run of several items has got, from the check child's reports.
-  checkingItem: (n, m) => `Checking item ${n} of ${m}…`,
+  checkingItem: (n, m) => `Проверяю пункт ${n} из ${m}…`,
   // How long a slow check's child has run, beside the spinner.
-  seconds: (n) => `${n} s`,
-  notYet: 'Not yet:',
+  seconds: (n) => `${n} с`,
+  notYet: 'Пока нет:',
   // The not-yet line folded under "The check says:", which says why.
-  notYetShort: 'Not yet.',
-  pressH: 'Press h for help.',
-  pressHAgain: 'Press h again for more help.',
-  checkSays: 'The check says:',
-  showExact: 'Show the exact command? y / n',
+  notYetShort: 'Пока нет.',
+  pressH: 'Нажмите h, чтобы получить подсказку.',
+  pressHAgain: 'Нажмите h ещё раз, чтобы получить больше подсказок.',
+  checkSays: 'Проверка говорит:',
+  showExact: 'Показать точную команду? y / n',
   // A check that answers the same after the learner redid the step (ticket
   // 192). The app can't see why, so it points earlier, and to the step a
   // lesson's back line names, which e goes back to.
-  sameAnswer: 'You redid this step and the check says the same, so the cause is likely in an earlier step.',
-  goBack: (n, title) => `Press e to go back to step ${n}: ${title}. Your files and ticks stay.`,
+  sameAnswer: 'Вы переделали этот шаг, а проверка отвечает так же, значит, причина, скорее всего, в одном из прошлых шагов.',
+  goBack: (n, title) => `Нажмите e, чтобы вернуться к шагу ${n}: ${title}. Ваши файлы и отметки останутся.`,
   // The note's shorter forms, for a window with fewer spare rows: the note
   // takes only the rows the screen has free, so nothing on it moves.
-  sameShort: 'Same answer again: the cause is likely earlier.',
-  goBackTo: (n, title) => `Press e to go back to step ${n}: ${title}.`,
-  sameBack: (n, title) => (title ? `Same answer again. Press e to go back to step ${n}: ${title}.` : `Same answer again. Press e to go back to step ${n}.`),
-  stuckOffer: 'Stuck? Press h for a hint.',
-  broken: (error) => `The check could not run: ${error}. This isn't your work. Press r to try again.`,
-  gitFailAfter: 'Press r to look again.',
-  stepDone: (n) => `Step ${n} done!`,
-  holds: (path) => [path, ' holds '],
-  cleanCopy: `Your ${TERMS.practiceCopy} is clean: nothing to commit.`,
+  sameShort: 'Тот же ответ: причина, скорее всего, раньше.',
+  goBackTo: (n, title) => `Нажмите e, чтобы вернуться к шагу ${n}: ${title}.`,
+  sameBack: (n, title) => (title ? `Тот же ответ. Нажмите e, чтобы вернуться к шагу ${n}: ${title}.` : `Тот же ответ. Нажмите e, чтобы вернуться к шагу ${n}.`),
+  stuckOffer: 'Застряли? Нажмите h, чтобы получить подсказку.',
+  broken: (error) => `Проверка не смогла запуститься: ${error}. Ваша работа тут ни при чём. Нажмите r, чтобы повторить.`,
+  gitFailAfter: 'Нажмите r, чтобы посмотреть ещё раз.',
+  stepDone: (n) => `Шаг ${n} пройден!`,
+  holds: (path) => [path, ' содержит '],
+  cleanCopy: 'Ваша учебная копия чистая: коммитить нечего.',
   // In the learner's own repository, a work folder that isn't the copy.
-  cleanRepo: 'Your repository is clean: nothing to commit.',
-  cleanUnder: (under) => `git status lists nothing under ${under}.`,
+  cleanRepo: 'Ваш репозиторий чистый: коммитить нечего.',
+  cleanUnder: (under) => `git status ничего не показывает в ${under}.`,
   // What changed, for a beat that needs git status to list something.
-  changedShows: (shown, more) => `Changed: ${shown}${more ? ` and ${more} more` : ''}`,
-  noChangeUnder: (under) => `git status lists no change under ${under} yet.`,
-  noChange: 'git status lists no change yet.',
-  nothingStaged: 'git status lists nothing staged yet.',
-  stagedShows: (shown, more) => `Staged: ${shown}${more ? ` and ${more} more` : ''}`,
-  changedOutside: (n, under, shown) => `${n} file${n === 1 ? '' : 's'} changed outside ${under}: ${shown}`,
+  changedShows: (shown, more) => `Изменено: ${andMore(shown, more)}`,
+  noChangeUnder: (under) => `git status пока не показывает изменений в ${under}.`,
+  noChange: 'git status пока не показывает изменений.',
+  nothingStaged: 'git status пока не показывает файлов, добавленных в индекс.',
+  stagedShows: (shown, more) => `В индексе: ${andMore(shown, more)}`,
+  changedOutside: (n, under, shown) => `${n} ${files(n)} вне ${under}: ${shown}`,
   // Against how git was when step n opened (ticket 105).
-  headSame: (n) => `No new commit yet: HEAD is where it was when step ${n} opened.`,
-  headDirty: (count, shown, more) => `A new commit, but git status still lists ${count} path${count === 1 ? '' : 's'}: ${shown}${more ? ` and ${more} more` : ''}`,
-  headMoved: (sha) => `A new commit, ${sha}, and nothing left to commit.`,
-  unchanged: (n) => `git status lists the same paths as when step ${n} opened.`,
-  changedSince: (n, count, shown, more) => `git status lists other paths than when step ${n} opened${count ? `: ${shown}${more ? ` and ${more} more` : ''}` : ': none now'}`,
+  headSame: (n) => `Нового коммита пока нет: HEAD там же, где был, когда открылся шаг ${n}.`,
+  headDirty: (count, shown, more) => `Новый коммит есть, но git status всё ещё показывает ${count} ${pl(count, 'путь', 'пути', 'путей')}: ${andMore(shown, more)}`,
+  headMoved: (sha) => `Новый коммит, ${sha}, и коммитить больше нечего.`,
+  unchanged: (n) => `git status показывает те же пути, что и когда открылся шаг ${n}.`,
+  changedSince: (n, count, shown, more) => `git status показывает другие пути, чем когда открылся шаг ${n}${count ? `: ${andMore(shown, more)}` : ': сейчас ни одного'}`,
   // A requires item that is the work folder's own (probe todos), not a lesson's.
-  folderLacks: (hint) => `This lesson needs your ${TERMS.workFolder} to hold more: ${hint}`,
-  session: (n) => `${n} step${n === 1 ? '' : 's'} this session`,
-  beatDone: 'Done.',
-  already: 'Already done: the check already passes, so this step counts.',
+  folderLacks: (hint) => `Для этого урока в вашей рабочей папке должно быть больше: ${hint}`,
+  session: (n) => `${n} ${pl(n, 'шаг', 'шага', 'шагов')} за эту сессию`,
+  beatDone: 'Готово.',
+  already: 'Уже готово: проверка уже проходит, шаг засчитан.',
   // A beat git status passed before anything changed: no check ran.
-  alreadyDone: 'Already done, so this step counts.',
-  alreadyCheck: 'The check already passes, so this step counts.',
-  hintsLater: (via) => (via === 'pick' ? 'Try it first: pick an answer, then h works.' : 'Try it first: press r to check, then h works.'),
-  pickFirst: 'Pick an answer first: a number, or the arrows.',
-  why: 'Why this matters, in the lesson\'s words:',
+  alreadyDone: 'Уже готово, шаг засчитан.',
+  alreadyCheck: 'Проверка уже проходит, шаг засчитан.',
+  hintsLater: (via) => (via === 'pick' ? 'Сначала попробуйте сами: выберите ответ, и тогда заработает h.' : 'Сначала попробуйте сами: нажмите r, чтобы проверить, и тогда заработает h.'),
+  pickFirst: 'Сначала выберите ответ: цифрой или стрелками.',
+  why: 'Почему это важно, словами урока:',
 
-  guessFirst: 'Guess:',
-  safetyChoice: 'A safety choice.',
-  anyAnswer: 'Any answer is fine: nothing is scored.',
-  guessRight: 'Your guess was right.',
-  nowYouKnow: 'Now you know:',
-  findOutAt: (n) => `Got it. You'll find out at step ${n}.`,
-  youGuessed: (text) => `You guessed: ${text}`,
-  right: 'Right.',
-  answered: 'Answered.',
-  notQuite: 'Not quite.',
-  trueOfElse: "That's true of something else. The lesson says:",
-  lookAgain: 'Look again, or press s to see the answer.',
+  guessFirst: 'Догадайтесь:',
+  safetyChoice: 'Выбор ради безопасности.',
+  anyAnswer: 'Подойдёт любой ответ: баллы не считаются.',
+  guessRight: 'Вы угадали.',
+  nowYouKnow: 'Теперь вы знаете:',
+  findOutAt: (n) => `Понятно. Узнаете на шаге ${n}.`,
+  youGuessed: (text) => `Ваша догадка: ${text}`,
+  right: 'Верно.',
+  answered: 'Отвечено.',
+  notQuite: 'Не совсем.',
+  trueOfElse: 'Это верно для другого. В уроке сказано:',
+  lookAgain: 'Посмотрите ещё раз или нажмите s, чтобы увидеть ответ.',
   // On a typing beat s is a letter of the answer (ticket 187).
-  lookAgainTyped: 'Look again, or press enter on an empty line to see the answer.',
-  lookFor: 'Look for',
-  theAnswer: "The answer, in the lesson's words:",
-  theAnswerIs: (n) => `It's option ${n}.`,
-  fixFirst: "That's the fix, in the lesson's words:",
-  fixThenPick: 'Fix it, then pick again.',
-  otherFine: "That's fine.",
-  stillStuck: 'Still stuck? Press p for the lesson page and the Stuck link.',
+  lookAgainTyped: 'Посмотрите ещё раз или нажмите enter на пустой строке, чтобы увидеть ответ.',
+  lookFor: 'Ищите',
+  theAnswer: 'Ответ словами урока:',
+  theAnswerIs: (n) => `Это вариант ${n}.`,
+  fixFirst: 'Вот исправление словами урока:',
+  fixThenPick: 'Исправьте это и выберите снова.',
+  otherFine: 'Это нормально.',
+  stillStuck: 'Всё ещё не получается? Нажмите p: откроется страница урока со ссылкой «Застряли».',
   // Where a code block is taller than the window: what doesn't fit is on
   // the page (ticket 90), above or below the line the beat explains.
-  codeMore: 'More lines are on the lesson page: press p.',
+  codeMore: 'Остальные строки — на странице урока: нажмите p.',
   // Where a line of it is wider than the window and ends in `dots`.
-  codeWide: (dots) => `A line that ends in ${dots} goes on past the edge: press p for the lesson page.`,
+  codeWide: (dots) => `Строка, которая кончается на ${dots}, уходит за край: нажмите p, чтобы открыть страницу урока.`,
   // k sends the block to the terminal, which may or may not put it on the
   // clipboard: the app can't see which, so it says what it did.
-  copied: (n) => `Asked your terminal to copy ${n === 1 ? 'this line' : `these ${n} lines`}. Nothing to paste? Press p for the page.`,
-  lastQuestion: 'Last question',
-  typeIt: 'Type it and press enter. No options this time.',
-  emptyShows: 'Not sure? Press enter on an empty line to see the answer.',
-  checkPasses: (n, m) => [`passes: ${n} of ${m} item${m === 1 ? '' : 's'}.`],
-  runItToo: (place) => `Run it ${place} too: you will see the same result.`,
-  eased: 'A little more help on this one: you needed help with it last time.',
-  stray: "That looks like a command. Type it in your other terminal, not here.",
-  strayIn: (place) => `That looks like a command. Type it in a terminal, ${place}, not here.`,
+  copied: (n) => `Попросил терминал скопировать ${n === 1 ? 'эту строку' : `эти ${n} ${pl(n, 'строку', 'строки', 'строк')}`}. Нечего вставить? Нажмите p, чтобы открыть страницу.`,
+  lastQuestion: 'Последний вопрос',
+  typeIt: 'Введите ответ и нажмите enter. В этот раз без вариантов.',
+  emptyShows: 'Не уверены? Нажмите enter на пустой строке, чтобы увидеть ответ.',
+  checkPasses: (n, m) => [`проходит: ${n} из ${m} ${pl(m, 'пункта', 'пунктов', 'пунктов')}.`],
+  runItToo: (place) => `Запустите это и ${place}: результат будет тот же.`,
+  eased: 'На этом шаге подсказок чуть больше: в прошлый раз вам понадобилась помощь.',
+  stray: 'Это похоже на команду. Введите её в другом терминале, а не здесь.',
+  strayIn: (place) => `Это похоже на команду. Введите её в терминале, ${place}, а не здесь.`,
   // Which folder a line that sends the learner to another terminal means,
   // where the level's work folder isn't the copy (ticket 86).
-  inFolder: (name) => `in ${name}`,
-  inCopy: `in your ${TERMS.practiceCopy}`,
-  inNewCopy: `in your ${TERMS.newCopy}`,
+  inFolder: (name) => `в папке ${name}`,
+  inCopy: 'в вашей учебной копии',
+  inNewCopy: 'в вашей новой копии',
 
-  levelUp: 'LEVEL UP',
-  toHinted: ["You've done each of these once, with every command shown.", 'From here you get the goal. Press h when you want a hint.'],
-  toChallenge: ['From memory now: just the goal.', 'Try it first, then press h if you need a hint.'],
-  nextCounts: (h, c) => `Still to come: ${[h && `${h} hinted step${h === 1 ? '' : 's'}`, c && `${c} challenge${c === 1 ? '' : 's'}`].filter(Boolean).join(' and ')}.`,
+  // Drawn in art.mjs's banner font: only the letters it has.
+  levelUp: 'НОВЫЙ УРОВЕНЬ',
+  toHinted: ['Каждое из этих заданий вы сделали один раз, с показанными командами.', 'Дальше показана цель. Нажмите h, когда понадобится подсказка.'],
+  toChallenge: ['Теперь по памяти: только цель.', 'Сначала попробуйте сами, потом нажмите h, если нужна подсказка.'],
+  nextCounts: (h, c) => `Впереди: ${[h && `${h} ${pl(h, 'шаг', 'шага', 'шагов')} с подсказками`, c && `${c} ${pl(c, 'испытание', 'испытания', 'испытаний')}`].filter(Boolean).join(' и ')}.`,
 
-  complete: 'COMPLETE',
-  lessonDone: (label) => `${label} done! You practised:`,
-  badge: (name) => `New badge: ${name}`,
-  checkedSummary: (n, m) => `The lesson's check passes: ${n} of ${m} item${m === 1 ? '' : 's'}`,
-  handover: 'You did every task without the exact command.',
+  complete: 'ПРОЙДЕНО',
+  // `label`: «Урок N» or «Итоговый проект», both masculine.
+  lessonDone: (label) => `${label} пройден! Что вы отработали:`,
+  badge: (name) => `Новый значок: ${badgeName(name)}`,
+  checkedSummary: (n, m) => `Проверка урока проходит: ${n} из ${m} ${pl(m, 'пункта', 'пунктов', 'пунктов')}`,
+  handover: 'Вы выполнили все задания без точной команды.',
   // On each level's capstone next screen only: inside a level, the next
   // lesson expects a clean tree.
-  invitation: 'Questions about anything in this level? Ask in your other terminal, then compare the answer with the lesson pages.',
-  invitationAt: (place) => `Questions about anything in this level? Ask in your other terminal, ${place}, then compare the answer with the lesson pages.`,
-  answeredSummary: (n) => `${n} question${n === 1 ? '' : 's'} answered`,
-  yourClimb: 'Your climb',
-  nextUp: 'Next up',
-  notchHarder: 'A notch harder: it starts with less help.',
-  savedBreak: 'Your progress is saved, so a break is fine. Come back with npm run learn.',
-  goFurther: 'Go further:',
+  invitation: 'Есть вопросы по этому уровню? Задайте их в другом терминале, а потом сверьте ответ со страницами уроков.',
+  invitationAt: (place) => `Есть вопросы по этому уровню? Задайте их в другом терминале, ${place}, а потом сверьте ответ со страницами уроков.`,
+  answeredSummary: (n) => `Отвечено на ${n} ${pl(n, 'вопрос', 'вопроса', 'вопросов')}`,
+  yourClimb: 'Ваш путь вверх',
+  nextUp: 'Следующий',
+  notchHarder: 'Чуть сложнее: подсказок с самого начала меньше.',
+  savedBreak: 'Прогресс сохранён, так что можно сделать перерыв. Вернуться: npm run learn.',
+  goFurther: 'Дальше:',
 
-  map: 'MAP',
-  help: 'Help:',
-  mapFooter: 'Each lesson reuses what came before, so it starts with less help.',
-  mapDone: 'done',
-  mapNext: 'next',
+  map: 'КАРТА',
+  help: 'Подсказки:',
+  mapFooter: 'Каждый урок опирается на предыдущие, поэтому начинается с меньшим числом подсказок.',
+  mapDone: 'готово',
+  mapNext: 'дальше',
   // A lesson whose Check passed with its Tear down still to do (ticket 102).
-  mapTearDown: 'tear down',
-  tearDownLeft: 'The check passes. The tear down is still to do.',
-  ofDone: (n, m) => `${n} of ${m} done`,
+  mapTearDown: 'уборка',
+  tearDownLeft: 'Проверка проходит. Уборка ещё впереди.',
+  ofDone: (n, m) => `готово ${n} из ${m}`,
 
-  checkOnly: ["This lesson isn't in the app yet. Follow the lesson page,", "and I'll watch its check for you:"],
+  checkOnly: ['Этого урока в приложении пока нет. Идите по странице урока,', 'а я буду следить за его проверкой:'],
   // After the page's name (pageTitle, p's title), a link where links work,
   // on the card: p spells out the address, which a card's rail would break.
-  pageLink: ': press p for its address.',
-  newCopy: [`This lesson runs in a ${TERMS.newCopy} of the template, not in this`, `${TERMS.practiceCopy}. Press f to give its folder, and I'll watch its check there:`],
-  newCopyAt: [`This lesson runs in your ${TERMS.newCopy} of the template. Follow the`, "lesson page, and I'll watch its check there:"],
-  newCopyPlain: `runs in a ${TERMS.newCopy} of the template, so it is not checked here`,
+  pageLink: ': нажмите p, чтобы увидеть адрес.',
+  newCopy: ['Этот урок идёт в новой копии шаблона, а не в этой', 'учебной копии. Нажмите f и укажите её папку — я буду следить за проверкой там:'],
+  newCopyAt: ['Этот урок идёт в вашей новой копии шаблона. Идите по', 'странице урока, а я буду следить за его проверкой там:'],
+  newCopyPlain: 'идёт в новой копии шаблона, поэтому здесь не проверяется',
   // Which items the check-only card shows, where they don't all fit.
-  itemsShown: (a, b, n) => `Items ${a} to ${b} of ${n}`,
-  itemOf: (a, n) => `Item ${a} of ${n}`,
+  itemsShown: (a, b, n) => `Пункты ${a}–${b} из ${n}`,
+  itemOf: (a, n) => `Пункт ${a} из ${n}`,
 
   // The work folder (ticket 86): the intro's question, the prompt for a
   // folder's path, and what the app found there. These are about this app
   // and git, never about Claude Code.
-  folderAsk: (level) => `Where do you want to practise ${level}?`,
-  folderCopy: `In this ${TERMS.practiceCopy}`,
-  folderOther: `In another folder, such as ${TERMS.yourRepository}`,
-  newCopyAsk: `Where is your ${TERMS.newCopy} of the template?`,
-  folderNewCopy: `Give the folder of your ${TERMS.newCopy}`,
-  workFolder: 'Work folder:',
-  thisCopy: `this ${TERMS.practiceCopy}`,
-  folderPrompt: (level) => `The ${TERMS.workFolder} for ${level}`,
-  folderPromptNew: `The folder of your ${TERMS.newCopy} of the template`,
-  folderHow: 'Type or paste its path, then press enter.',
-  folderEmpty: `An empty line means this ${TERMS.practiceCopy}.`,
+  folderAsk: (level) => `Где вы хотите проходить ${String(level ?? '').toLowerCase()} уровень?`,
+  folderCopy: 'В этой учебной копии',
+  folderOther: 'В другой папке, например в вашем репозитории',
+  newCopyAsk: 'Где ваша новая копия шаблона?',
+  folderNewCopy: 'Укажите папку вашей новой копии',
+  workFolder: 'Рабочая папка:',
+  thisCopy: 'эта учебная копия',
+  folderPrompt: (level) => `Рабочая папка для ${levelGen(level)} уровня`,
+  folderPromptNew: 'Папка вашей новой копии шаблона',
+  folderHow: 'Введите или вставьте путь и нажмите enter.',
+  folderEmpty: 'Пустая строка — эта учебная копия.',
   // The notes name no folder: the header and the Work folder line do, so a
   // long name costs no row.
-  notGit: `git says this ${TERMS.workFolder} is not a git repository. Press f to pick another folder.`,
-  noPractice: `Git doesn't ignore .practice/ in this ${TERMS.workFolder}, where lessons save their files: add a .practice/ line to its .git/info/exclude or .gitignore.`,
-  folderGitBroken: (error) => `git couldn't look at this ${TERMS.workFolder}: ${error}.`,
+  notGit: 'git говорит, что эта рабочая папка — не git-репозиторий. Нажмите f, чтобы выбрать другую папку.',
+  noPractice: 'Git не игнорирует .practice/ в этой рабочей папке, а уроки хранят там свои файлы: добавьте строку .practice/ в её .git/info/exclude или .gitignore.',
+  folderGitBroken: (error) => `git не смог заглянуть в эту рабочую папку: ${error}.`,
   // A new copy given as this practice copy, in the prompt or with --dir.
-  newCopyIsCopy: `That is this ${TERMS.practiceCopy}. Give the folder of your ${TERMS.newCopy} of the template.`,
-  folderGone: (path) => `No folder at ${path} any more. Press f to pick another.`,
+  newCopyIsCopy: 'Это и есть эта учебная копия. Укажите папку вашей новой копии шаблона.',
+  folderGone: (path) => `Папки ${path} больше нет. Нажмите f, чтобы выбрать другую.`,
   // What a lesson needs before it starts (ticket 89). A prerequisite that
   // failed in the work folder: the lesson it comes from, and the one check
   // item that doesn't pass or what the one file lacks.
-  buildsOnCheck: (label, item) => `This lesson builds on ${label}. One item of its check doesn't pass here yet: ${item}`,
-  buildsOnFile: (label, hint) => `This lesson builds on ${label}: ${hint}`,
-  openFirst: (label) => `Open ${label} first`,
+  buildsOnCheck: (label, item) => `Этот урок опирается на ${label}. Один пункт его проверки здесь пока не проходит: ${item}`,
+  buildsOnFile: (label, hint) => `Этот урок опирается на ${label}: ${hint}`,
+  openFirst: (label) => `Сначала откройте ${label}`,
   // Commands no PATH folder holds, before the page's You need lines that name them.
   // The lead of the page's line for the learner's repository (ticket 179).
-  youNeed: 'You need:',
-  notOnPath: (...names) => `No ${names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names.at(-1)}` : names[0]} on your PATH. You need:`,
+  youNeed: 'Что понадобится:',
+  notOnPath: (...names) => `В вашем PATH нет ${either(names)}. Что понадобится:`,
   // Where the intro has no room for all of that, one row hands it to n.
-  notesShort: 'Read this before you start: press n',
-  notesTitle: 'Before you start',
+  notesShort: 'Прочитайте это перед началом: нажмите n',
+  notesTitle: 'Перед началом',
 
-  welcomeBack: 'Welcome back!',
-  restartAsk: 'Start this lesson over? Your answers and ticks for it are cleared.',
-  saveFailed: (error) => `Couldn't save your place: ${error}. The app keeps going.`,
-  youreOn: (label, n, m, title) => `You're on ${label}, step ${n} of ${m}: ${title}.`,
+  welcomeBack: 'С возвращением!',
+  restartAsk: 'Начать этот урок заново? Ваши ответы и отметки по нему будут стёрты.',
+  saveFailed: (error) => `Не удалось сохранить место: ${error}. Приложение продолжает работу.`,
+  youreOn: (label, n, m, title) => `Вы здесь: ${label}, шаг ${n} из ${m}: ${title}.`,
 
-  cardTitle: 'Your card',
-  cardIntro: "The commands from steps you finished, in the lessons' words.",
-  cardEmpty: 'Nothing here yet: commands show up here as you finish the steps that use them.',
-  cardLink: 'Commands by level, in the guide:',
+  cardTitle: 'Ваша карточка',
+  cardIntro: 'Команды из пройденных шагов, словами уроков.',
+  cardEmpty: 'Пока пусто: команды появятся здесь, когда вы пройдёте шаги, где они нужны.',
+  cardLink: 'Команды по уровням в руководстве:',
   // Recall, then compare: the next screen asks, space shows the entries.
   // A lesson's entries can be keys or a git command, and there can be one:
   // the words name neither a kind nor a number.
-  recallAsk: (label) => `Say to yourself what ${label} taught you, then press space.`,
-  compareTitle: (label) => `${label}, on your card`,
-  compareIntro: "Compare what you said with the lesson's own words.",
+  recallAsk: (label) => `Вспомните, чему вас научил урок ${label}, и нажмите space.`,
+  compareTitle: (label) => `${label} на вашей карточке`,
+  compareIntro: 'Сравните то, что вспомнили, со словами урока.',
 
-  pageTitle: 'The lesson page',
-  stuckLink: 'Stuck? Tell us here:',
+  pageTitle: 'Страница урока',
+  stuckLink: 'Застряли? Напишите нам здесь:',
 
-  keysTitle: 'Keys',
+  keysTitle: 'Клавиши',
   keyHelp: [
-    ['enter', 'next, or choose'],
-    ['space', 'I did it'],
-    ['↑ ↓  1-9', 'move, or pick an answer'],
-    ['h', 'a hint, one at a time'],
-    ['r', 'check again now'],
-    ['w', 'why this matters'],
-    ['b', 'back one screen'],
-    ['m', 'the map of lessons'],
-    ['p', 'the lesson page and what to read next'],
-    ['?', 'these keys'],
-    ['q', 'quit (your place is saved)'],
+    ['enter', 'дальше или выбрать'],
+    ['space', 'я сделал'],
+    ['↑ ↓  1-9', 'двигаться или выбрать ответ'],
+    ['h', 'подсказка, по одной'],
+    ['r', 'проверить ещё раз сейчас'],
+    ['w', 'почему это важно'],
+    ['b', 'назад на один экран'],
+    ['m', 'карта уроков'],
+    ['p', 'страница урока и что почитать дальше'],
+    ['?', 'эти клавиши'],
+    ['q', 'выйти (место сохранится)'],
   ],
   // Listed under the arrows where the course has more than one level, with
   // f, which changes a later level's work folder on its map page (ticket 86).
-  levelKey: ['← →  f', `the map: another level; f: ${TERMS.workFolder}`],
-  folderChange: 'f to change',
+  levelKey: ['← →  f', 'карта: другой уровень; f: рабочая папка'],
+  folderChange: 'f — сменить',
   // Listed only where the ? overlay has a row to spare.
-  cardKey: ['c', 'your card: commands from finished steps'],
-  calm: 'Prefer a still screen? Quit, then start with npm run learn -- --calm.',
+  cardKey: ['c', 'ваша карточка: команды из пройденных шагов'],
+  calm: 'Нужен неподвижный экран? Выйдите и запустите npm run learn -- --calm.',
 
-  small: 'Make this window a bit bigger (at least 60 by 20).',
-  savedAt: (label, n, m) => `Saved: ${label}, step ${n} of ${m}. Run npm run learn to pick up where you left off.`,
+  small: 'Сделайте это окно чуть больше (не меньше 60 на 20).',
+  savedAt: (label, n, m) => `Сохранено: ${label}, шаг ${n} из ${m}. Запустите npm run learn, чтобы продолжить с этого места.`,
   // Where the lesson's work folder is another: progress stays in the copy.
-  savedAtCopy: (label, n, m, root) => `Saved: ${label}, step ${n} of ${m}. Run npm run learn in your ${TERMS.practiceCopy}, ${root}, to pick up where you left off.`,
+  savedAtCopy: (label, n, m, root) => `Сохранено: ${label}, шаг ${n} из ${m}. Запустите npm run learn в вашей учебной копии, ${root}, чтобы продолжить с этого места.`,
   // Beginner lesson 1 no longer makes .practice/; lesson 2 does, so name the
   // command rather than a step.
-  savedLater: `Your place is saved once your ${TERMS.practiceCopy} has a .practice/ folder: run mkdir .practice there.`,
-  plainIntro: 'npm run learn shows one step at a time in a terminal. Run it in a terminal window to use it.',
-  usage: 'Usage: npm run learn -- [--calm] [--plain] [--dir <folder>]. --calm keeps the screen still; --plain draws plain symbols with no color; --dir sets the work folder of the level the app opens on.',
-  noFolder: (path) => `No folder at ${path}.`,
-  dirBeginner: `This app checks Beginner in this ${TERMS.practiceCopy}, so --dir has no level to set yet. From Intermediate on, use it, or press f on the map.`,
-  plainIn: (dir) => ` (checked in ${dir})`,
+  savedLater: 'Ваше место сохранится, когда в учебной копии появится папка .practice/: выполните там mkdir .practice.',
+  plainIntro: 'npm run learn показывает по одному шагу в терминале. Запустите его в окне терминала.',
+  usage: 'Запуск: npm run learn -- [--calm] [--plain] [--dir <папка>]. --calm — неподвижный экран; --plain — простые символы без цвета; --dir задаёт рабочую папку уровня, на котором откроется приложение.',
+  noFolder: (path) => `Папки ${path} нет.`,
+  dirBeginner: 'Начальный уровень приложение проверяет в этой учебной копии, поэтому --dir пока нечего задавать. Со среднего уровня используйте его или нажмите f на карте.',
+  plainIn: (dir) => ` (проверено в ${dir})`,
   // A lesson done in the app whose check fails now (106): a later lesson
   // may change what it checks on purpose, as a-6 moves a component.
-  plainChanged: 'Its check fails now: a later lesson may have changed what it checks.',
+  plainChanged: 'Сейчас его проверка не проходит: возможно, один из следующих уроков изменил то, что она проверяет.',
+  // Lines of the plain listing (plain.mjs).
+  plainDone: ' (пройден в приложении)',
+  plainBroken: (error) => `проверка не смогла запуститься: ${error}`,
+  plainItems: (n, m) => `проходит ${n} из ${m} ${pl(m, 'пункта', 'пунктов', 'пунктов')} проверки`,
+  plainSlow: (id, n) => ` (npm run check -- ${id} запускает ещё ${n} ${pl(n, 'долгий пункт', 'долгих пункта', 'долгих пунктов')})`,
+  // A file's size, for binaryData (holds.mjs).
+  bytes: (n) => `${n} ${pl(n, 'байт', 'байта', 'байт')}`,
+  kilobytes: (n) => `${n} КБ`,
 
   k: {
-    itsOpen: "it's open", quit: 'quit', choose: 'choose', start: 'start', map: 'map', more: 'more', checkNow: 'check now',
-    checkAgain: 'check again', moreHelp: 'more help', help: 'help', hint: 'hint', anotherHint: 'another hint', why: 'why', back: 'back',
-    next: 'next', nextTo: (title) => `next: ${title}`, answer: 'answer', showAnswer: 'show answer', letsGo: "let's go",
-    bringIt: 'bring it on', whatsNext: "what's next", startN: (label) => `start ${label}`, open: 'open',
-    useIt: 'use it', cancel: 'cancel', folder: 'folder', giveFolder: 'give its folder',
-    continue: 'continue', startOver: 'start over', yesStartOver: 'yes, start over', keep: 'no, keep it', close: 'close', scroll: 'scroll', level: 'level', card: 'card', yes: 'show it', no: 'not yet', page: 'page', clear: 'clear',
-    copy: 'copy', earlier: 'earlier step', earlierShort: 'earlier', skip: 'skip',
+    itsOpen: 'открыт', quit: 'выйти', choose: 'выбрать', start: 'начать', map: 'карта', more: 'ещё', checkNow: 'проверить',
+    checkAgain: 'ещё раз', moreHelp: 'больше помощи', help: 'помощь', hint: 'подсказка', anotherHint: 'ещё подсказка', why: 'зачем', back: 'назад',
+    next: 'дальше', nextTo: (title) => `дальше: ${title}`, answer: 'ответить', showAnswer: 'показать ответ', letsGo: 'поехали',
+    bringIt: 'давайте', whatsNext: 'что дальше', startN: (label) => `начать ${label}`, open: 'открыть',
+    useIt: 'выбрать', cancel: 'отмена', folder: 'папка', giveFolder: 'указать папку',
+    continue: 'продолжить', startOver: 'заново', yesStartOver: 'да, заново', keep: 'нет, оставить', close: 'закрыть', scroll: 'листать', level: 'уровень', card: 'карточка', yes: 'показать', no: 'пока нет', page: 'страница', clear: 'очистить',
+    copy: 'копировать', earlier: 'прошлый шаг', earlierShort: 'назад', skip: 'пропустить',
   },
 };

@@ -1,41 +1,41 @@
 ---
-name: Track my progress
-about: A checklist of every lesson and capstone in the guide, to tick off as you go
-title: My progress
+name: Отслеживать прогресс
+about: Чек-лист всех уроков и итоговых проектов руководства, чтобы отмечать их по ходу дела
+title: Мой прогресс
 labels: []
 assignees: []
 ---
 
-Tick each item when its check passes (`npm run check -- <lesson-id>`). Electives are optional and not listed.
+Отмечайте пункт, когда его проверка проходит (`npm run check -- <lesson-id>`). Дополнительные уроки необязательны и в список не входят.
 
-### Beginner
+### Начальный уровень
 
-- [ ] b-1 Install, sign in and look around
-- [ ] b-2 Permission modes and plan mode
-- [ ] b-3 Your first change, from request to commit
-- [ ] b-4 Keep a session on track
-- [ ] b-5 Project memory with CLAUDE.md
-- [ ] Beginner capstone
+- [ ] b-1 Установка, вход и первый осмотр
+- [ ] b-2 Режимы разрешений и plan mode
+- [ ] b-3 Первое изменение: от запроса до коммита
+- [ ] b-4 Как удержать сессию в рабочем русле
+- [ ] b-5 Память проекта в CLAUDE.md
+- [ ] Итоговый проект начального уровня
 
-### Intermediate
+### Средний уровень
 
-- [ ] i-1 Turn a repeated workflow into a skill
-- [ ] i-2 Organize project memory and see what loaded
-- [ ] i-3 Pick the model and effort
-- [ ] i-4 Permissions, settings scopes and the sandbox
-- [ ] i-5 Enforce a rule with a hook
-- [ ] i-6 Delegate to a custom subagent
-- [ ] i-7 Connect a tool with MCP
-- [ ] i-8 Install and manage plugins
-- [ ] Intermediate capstone
+- [ ] i-1 Превращаем повторяющийся процесс в skill
+- [ ] i-2 Организуем память проекта и смотрим, что загрузилось
+- [ ] i-3 Выбираем модель и effort
+- [ ] i-4 Разрешения, уровни настроек и песочница
+- [ ] i-5 Закрепляем правило с помощью hook
+- [ ] i-6 Поручаем задачу своему субагенту
+- [ ] i-7 Подключаем инструмент через MCP
+- [ ] i-8 Устанавливаем плагины и управляем ими
+- [ ] Итоговый проект среднего уровня
 
-### Advanced
+### Продвинутый уровень
 
-- [ ] a-1 Parallel sessions with worktrees
-- [ ] a-2 Choose an orchestration pattern
-- [ ] a-3 Run and save a dynamic workflow
-- [ ] a-4 Script Claude Code with `claude -p`
+- [ ] a-1 Параллельные сессии с worktrees
+- [ ] a-2 Выбор схемы оркестрации
+- [ ] a-3 Запуск и сохранение динамического workflow
+- [ ] a-4 Скрипты с Claude Code: `claude -p`
 - [ ] a-5 GitHub Actions
-- [ ] a-6 Share your setup with a team
-- [ ] a-7 Put bounds on autonomous runs
-- [ ] Advanced capstone
+- [ ] a-6 Делимся настройкой с командой
+- [ ] a-7 Границы для автономных запусков
+- [ ] Итоговый проект продвинутого уровня

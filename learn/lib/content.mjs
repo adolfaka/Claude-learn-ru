@@ -103,29 +103,29 @@ const OPTION_KEYS = new Set(['right', 'wrong', 'option', 'stuck', 'other', 'deco
 // whatever its level's work folder is, until its lesson file's front matter
 // says so (ticket 86).
 export const PATH = [
-  { id: 'b-1', level: 'beginner', page: 'docs/beginner/01-install-and-look-around.md', minutes: 'about 20 minutes' },
-  { id: 'b-2', level: 'beginner', page: 'docs/beginner/02-permission-modes-and-plan-mode.md', minutes: 'about 25 minutes' },
-  { id: 'b-3', level: 'beginner', page: 'docs/beginner/03-first-change.md', minutes: 'about 20 minutes' },
-  { id: 'b-4', level: 'beginner', page: 'docs/beginner/04-keep-a-session-on-track.md', minutes: 'about 25 minutes' },
-  { id: 'b-5', level: 'beginner', page: 'docs/beginner/05-project-memory.md', minutes: 'about 20 minutes' },
-  { id: 'b-capstone', level: 'beginner', page: 'docs/beginner/capstone.md', minutes: '30 to 60 minutes' },
-  { id: 'i-1', level: 'intermediate', page: 'docs/intermediate/01-first-skill.md', minutes: 'about 20 minutes' },
-  { id: 'i-2', level: 'intermediate', page: 'docs/intermediate/02-organize-memory.md', minutes: 'about 20 minutes' },
-  { id: 'i-3', level: 'intermediate', page: 'docs/intermediate/03-model-and-effort.md', minutes: 'about 20 minutes' },
-  { id: 'i-4', level: 'intermediate', page: 'docs/intermediate/04-permissions-and-sandbox.md', minutes: 'about 20 minutes' },
-  { id: 'i-5', level: 'intermediate', page: 'docs/intermediate/05-hooks.md', minutes: 'about 20 minutes' },
-  { id: 'i-6', level: 'intermediate', page: 'docs/intermediate/06-subagents.md', minutes: 'about 25 minutes' },
-  { id: 'i-7', level: 'intermediate', page: 'docs/intermediate/07-mcp.md', minutes: 'about 25 minutes' },
-  { id: 'i-8', level: 'intermediate', page: 'docs/intermediate/08-plugins.md', minutes: 'about 25 minutes' },
-  { id: 'i-capstone', level: 'intermediate', page: 'docs/intermediate/capstone.md', minutes: '30 to 60 minutes', folder: 'copy' },
-  { id: 'a-1', level: 'advanced', page: 'docs/advanced/01-parallel-sessions.md', minutes: 'about 20 minutes' },
-  { id: 'a-2', level: 'advanced', page: 'docs/advanced/02-orchestration-patterns.md', minutes: 'about 20 minutes' },
-  { id: 'a-3', level: 'advanced', page: 'docs/advanced/03-dynamic-workflows.md', minutes: 'about 20 minutes, plus run time' },
-  { id: 'a-4', level: 'advanced', page: 'docs/advanced/04-headless.md', minutes: 'about 20 minutes' },
-  { id: 'a-5', level: 'advanced', page: 'docs/advanced/05-github-actions.md', minutes: 'about 20 minutes, plus run time', newCopy: true },
-  { id: 'a-6', level: 'advanced', page: 'docs/advanced/06-share-your-setup.md', minutes: 'about 20 minutes' },
-  { id: 'a-7', level: 'advanced', page: 'docs/advanced/07-bounded-runs.md', minutes: 'about 20 minutes, plus run time' },
-  { id: 'a-capstone', level: 'advanced', page: 'docs/advanced/capstone.md', minutes: '60 to 90 minutes, plus run time', newCopy: true },
+  { id: 'b-1', level: 'beginner', page: 'docs/beginner/01-install-and-look-around.md', minutes: 'около 20 минут' },
+  { id: 'b-2', level: 'beginner', page: 'docs/beginner/02-permission-modes-and-plan-mode.md', minutes: 'около 25 минут' },
+  { id: 'b-3', level: 'beginner', page: 'docs/beginner/03-first-change.md', minutes: 'около 20 минут' },
+  { id: 'b-4', level: 'beginner', page: 'docs/beginner/04-keep-a-session-on-track.md', minutes: 'около 25 минут' },
+  { id: 'b-5', level: 'beginner', page: 'docs/beginner/05-project-memory.md', minutes: 'около 20 минут' },
+  { id: 'b-capstone', level: 'beginner', page: 'docs/beginner/capstone.md', minutes: 'от 30 до 60 минут' },
+  { id: 'i-1', level: 'intermediate', page: 'docs/intermediate/01-first-skill.md', minutes: 'около 20 минут' },
+  { id: 'i-2', level: 'intermediate', page: 'docs/intermediate/02-organize-memory.md', minutes: 'около 20 минут' },
+  { id: 'i-3', level: 'intermediate', page: 'docs/intermediate/03-model-and-effort.md', minutes: 'около 20 минут' },
+  { id: 'i-4', level: 'intermediate', page: 'docs/intermediate/04-permissions-and-sandbox.md', minutes: 'около 20 минут' },
+  { id: 'i-5', level: 'intermediate', page: 'docs/intermediate/05-hooks.md', minutes: 'около 20 минут' },
+  { id: 'i-6', level: 'intermediate', page: 'docs/intermediate/06-subagents.md', minutes: 'около 25 минут' },
+  { id: 'i-7', level: 'intermediate', page: 'docs/intermediate/07-mcp.md', minutes: 'около 25 минут' },
+  { id: 'i-8', level: 'intermediate', page: 'docs/intermediate/08-plugins.md', minutes: 'около 25 минут' },
+  { id: 'i-capstone', level: 'intermediate', page: 'docs/intermediate/capstone.md', minutes: 'от 30 до 60 минут', folder: 'copy' },
+  { id: 'a-1', level: 'advanced', page: 'docs/advanced/01-parallel-sessions.md', minutes: 'около 20 минут' },
+  { id: 'a-2', level: 'advanced', page: 'docs/advanced/02-orchestration-patterns.md', minutes: 'около 20 минут' },
+  { id: 'a-3', level: 'advanced', page: 'docs/advanced/03-dynamic-workflows.md', minutes: 'около 20 минут плюс время запуска' },
+  { id: 'a-4', level: 'advanced', page: 'docs/advanced/04-headless.md', minutes: 'около 20 минут' },
+  { id: 'a-5', level: 'advanced', page: 'docs/advanced/05-github-actions.md', minutes: 'около 20 минут плюс время запуска', newCopy: true },
+  { id: 'a-6', level: 'advanced', page: 'docs/advanced/06-share-your-setup.md', minutes: 'около 20 минут' },
+  { id: 'a-7', level: 'advanced', page: 'docs/advanced/07-bounded-runs.md', minutes: 'около 20 минут плюс время запуска' },
+  { id: 'a-capstone', level: 'advanced', page: 'docs/advanced/capstone.md', minutes: 'от 60 до 90 минут плюс время запуска', newCopy: true },
 ];
 // The guide's levels, in course order.
 export const LEVELS = [...new Set(PATH.map((p) => p.level))];
@@ -147,7 +147,7 @@ export const SLOW = {
   'i-5': [2], 'i-7': [2], 'i-capstone': [1, 9, 11],
   'a-4': [1, 2, 3], 'a-7': [0, 1, 2, 3, 4], 'a-capstone': [4, 5, 6, 11],
 };
-export const GUIDE = 'https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know';
+export const GUIDE = 'https://github.com/runowata/claude-code-ru';
 // The guide's Commands by level page, which ends your card.
 export const COMMANDS_URL = `${GUIDE}/blob/main/docs/reference/commands.md`;
 // A level's index page, which a `<level>-index` warm-up quotes.
@@ -349,7 +349,7 @@ export function parseLesson(text, file = 'lesson') {
       // A `say` that opens "Done when" is a check's expectation in the app's
       // words, for a step whose page has none to quote: like `expect`, a done
       // beat hides it where the evidence line replaces it.
-      beat.lines.push({ key, text: v.text, quoted: v.quoted, ...(key === 'say' && /^Done when /.test(v.text) ? { doneWhen: true } : {}) });
+      beat.lines.push({ key, text: v.text, quoted: v.quoted, ...(key === 'say' && /^(?:Done when|Готово, когда) /.test(v.text) ? { doneWhen: true } : {}) });
     }
     else beat[camel(key)] = v.text;
   }

@@ -375,8 +375,9 @@ const TOASTS = {
 
 // ASCII mode: the few symbols in the app's own words and in quotes, spelled
 // out; anything else outside ASCII becomes '?'.
-const ASCII = { '·': '|', '…': '...', '↑': '^', '↓': 'v', '←': '<-', '→': '->', '’': "'", '‘': "'", '“': '"', '”': '"', '–': '-', '›': '>' };
-const ascii = (line) => line.replace(/[^\x00-\x7f]/g, (ch) => ASCII[ch] ?? '?');
+const ASCII = { '·': '|', '…': '...', '↑': '^', '↓': 'v', '←': '<-', '→': '->', '’': "'", '‘': "'", '“': '"', '”': '"', '–': '-', '›': '>', '—': '-', '«': '"', '»': '"', '„': '"', '№': 'N' };
+// Cyrillic letters (U+0400–U+04FF) pass through: the Russian text itself.
+const ascii = (line) => line.replace(/[^\x00-\x7fЀ-ӿ]/g, (ch) => ASCII[ch] ?? '?');
 
 function small(cols, rows) {
   const out = Array.from({ length: rows }, () => '');
@@ -1016,7 +1017,7 @@ const VIEWS = {
     const cheer = e < at.whole;
     const art = bigPip(ctx, BIG_PIP.complete, cheer ? 'cheer' : SHOTS.lookAround.face, into(ctx, 'lookAround'));
     const word = banner(t, C.complete, cheer ? { letters: Math.floor((C.complete.length * e) / at.whole) } : {});
-    const label = s.lesson.endsWith('capstone') ? 'Capstone' : `Lesson ${lessonNumber(s)}`;
+    const label = s.lesson.endsWith('capstone') ? 'Итоговый проект' : `Урок ${lessonNumber(s)}`;
     // The confetti falls into its row: from 24 rows across it and the blank
     // under it, turn about; below 24 rows, where that blank can give way,
     // glyph by glyph.
@@ -1033,7 +1034,7 @@ const VIEWS = {
     // Each lands on the 40 ms grid, where a frame is drawn.
     const lands = (c) => at.ticks + (order.length > 1 ? TIMING.grid * Math.round((at.ticksBy - at.ticks) * order.indexOf(c) / (order.length - 1) / TIMING.grid) : 0);
     return {
-      head: lessonHead(ctx, t.pill(`${C.complete} ${t.glyph.check}`, 'okBg'), `${total} of ${total}`),
+      head: lessonHead(ctx, t.pill(`${C.complete} ${t.glyph.check}`, 'okBg'), `${total} из ${total}`),
       body: [
         decor(confettiRows),
         under,
@@ -1097,7 +1098,7 @@ const VIEWS = {
     }
     body.push(SPACER, ...para(t, C.savedBreak, W, 'muted'));
     return {
-      head: lessonHead(ctx, t.pill(`${C.complete} ${t.glyph.check}`, 'okBg'), `${total} of ${total}`),
+      head: lessonHead(ctx, t.pill(`${C.complete} ${t.glyph.check}`, 'okBg'), `${total} из ${total}`),
       body,
       keys: [nextKey(s), key('p', C.k.page), key('m', C.k.map), cardKey(s), key('q', C.k.quit)],
     };
@@ -1417,7 +1418,7 @@ function stepView(ctx) {
         // A live tick stays and takes no turn; each other command takes the next.
         const turn = checked && !live ? ++fresh : 0;
         const ticked = checked && (live || passing >= SHOTS.stepDone.tick * turn);
-        const tick = live && !done ? `  ${t.fg('ok', long ? `${t.glyph.check} .practice/ exists` : t.glyph.check)}` : ticked ? `  ${t.fg('ok', t.glyph.check)}` : '';
+        const tick = live && !done ? `  ${t.fg('ok', long ? `${t.glyph.check} .practice/ есть` : t.glyph.check)}` : ticked ? `  ${t.fg('ok', t.glyph.check)}` : '';
         const lines = chip(t, cmd, beat.where, cw);
         rows.push(lines[0] + tick, ...lines.slice(1));
         if (!nextRun && i < beat.lines.length - 1) rows.push(SPACER);
@@ -1541,7 +1542,7 @@ function options(ctx, beat) {
     const mark = right ? t.fg('ok', t.glyph.check) : wrong ? t.fg('warn', t.glyph.warnMark) : cursor ? t.fg('key', t.bold(t.glyph.pointer)) : chosen ? t.fg('key', t.glyph.pointer) : ' ';
     const num = cursor ? t.inverse(t.fg('key', t.bold(` ${i + 1} `))) : t.fg('muted', ` ${i + 1} `);
     const color = right ? 'ok' : wrong || o.kind === 'other' ? 'muted' : cursor ? 'key' : 'text';
-    const tag = wrong && st.wrongs.at(-1) === i && !st.answer ? `  ${t.fg('warn', `${t.unicode ? '←' : '<-'} not this one`)}` : '';
+    const tag = wrong && st.wrongs.at(-1) === i && !st.answer ? `  ${t.fg('warn', `${t.unicode ? '←' : '<-'} не этот`)}` : '';
     // The option wraps short of the tag beside its first line.
     const text = para(t, o.text, inner - 10 - width(tag), color);
     return text.map((x, k) => (k ? `       ${x}` : ` ${mark} ${num}  ${cursor ? t.bold(x) : x}${tag}`));
@@ -1604,8 +1605,8 @@ function footerRows(ctx, { beat, content, isLastBeat, note = null }) {
   // What the file holds, in `max` columns: on two lines when one is too long.
   // A glob's file is the one it matched.
   const shownPath = st.found ?? beat.evidence;
-  const holds = (max) => (width(`${shownPath} holds ${st.evidence}`) <= max ? [`${t.fg('code', shownPath)}${t.fg('text', ' holds ')}${t.fg('code', st.evidence)}`]
-    : [t.fg('code', cut(shownPath, max, t.unicode ? '…' : '.')), `${t.fg('text', 'holds ')}${t.fg('code', cut(st.evidence, max - 6, t.unicode ? '…' : '.'))}`]);
+  const holds = (max) => (width(`${shownPath} содержит ${st.evidence}`) <= max ? [`${t.fg('code', shownPath)}${t.fg('text', ' содержит ')}${t.fg('code', st.evidence)}`]
+    : [t.fg('code', cut(shownPath, max, t.unicode ? '…' : '.')), `${t.fg('text', 'содержит ')}${t.fg('code', cut(st.evidence, max - 9, t.unicode ? '…' : '.'))}`]);
   const celebrate = (lines) => {
     const count = s.session + (firstPass(s) ? 1 : 0);
     // The check mark draws in strokes, then the sparks.
@@ -1682,7 +1683,7 @@ function footerRows(ctx, { beat, content, isLastBeat, note = null }) {
   } else if (st.status === 'waiting' && (looksAtFile(beat) || needsChange(beat.verify))) {
     // A stale push means everything is pushed already (r27 E16).
     const line = st.stale && beat.verify.kind === 'probe' && beat.verify.name === 'pushed' ? C.stalePush : st.stale ? C.staleWatch : C.watching;
-    const [a, what, b] = line(beat.watching ?? beat.evidence ?? (needsChange(beat.verify) ? 'git status' : 'your files'));
+    const [a, what, b] = line(beat.watching ?? beat.evidence ?? (needsChange(beat.verify) ? 'git status' : 'ваши файлы'));
     rows.push(...para(t, `${t.lead('watch')}${a}\`${what}\`${b}`, inner, 'muted'));
   } else if (beat.verify.kind === 'git-clean' && (st.status === 'waiting' || st.status === 'fail')) {
     const paths = gitListed(s, beat);
