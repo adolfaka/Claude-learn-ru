@@ -91,7 +91,7 @@ export const items = [
       const { memory, line, scoped } = rule(repo);
       if (!memory) return 'Закоммиченного CLAUDE.md нет. Выполните `/init`, отредактируйте то, что он написал, затем выполните `git add CLAUDE.md` и закоммитьте.';
       if (!line) return 'В закоммиченном CLAUDE.md нет строки вроде ``- Каждый новый файл JavaScript в `src/` начинается со строки `// SPDX-License-Identifier: MIT`.``. Добавьте её под `## Conventions` и снова закоммитьте CLAUDE.md.';
-      return scoped ? true : `Правило для \`${line}\` не говорит, к каким файлам оно относится. Ограничьте его словами «Каждый новый файл JavaScript в \`src/\`» и закоммитьте CLAUDE.md: такая первая строка может сломать скрипт оболочки или JSON.`;
+      return scoped ? true : `Правило для \`${line}\` не говорит, к каким файлам относится. Начните с «Каждый новый файл JavaScript в \`src/\`» и закоммитьте CLAUDE.md: иначе строка сломает скрипт или JSON.`;
     },
   },
   {

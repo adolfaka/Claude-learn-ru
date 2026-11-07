@@ -205,7 +205,7 @@ export const movedComponent = {
       for (const { path, rel } of agents.filter((a) => !KIT.has(a.rel))) {
         const name = agentName(repo, path, true);
         const twin = project.agents.find((a) => a.name === name);
-        tried.push(twin ? { hint: `${code(path)} лежит в плагине, но ${code(twin.path)} всё ещё закоммичен, поэтому субагент загружается дважды: как ${code(name)} и как ${code(`${plugin.name}:${name}`)}. Выполните \`git rm ${shell(twin.path)}\` и закоммитьте.` } : { ok: rel });
+        tried.push(twin ? { hint: `${code(path)} лежит в плагине, но ${code(twin.path)} всё ещё закоммичен, поэтому субагент загружается дважды: как ${code(name)} и ${code(`${plugin.name}:${name}`)}. Выполните \`git rm ${shell(twin.path)}\` и закоммитьте.` } : { ok: rel });
       }
       for (const { path } of hooks) tried.push(reviewHooks(repo, plugin, path, project, committed));
     }
@@ -255,7 +255,7 @@ export const personalFiles = {
         else if (rule.problem) problems.push(ignoreHint(rule, path));
       }
     }
-    if (unruled.length > 1) problems.push(`Ни один закоммиченный \`.gitignore\` не игнорирует ${and(unruled.map(code))}. Добавьте строки ${and(unruled.map(code))} в \`.gitignore\` и закоммитьте. Правило в вашем глобальном файле исключений git не считается: его нет в репозитории.`);
+    if (unruled.length > 1) problems.push(`Ни один закоммиченный \`.gitignore\` не игнорирует ${and(unruled.map(code))}. Добавьте строки ${and(unruled.map(code))} в \`.gitignore\` и закоммитьте. Глобальный файл исключений git не считается.`);
     else if (unruled.length) problems.push(ignoreHint({ problem: 'none' }, unruled[0]));
     return problems.length ? problems.join(' ') : true;
   },

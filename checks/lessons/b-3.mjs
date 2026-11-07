@@ -34,7 +34,7 @@ export function testRunError(run, { requireFailure = false } = {}) {
 // it can't check another repository.
 function notTemplate(repo) {
   const missing = ['src/cli.js', 'src/links.js'].filter((path) => !repo.exists(path));
-  return missing.length ? `В этой папке нет ${missing.map((p) => `\`${p}\``).join(' или ')}. Урок 3 запускает проверку ссылок из шаблона для практики и разбирает подложенный в неё патч, поэтому проходите урок в своей копии шаблона и запускайте проверку там.` : null;
+  return missing.length ? `В этой папке нет ${missing.map((p) => `\`${p}\``).join(' или ')}. Урок 3 запускает проверку ссылок из шаблона и разбирает патч в нём, поэтому проходите его в своей копии шаблона.` : null;
 }
 
 // Runs the repository's link checker on a folder holding `files`, and returns
@@ -90,12 +90,12 @@ export const testsPass = {
       return error ? `\`npm test\` завершается ошибкой. ${error}` : run.status === 0 ? true : '`npm test` завершается ошибкой. Запустите его, прочитайте первый сбой и попросите Claude исправить код, а не тест.';
     }
     const saved = repo.read('.practice/b-3-tests.txt');
-    const save = '`<ваша команда тестов>; echo $? > .practice/b-3-tests.txt` (Windows: `<ваша команда тестов>; $LASTEXITCODE > .practice/b-3-tests.txt`)';
-    if (saved === null) return `В этом репозитории нет скрипта \`npm test\`. Запустите тесты и сохраните их код выхода: ${save}.`;
+    const save = '`<тесты>; echo $? > .practice/b-3-tests.txt` (Windows: в конце `$LASTEXITCODE > .practice/b-3-tests.txt`)';
+    if (saved === null) return `Нет скрипта \`npm test\`. Сохраните код выхода: ${save}.`;
     const code = saved.trim();
     if (code === '0') return true;
     // In PowerShell, `$?` is True or False rather than an exit code.
-    if (!/^-?\d+$/.test(code)) return `В \`.practice/b-3-tests.txt\` записано «${code}», а не код выхода. Сохраните заново: ${save}.`;
+    if (!/^-?\d+$/.test(code)) return `В \`.practice/b-3-tests.txt\` «${code}», а не код выхода. Сохраните заново: ${save}.`;
     return `Судя по \`.practice/b-3-tests.txt\`, тесты завершились с кодом ${code}, а не 0.`;
   },
 };
@@ -120,10 +120,10 @@ export const items = [
         'doc.md': '[setup](setup.md "Setup guide")\n[gone](gone.md "Old page")\n[old](old.md \'Old page\')\n',
       });
       if (error) return error;
-      if (broken.has(1)) return `Инструмент сообщает о \`[setup](setup.md "Setup guide")\` как о битой ссылке на \`${broken.get(1)}\`, хотя setup.md существует. Попросите Claude не включать заголовок в адрес ссылки и добавить тест.`;
+      if (broken.has(1)) return `Инструмент считает \`[setup](setup.md "Setup guide")\` битой ссылкой на \`${broken.get(1)}\`, хотя setup.md есть. Попросите Claude убрать заголовок из адреса и добавить тест.`;
       const links = { 2: ['`[gone](gone.md "Old page")`', 'gone.md'], 3: ['`[old](old.md \'Old page\')`', 'old.md'] };
       const skipped = [2, 3].filter((line) => !broken.has(line)).map((line) => links[line][0]);
-      if (skipped.length) return `Инструмент пропускает ${skipped.join(' и ')}. Закончите разбор на примере: ссылки с заголовком в двойных или одинарных кавычках должны проверяться, с тестом на каждый случай.`;
+      if (skipped.length) return `Инструмент пропускает ${skipped.join(' и ')}. Закончите разбор: ссылки с заголовком в кавычках любого вида проверяются, с тестом на каждую.`;
       const wrong = [2, 3].filter((line) => broken.get(line) !== links[line][1]);
       return wrong.length ? `Инструмент читает адрес ${links[wrong[0]][0]} как \`${broken.get(wrong[0])}\`, а не \`${links[wrong[0]][1]}\`. Попросите Claude не включать заголовок в адрес и добавить на это тест.` : true;
     },
@@ -135,13 +135,13 @@ export const items = [
       if (other) return other;
       const { broken, error } = brokenIn(repo, { 'doc.md': '[app](//cdn.example.com/app.js)\n[root](/missing.md)\n[page](missing.md)\n' });
       if (error) return error;
-      if (broken.has(1)) return 'Инструмент по-прежнему считает `//cdn.example.com/app.js` битой ссылкой. Выполните `git apply practice/b-3/protocol-relative.patch`, затем исправьте изъян («Ваша очередь», шаг 2).';
+      if (broken.has(1)) return '`//cdn.example.com/app.js` всё ещё битая. Выполните `git apply practice/b-3/protocol-relative.patch` и исправьте изъян («Ваша очередь», шаг 2).';
       const links = { 2: '`[root](/missing.md)`', 3: '`[page](missing.md)`' };
       const skipped = [2, 3].filter((line) => !broken.has(line));
       if (!skipped.length) return true;
       // Before the Learner commits a fix, the hint leaves finding the flaw to them.
-      if (!patchCommitted(repo)) return 'Инструмент пропускает ссылку, которая, судя по описанию патча, по-прежнему проверяется: изъян всё ещё на месте. Сравните это описание с тем, что пропускает новая строка, и скажите Claude («Ваша очередь», шаги 1 и 3).';
-      return `Ваш коммит по-прежнему пропускает ${skipped.map((line) => links[line]).join(' и ')}. Сравните это с описанием патча, исправьте правило, добавьте тест, который падает на патче, и закоммитьте и то и другое.`;
+      if (!patchCommitted(repo)) return 'Инструмент пропускает ссылку, которую описание патча считает проверяемой: изъян на месте. Сравните описание с новой строкой и скажите Claude («Ваша очередь», шаги 1 и 3).';
+      return `Ваш коммит всё ещё пропускает ${skipped.map((line) => links[line]).join(' и ')}. Сверьтесь с описанием патча, исправьте правило, добавьте тест, падающий на патче, и закоммитьте оба.`;
     },
   },
   {
@@ -160,8 +160,8 @@ export const items = [
         const mutant = npmTest(dir);
         const mutantError = testRunError(mutant, { requireFailure: true });
         if (mutantError || mutant.status !== 0) return mutantError ?? true;
-        if (!patchCommitted(repo)) return 'Ваши тесты по-прежнему проходят, если вернуть `isExternal` из патча, так что ни один из них пока не ловит его изъян. Когда найдёте изъян («Ваша очередь», шаг 1), попросите Claude написать тест, который падает на версии из патча.';
-        return 'Ваши тесты по-прежнему проходят, если вернуть `isExternal` из патча: ни один из них не падает на ссылке, которую патч пропускает по ошибке. Добавьте регрессионный случай для этой ссылки и закоммитьте его.';
+        if (!patchCommitted(repo)) return 'С `isExternal` из патча тесты по-прежнему проходят: изъян они не ловят. Найдя его («Ваша очередь», шаг 1), попросите Claude о тесте, падающем на версии из патча.';
+        return 'С `isExternal` из патча тесты по-прежнему проходят: ни один не падает на ссылке, которую патч пропускает зря. Добавьте тест на неё и закоммитьте.';
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

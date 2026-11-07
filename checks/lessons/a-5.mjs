@@ -74,11 +74,11 @@ function setupProblems(file, step, o) {
   else if (!PINNED.test(step.ref)) problems.push(`\`@${step.ref}\` в строке ${step.line} может сдвинуться на новый релиз, и версия Claude Code на раннере сменится без вашего коммита. Закрепите тег релиза (\`@vX.Y.Z\`) или полный SHA коммита этого релиза.`);
 
   const { prompt } = step.inputs;
-  if (!prompt) problems.push(`У шага в строке ${step.line} нет \`prompt\`, поэтому Claude ждёт \`@claude\` в задаче или pull request (интерактивный режим). Добавьте под \`with:\` параметр \`prompt\`, который говорит, что должен сделать Claude, чтобы он работал сразу после старта рабочего процесса (автоматический режим).`);
+  if (!prompt) problems.push(`У шага в строке ${step.line} нет \`prompt\`, поэтому Claude ждёт \`@claude\` в задаче или pull request (интерактивный режим). Добавьте под \`with:\` параметр \`prompt\` с задачей, чтобы Claude работал сразу (автоматический режим).`);
   else if (!prompt.text?.trim()) problems.push(`\`prompt\` в строке ${prompt.line} пуст. Напишите там, что должен сделать Claude.`);
 
   const given = CREDENTIALS.filter((k) => step.inputs[k]);
-  if (!given.length) problems.push(`Шаг в строке ${step.line} не передаёт учётных данных. Добавьте под \`with:\` строку \`anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}\` или, для токена подписки, \`claude_code_oauth_token: \${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}\`, указав ${o.secret}.`);
+  if (!given.length) problems.push(`Шаг в строке ${step.line} не передаёт учётных данных. Добавьте под \`with:\` \`anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}\` (или \`claude_code_oauth_token\`), указав ${o.secret}.`);
   for (const k of given) {
     const v = step.inputs[k];
     const text = (v.text ?? '').trim();
@@ -182,7 +182,7 @@ function limitProblems(file, step, o) {
   }
 
   const token = step.inputs.github_token;
-  if (!token) problems.push(`Шаг в строке ${step.line} не передаёт \`github_token\`, поэтому ${o.noToken}. Добавьте под \`with:\` строку \`github_token: \${{ github.token }}\`, чтобы Claude использовал токен этого задания и заданные вами \`permissions\`.`);
+  if (!token) problems.push(`Шаг в строке ${step.line} не передаёт \`github_token\`, поэтому ${o.noToken}. Добавьте под \`with:\` \`github_token: \${{ github.token }}\`.`);
   else if (!JOB_TOKEN.test((token.text ?? '').trim())) problems.push(`\`github_token\` в строке ${token.line} — не собственный токен этого задания, поэтому \`permissions\` задания его не ограничивают. Напишите \`github_token: \${{ github.token }}\`.`);
   return problems;
 }
@@ -240,7 +240,7 @@ function report(repo, { file }, problems) {
 
 // Why no committed workflow step starts on one of `triggers`.
 function missingHint(repo, { triggers, file, guide }) {
-  const byHand = triggers.includes('workflow_dispatch') ? ' GitHub запускает рабочий процесс вручную, только когда его файл лежит в ветке по умолчанию.' : '';
+  const byHand = triggers.includes('workflow_dispatch') ? ' Вручную GitHub запускает только файл из ветки по умолчанию.' : '';
   const [loose] = uncommittedWorkflows(repo);
   if (loose) {
     return loose.tracked
@@ -257,8 +257,8 @@ function missingHint(repo, { triggers, file, guide }) {
   }
   // This one is long already: GitHub's rule about manual runs waits for the
   // hint about the second workflow's commit (ticket 198).
-  if (files.length) return `В ${code(files[0].path)} нет \`prompt\`, поэтому он ждёт \`@claude\` (интерактивный режим). Нужен второй рабочий процесс, ${code(file)}, который запускается через ${onPhrase(triggers)} и содержит \`prompt\`. Напишите его, как описано в ${guide}, затем закоммитьте и отправьте.`;
-  return `Нет закоммиченного рабочего процесса, который запускает \`anthropics/claude-code-action\`. Напишите ${code(file)}, как описано в ${guide}, затем закоммитьте и отправьте.${byHand}`;
+  if (files.length) return `В ${code(files[0].path)} нет \`prompt\`, поэтому он ждёт \`@claude\` (интерактивный режим). Нужен второй рабочий процесс, ${code(file)}, запускаемый через ${onPhrase(triggers)}, с \`prompt\`. Напишите его, закоммитьте и отправьте.`;
+  return `Нет закоммиченного рабочего процесса, который запускает \`anthropics/claude-code-action\`. Напишите ${code(file)} по ${guide.replace('разделе','разделу')}, закоммитьте и отправьте.${byHand}`;
 }
 
 // The workflow items. Options: `triggers`, the events the workflow may start
@@ -356,13 +356,13 @@ export function dispatchedRun(record = RUNS, file = WORKFLOW) {
       };
     }
     const sha = typeof run.headSha === 'string' && /^[0-9a-f]{40}$/i.test(run.headSha) ? run.headSha.toLowerCase() : null;
-    if (!sha) return { stage: 4, hint: `${which} не содержит \`headSha\`, поэтому проверка не может понять, на каком коммите он выполнялся. Сохраните список с этим полем: ${save}.` };
+    if (!sha) return { stage: 4, hint: `${which} не содержит \`headSha\`, поэтому проверка не знает его коммит. Сохраните список с ним: ${save}.` };
     if (!isCommit(repo, sha)) return { stage: 4, hint: `${which} выполнялся на коммите ${short(sha)}, которого нет в этом репозитории. Выполните \`git pull\`, чтобы получить его, затем снова запустите проверку.` };
     // Once the history holds the lesson's file, the run must be on a commit
     // that holds it, as the workflow items read only that file then.
     const named = claudeHistory(repo).some(({ files }) => files.some((f) => f.path === file));
     const held = claudeWorkflowsAt(repo, sha).some((f) => (!named || f.path === file) && f.steps.some((s) => s.inputs.prompt?.text?.trim()));
-    if (!held) return { stage: 5, hint: `${which} выполнялся на коммите ${short(sha)}, где ${named ? code(file) : 'ни один рабочий процесс'} не запускает \`anthropics/claude-code-action\` с \`prompt\`. Когда ваш рабочий процесс будет отправлен, запустите его командой ${start}, дождитесь конца, ${again}.` };
+    if (!held) return { stage: 5, hint: `${which} выполнялся на коммите ${short(sha)}, где ${named ? code(file) : 'ни один рабочий процесс'} не запускает \`anthropics/claude-code-action\` с \`prompt\`. Отправьте рабочий процесс, запустите его: ${start}, ${again}.` };
     return { stage: 6 };
   }
 

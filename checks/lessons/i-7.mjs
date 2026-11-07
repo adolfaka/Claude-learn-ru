@@ -42,7 +42,7 @@ export const items = [
       if (!s) return 'Ни один сервер в .mcp.json не запускает chrome-devtools-mcp. Добавьте его в `mcpServers`, как в уроке.';
       const args = (s.args ?? []).map(String);
       const pkg = args.find((a) => a.startsWith('chrome-devtools-mcp'));
-      if (!/^chrome-devtools-mcp@\d+\.\d+\.\d+$/.test(pkg)) return `Версия \`${pkg}\` не закреплена. Укажите точную версию, например \`chrome-devtools-mcp@1.10.1\`, чтобы каждый коллега запускал тот код, который вы проверили.`;
+      if (!/^chrome-devtools-mcp@\d+\.\d+\.\d+$/.test(pkg)) return `Версия \`${pkg}\` не закреплена. Укажите точную версию, например \`chrome-devtools-mcp@1.10.1\`.`;
       if (!off(args, 'usage-statistics')) return 'Статистика использования всё ещё включена. Добавьте `--no-usage-statistics` в args.';
       if (!off(args, 'performance-crux')) return 'Трассировки производительности всё ещё могут отправлять URL в CrUX API Google. Добавьте `--no-performance-crux` в args.';
       if (!String(s.env?.CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS ?? '').trim()) return 'Проверка обновлений всё ещё включена. Задайте `CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS` равным `"1"` в `env` сервера.';

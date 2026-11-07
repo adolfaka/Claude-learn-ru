@@ -161,7 +161,7 @@ function reviewEntry(repo, marketplace, entry, index, committed) {
   if (typeof entry.name !== 'string' || !NAME.test(entry.name)) return { stage: 0, hint: `${where}: нужен \`name\` из букв, цифр, \`.\`, \`_\` и \`-\`, начинающийся с буквы или цифры.` };
   const { name, source } = entry;
   const example = `\`"source": "./plugins/${name}"\``;
-  if (isObject(source)) return { stage: 1, hint: `${where} берёт плагин из ${typeof source.source === 'string' ? `источника ${code(source.source)}` : 'другого источника'}, и каждому коллеге пришлось бы его устанавливать. Держите плагин внутри папки marketplace и укажите его относительным путём, например ${example}.` };
+  if (isObject(source)) return { stage: 1, hint: `${where} берёт плагин из ${typeof source.source === 'string' ? `источника ${code(source.source)}` : 'другого источника'}, и каждому коллеге пришлось бы его ставить. Держите плагин в папке marketplace с относительным путём, например ${example}.` };
   if (typeof source !== 'string' || !source.trim()) return { stage: 1, hint: `${where}: нет \`source\`. Укажите плагин путём от папки marketplace, например ${example}.` };
   if (source.includes('\\')) return { stage: 1, hint: `${where} пишет \`source\` с обратной косой чертой, ${code(source)}, а Claude Code в macOS и Linux такой путь не принимает. Используйте прямые косые черты, как в ${example}.` };
   if (source !== '.' && !source.startsWith('./')) return { stage: 1, hint: `${where}: \`source\` равен ${code(source)}. Относительный путь должен начинаться с \`./\`: напишите \`"source": "./${source.replace(/^\/+/, '')}"\`.` };
@@ -174,7 +174,7 @@ function reviewEntry(repo, marketplace, entry, index, committed) {
     const lists = `${where} указывает на ${code(`${dir || '.'}/`)}`;
     if (existsSync(join(repo.dir, manifest))) return { stage: 2, ...found, hint: commitHint(repo, manifest, dir || manifest) };
     if (dir && [...committed].some((p) => p.startsWith(`${dir}/`))) return { stage: 2, ...found, hint: `${lists}, но там нет \`.claude-plugin/plugin.json\`. Он нужен папке плагина, с \`name\` плагина: добавьте его и закоммитьте.` };
-    return { stage: 2, ...found, hint: `${lists}, но там не закоммичен ни один плагин. Положите туда плагин вместе с его \`.claude-plugin/plugin.json\` и закоммитьте либо исправьте \`source\`.` };
+    return { stage: 2, ...found, hint: `${lists}, но там не закоммичен ни один плагин. Положите туда плагин с \`.claude-plugin/plugin.json\` и закоммитьте либо исправьте \`source\`.` };
   }
   const plugin = manifestJson(headText(repo, manifest) ?? '');
   if (plugin.error) return { stage: 3, ...found, hint: `Закоммиченный ${code(manifest)} — некорректный JSON: ${plugin.error}` };
@@ -240,7 +240,7 @@ export function marketplaceHint(repo, start = 'Скачайте пример mar
   if (renamed) {
     const from = posix.dirname(renamed);
     const to = inside(folder(posix.dirname(from)), '.claude-plugin');
-    return `${code(`${from}/`)} не станет marketplace, пока папка не называется \`.claude-plugin/\`: Claude Code читает marketplace из \`.claude-plugin/marketplace.json\`. Выполните \`git mv ${shell(from)} ${shell(to)}\` (или \`mv\`, если она ещё не закоммичена) и закоммитьте.`;
+    return `${code(`${from}/`)} не станет marketplace, пока папка не называется \`.claude-plugin/\`. Выполните \`git mv ${shell(from)} ${shell(to)}\` (или \`mv\`, если не закоммичена) и закоммитьте.`;
   }
   return `Закоммиченного \`.claude-plugin/marketplace.json\` нет. ${start}, и закоммитьте его.`;
 }
@@ -283,7 +283,7 @@ function reviewRegistration(settings, marketplace) {
   const known = settings[key];
   if (!isObject(known)) return { stage: 0, hint: `Закоммиченный \`${SETTINGS}\` не регистрирует ни одного marketplace. Добавьте ${BLOCK(name, root)} и закоммитьте.` };
   if (!own(known, name)) {
-    if (canonical && own(settings.additionalMarketplaces, name)) return { stage: 1, hint: `В закоммиченном \`${SETTINGS}\` заданы и \`extraKnownMarketplaces\`, и другое его написание, \`additionalMarketplaces\`; тогда Claude Code читает только \`extraKnownMarketplaces\`, поэтому ${code(name)} в \`additionalMarketplaces\` игнорируется. Перенесите его в \`extraKnownMarketplaces\` и закоммитьте.` };
+    if (canonical && own(settings.additionalMarketplaces, name)) return { stage: 1, hint: `В закоммиченном \`${SETTINGS}\` заданы и \`extraKnownMarketplaces\`, и его другое написание, \`additionalMarketplaces\`; Claude Code читает только первое, поэтому ${code(name)} в \`additionalMarketplaces\` игнорируется. Перенесите его в \`extraKnownMarketplaces\` и закоммитьте.` };
     const other = Object.keys(known).find((k) => sourceFolder(known[k]?.source, key, { ...marketplace, name: k }).dir === root);
     if (other !== undefined) return { stage: 1, hint: `\`${key}\` регистрирует marketplace под ключом ${code(other)}, но ключом должен быть \`name\` marketplace из ${code(marketplace.path)} — ${code(name)}. Переименуйте ключ и закоммитьте.` };
     return { stage: 1, hint: `\`${key}\` в закоммиченном \`${SETTINGS}\` не регистрирует marketplace с именем ${code(name)}. Добавьте ${BLOCK(name, root)} и закоммитьте.` };

@@ -233,7 +233,7 @@ test('b-2 fails when files had changed before the plan was approved, and says ho
   try {
     const { code, out } = check(['b-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /до того, как вы одобрили план/);
+    assert.match(out, /до одобрения плана/);
     assert.match(out, /git stash push --include-untracked/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -320,7 +320,7 @@ test('b-2 says the after snapshot lists no changed file yet, and what to do firs
     const { code, out } = check(['b-2', '--dir', dir]);
     assert.equal(code, 1, out);
     assert.match(out, /`\.practice\/b-2-after\.txt` пока не содержит изменённых файлов\./);
-    assert.match(out, /Одобрите проверенный план; если Claude Code спрашивает, читайте каждый запрос/);
+    assert.match(out, /Одобрите план; если Claude Code спрашивает, читайте каждый запрос/);
     // Step 7's whole rule: read each request, and No where a command does
     // more than the plan needs, never Yes to every request.
     assert.match(out, /читайте каждый запрос: Yes, если он в рамках плана, иначе No\./);
@@ -690,7 +690,7 @@ test('the Beginner capstone fails when files had changed before approval, and sa
   try {
     const { code, out } = check(['b-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /до того, как вы одобрили план: src\/cli\.js/);
+    assert.match(out, /до одобрения плана: src\/cli\.js/);
     assert.match(out, /Закоммитьте их или отложите в stash/);
     assert.match(out, /plan mode/);
   } finally {

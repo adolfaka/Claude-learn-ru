@@ -55,7 +55,7 @@ export const items = [
     check(repo) {
       const ids = projectPlugins(repo);
       if (ids === null) return 'Нет закоммиченного .claude/settings.json, который читается как JSON. Добавьте запись `enabledPlugins` из урока и закоммитьте.';
-      return ids.length ? true : `Его \`enabledPlugins\` не включает ни одного плагина из marketplace Anthropic. Добавьте \`"claude-code-setup@claude-plugins-official": true\`: после @ стоит имя marketplace, одно из ${ANTHROPIC.join(', ')}.`;
+      return ids.length ? true : `Его \`enabledPlugins\` не включает ни одного плагина из marketplace Anthropic. Добавьте \`"claude-code-setup@claude-plugins-official": true\`.`;
     },
   },
   {
@@ -79,9 +79,9 @@ export const items = [
       const list = savedList(repo);
       if (typeof list === 'string') return list;
       const trials = list.filter((p) => /-lsp@/.test(p?.id ?? '') && p.scope === 'local' && here(p.projectPath, repo.dir) !== false);
-      if (!trials.length) return 'Сохранённый список не показывает ни одного плагина code intelligence на локальном уровне в этом репозитории. Установите плагин своего языка, например `typescript-lsp`, только для этого репозитория, затем снова сохраните список.';
+      if (!trials.length) return 'Сохранённый список не показывает ни одного плагина code intelligence на локальном уровне. Установите, например, `typescript-lsp` только для этого репозитория.';
       const shared = trials.map((p) => p.id).filter((id) => (committedPlugins(repo) ?? []).includes(id));
-      return shared.length < trials.length ? true : `${shared.join(', ')} включён в закоммиченном \`.claude/settings.json\`, поэтому вашу пробу получит каждый коллега. Уберите его из \`enabledPlugins\` и закоммитьте.`;
+      return shared.length < trials.length ? true : `${shared.join(', ')} включён в общих настройках, поэтому вашу пробу получит каждый коллега. Уберите его из \`enabledPlugins\`.`;
     },
   },
 ];

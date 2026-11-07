@@ -31,7 +31,7 @@ const PROJECT = '.claude/settings.json';
 const OUT = 'result.json';
 const PATH_TOOLS = new Set(['Read', 'Edit', 'Write', 'NotebookEdit', 'MultiEdit', 'Glob', 'Grep']);
 const SANDBOX = '`"sandbox": {"enabled": true, "failIfUnavailable": true, "allowUnsandboxedCommands": false, "autoAllowBashIfSandboxed": false}`';
-const NARROW = 'Разрешайте одну папку или одну команду на правило, как в `Edit(./src/**)` или `Bash(npm test *)`.';
+const NARROW = 'Разрешайте одну папку или команду, как в `Edit(./src/**)` или `Bash(npm test *)`.';
 const AMOUNT = /^(\d+(\.\d*)?|\.\d+)$/;
 
 const code = (text) => `\`${text}\``;
@@ -148,7 +148,7 @@ function noCall(repo, a, script) {
   if (a.calls.length) return null;
   const skipped = notRun(a.run, script);
   if (skipped) return skipped;
-  return `При запуске как ${usage(script)} ${code(script)} ни разу не запустил \`claude -p\`, и проверка не нашла вызова \`claude -p\` в его тексте. ${ended(a.run)}${pending(repo, script)}`;
+  return `Скрипт ни разу не запустил \`claude -p\`, и проверка не нашла вызова \`claude -p\` в его тексте. ${ended(a.run)}${pending(repo, script)}`;
 }
 
 // The settings a call passes with --settings: `{ value, path, label }`, or
@@ -244,7 +244,7 @@ function modeHint(repo, script) {
   const mode = committedMode(repo, script);
   if (mode === null) return repo.exists(script) ? commitHint(repo, script) : `Файла ${code(script)} нет. Напишите его, как показано в уроке, затем закоммитьте.`;
   if (mode === '100755') return null;
-  if (mode === '100644') return `${code(script)} не исполняемый. Выполните \`chmod +x ${script}\`, затем \`git add ${script}\` и закоммитьте. В Windows выполните \`git update-index --chmod=+x ${script}\` и закоммитьте.`;
+  if (mode === '100644') return `${code(script)} не исполняемый. Выполните \`chmod +x ${script}\` и \`git add ${script}\`, затем закоммитьте. В Windows вместо chmod: \`git update-index --chmod=+x ${script}\`.`;
   return `${code(script)} закоммичен как ${mode === '120000' ? 'символическая ссылка' : 'что-то, кроме обычного файла'}. Закоммитьте сам файл скрипта и сделайте его исполняемым.`;
 }
 
@@ -259,9 +259,9 @@ export function boundedScript(script = SCRIPT) {
       if (skipped) return skipped;
       if (!a.print.length) {
         const why = a.stray.length
-          ? 'запустил `claude` без `-p` (или `--print`), а так начинается интерактивная сессия, которая ждёт вас. Добавьте `-p` с задачей сразу после него.'
+          ? 'запустил `claude` без `-p`, а так начинается интерактивная сессия, которая ждёт вас. Добавьте `-p` с задачей.'
           : `ни разу не запустил \`claude -p\`. ${ended(a.run)}`;
-        return `При запуске как ${usage(script)} ${code(script)} ${why}${pending(repo, script)}`;
+        return `Скрипт ${why}${pending(repo, script)}`;
       }
       const problems = [];
       if (a.print.length > 1) problems.push(`С одной задачей он запустил \`claude -p\` ${a.print.length} ${pl(a.print.length, 'раз', 'раза', 'раз')}. Запускайте его один раз.`);
@@ -423,7 +423,7 @@ function ruleProblems(repo, call) {
   for (const { rule, label, why } of wide.slice(0, 3)) problems.push(`${code(rule)} в ${label} ${why}.`);
   if (wide.length > 3) problems.push(`И ещё ${wide.length - 3} ${pl(wide.length - 3, 'такое правило', 'таких правила', 'таких правил')}.`);
   if (wide.length) problems.push(NARROW);
-  if (!own) problems.push(`Ничто из переданного запуску не разрешает ни одного вызова, поэтому в режиме \`dontAsk\` он не может ни править файлы, ни запускать ваши тесты. В \`permissions.allow\` файла границ разрешите папки, которые правит задача, и её единственную команду, как в \`"Edit(./src/**)"\` и \`"Bash(npm test *)"\`.`);
+  if (!own) problems.push(`Ничто из переданного запуску не разрешает ни одного вызова, поэтому в режиме \`dontAsk\` он не может ни править файлы, ни запускать тесты. В \`permissions.allow\` разрешите нужные папки и одну команду, как в \`"Edit(./src/**)"\` и \`"Bash(npm test *)"\`.`);
 
   for (const command of ['git commit', 'git push']) {
     if (deny.some((d) => stops(d.rule, command))) continue;
@@ -451,7 +451,7 @@ export function narrowRules(script = SCRIPT) {
 
 function sandboxProblems(repo, call) {
   const settings = settingsOf(repo, call);
-  if (settings.none) return [`Запуск не получает файла настроек, поэтому песочницу ничто не включает: передайте файл границ через \`--settings\` и добавьте в него ${SANDBOX}.`];
+  if (settings.none) return [`Запуск не получает файла настроек, поэтому песочницу ничто не включает. Передайте \`--settings\` с ${SANDBOX}.`];
   if (settings.hint) return [settings.hint];
   const box = settings.value.sandbox;
   const notes = settings.path ? pending(repo, settings.path) : '';
@@ -460,7 +460,7 @@ function sandboxProblems(repo, call) {
   if (box.enabled !== true) problems.push('Задайте `"enabled": true` в `sandbox`: песочница выключена, пока её не включит файл настроек.');
   if (box.failIfUnavailable !== true) problems.push('Задайте `"failIfUnavailable": true`: без этого запуск, у которого песочница не стартует, выполняет команды вне песочницы.');
   if (box.allowUnsandboxedCommands !== false) problems.push('Задайте `"allowUnsandboxedCommands": false`: без этого Claude может повторить заблокированную песочницей команду вне песочницы.');
-  if (box.autoAllowBashIfSandboxed !== false) problems.push('Задайте `"autoAllowBashIfSandboxed": false`: без этого команды в песочнице выполняются без участия ваших правил allow и режима разрешений, и остановить такую команду могут только правила deny.');
+  if (box.autoAllowBashIfSandboxed !== false) problems.push('Задайте `"autoAllowBashIfSandboxed": false`: иначе команды в песочнице идут в обход ваших правил allow, и остановить их могут только правила deny.');
   if (!problems.length) return [];
   return [`В ${settings.label}: ${problems.join(' ')}${notes}`];
 }
@@ -506,12 +506,12 @@ function resultHint(saved, path, again) {
   if (saved.text) return `${code(path)} — не JSON. Сохраните туда только то, что \`claude -p --output-format json\` выводит в стандартный вывод. ${again}`;
   if (saved.noResult) return `${code(path)} не содержит результата: запуск не завершился. ${again}`;
   if (saved.value?.type !== 'result') return `${code(path)} — не результат запуска \`claude -p\` с \`--output-format json\`. ${again}`;
-  if (saved.value.session_id === STUB_SESSION) return `${code(path)} содержит подставной ответ проверки, а не настоящий запуск: ваш скрипт сохранил его туда, пока проверка его запускала. Сохраняйте JSON только туда, куда указывает второй аргумент скрипта. ${again}`;
+  if (saved.value.session_id === STUB_SESSION) return `${code(path)} содержит подставной ответ проверки, а не настоящий запуск: скрипт сохранил его туда, пока проверка его запускала. Сохраняйте JSON только во второй аргумент скрипта. ${again}`;
   return null;
 }
 
 export function sliceRun(record = SLICE, script = SCRIPT) {
-  const again = 'Затем снова запустите часть задачи.';
+  const again = 'Затем повторите запуск.';
   return {
     text: `${code(record)} содержит запуск на части задачи, стоимость которого ниже вашего лимита расходов`,
     local: true,
@@ -521,15 +521,15 @@ export function sliceRun(record = SLICE, script = SCRIPT) {
       const wrong = resultHint(saved, record, again);
       if (wrong) return wrong;
       const run = saved.value;
-      if (run.subtype === 'error_max_budget_usd') return `Часть задачи остановилась на вашем лимите расходов (\`error_max_budget_usd\`), значит, лимит ниже стоимости одной части. Поднимите \`--max-budget-usd\` в ${code(script)} и закоммитьте. ${again}`;
-      if (run.subtype === 'error_max_turns') return `Часть задачи остановилась на вашем лимите ходов (\`error_max_turns\`), не закончив работу. Поднимите \`--max-turns\` в ${code(script)} или дайте часть поменьше. ${again}`;
+      if (run.subtype === 'error_max_budget_usd') return `Часть задачи остановилась на вашем лимите расходов (\`error_max_budget_usd\`): он ниже её стоимости. Поднимите \`--max-budget-usd\` в ${code(script)} и закоммитьте. ${again}`;
+      if (run.subtype === 'error_max_turns') return `Часть задачи остановилась на вашем лимите ходов (\`error_max_turns\`). Поднимите \`--max-turns\` в ${code(script)} или дайте часть поменьше. ${again}`;
       if (run.subtype !== 'success') return `Часть задачи завершилась с ${code(String(run.subtype))}, а не с \`success\`, поэтому не показывает, сколько стоит целая часть. ${again}`;
       if (run.is_error === true) return `Запуск на части задачи упал${typeof run.result === 'string' && run.result.trim() ? `: «${quoted(run.result)}»` : ''}. Исправьте то, о чём он сообщает. ${again}`;
-      if (typeof run.total_cost_usd !== 'number' || !Number.isFinite(run.total_cost_usd) || run.total_cost_usd < 0) return `У запуска в ${code(record)} нет оценки стоимости в \`total_cost_usd\`, а часть задачи нужна именно ради неё. Сохраните JSON, который выводит \`claude -p\`, без изменений. ${again}`;
+      if (typeof run.total_cost_usd !== 'number' || !Number.isFinite(run.total_cost_usd) || run.total_cost_usd < 0) return `У запуска в ${code(record)} нет оценки стоимости в \`total_cost_usd\`, а часть нужна именно ради неё. Сохраните JSON от \`claude -p\` без изменений. ${again}`;
       if (!Number.isInteger(run.num_turns)) return `У запуска в ${code(record)} нет числа ходов в \`num_turns\`, значит, это не тот JSON, который сохраняет \`claude -p\`. ${again}`;
       const budget = budgetOf(analysis(repo, script));
       if (budget === null) return `Проверка не может прочитать лимит расходов из ${code(script)} (см. второй пункт), поэтому не может сравнить с ним стоимость части задачи.`;
-      if (run.total_cost_usd >= budget) return `Часть задачи обошлась примерно в $${run.total_cost_usd} (\`total_cost_usd\`), а ваш лимит расходов, \`--max-budget-usd ${budget}\`, не выше этой суммы. Задайте лимит выше стоимости части, с поправкой на всю задачу, и закоммитьте ${code(script)}.`;
+      if (run.total_cost_usd >= budget) return `Часть задачи обошлась примерно в $${run.total_cost_usd} (\`total_cost_usd\`), а ваш лимит расходов, \`--max-budget-usd ${budget}\`, не выше этой суммы. Задайте лимит выше с поправкой на всю задачу и закоммитьте ${code(script)}.`;
       return true;
     },
   };

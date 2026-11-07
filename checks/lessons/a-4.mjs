@@ -227,7 +227,7 @@ export function committedScript(script, guide = 'разделе «Ваша оч�
       const mode = committedMode(repo, script);
       if (mode === null) return repo.exists(script) ? `${code(script)} не закоммичен. Выполните \`git add ${script}\` и закоммитьте.` : `Файла ${code(script)} нет. Напишите его так, как описано в ${guide}, затем закоммитьте.`;
       if (mode === '100755') return true;
-      if (mode === '100644') return `${code(script)} не исполняемый. Выполните \`chmod +x ${script}\`, затем \`git add ${script}\` и закоммитьте. В Windows выполните \`git update-index --chmod=+x ${script}\` и закоммитьте.`;
+      if (mode === '100644') return `${code(script)} не исполняемый. Выполните \`chmod +x ${script}\`, затем \`git add ${script}\` и закоммитьте. В Windows: \`git update-index --chmod=+x ${script}\`.`;
       return `${code(script)} закоммичен как ${mode === '120000' ? 'символическая ссылка' : 'что-то, кроме файла'}. Закоммитьте сам файл скрипта и сделайте его исполняемым.`;
     },
   };
@@ -344,7 +344,7 @@ export function scriptBehavior(script, fallback = RESULT) {
 // the bound.
 export function savedRun(result, script) {
   const run = `подготовьте изменение и запустите \`${script}${result === RESULT ? '' : ` ${result}`}\``;
-  const again = `Затем снова ${run}.`;
+  const again = 'Затем запустите скрипт снова.';
   return {
     text: `${code(result)} содержит запуск, который завершился успешно в пределах вашего ограничения`,
     local: true,
@@ -358,8 +358,8 @@ export function savedRun(result, script) {
         return `${code(result)} — не JSON. Сохраните туда вывод \`claude -p --output-format json\` без изменений. ${again}`;
       }
       if (value?.type !== 'result') return `${code(result)} — не результат запуска \`claude -p\` с \`--output-format json\`. ${again}`;
-      if (value.session_id === STUB_SESSION) return `${code(result)} содержит ответ подставной замены из проверки, а не настоящий запуск: ваш скрипт сохранил его туда, пока проверка его запускала. Сохраняйте JSON только туда, куда указывает первый аргумент скрипта. ${again}`;
-      if (value.subtype !== 'success') return `Запуск в ${code(result)} остановился раньше времени (${code(String(value.subtype))}) и не содержит ревью.${value.subtype === 'error_max_turns' ? ` Поднимите предел, но не выше ${CAP_MAX}, сузьте промпт или проверьте флаги.` : ''} ${again}`;
+      if (value.session_id === STUB_SESSION) return `${code(result)} содержит ответ подставной замены из проверки, а не настоящий запуск: скрипт записал его сам. Сохраняйте JSON только в первый аргумент скрипта. ${again}`;
+      if (value.subtype !== 'success') return `Запуск в ${code(result)} остановился раньше времени (${code(String(value.subtype))}) и не содержит ревью.${value.subtype === 'error_max_turns' ? ` Поднимите предел (до ${CAP_MAX}), сузьте промпт или флаги.` : ''} ${again}`;
       if (value.is_error !== false) return `Запуск в ${code(result)} завершился сбоем${typeof value.result === 'string' && value.result.trim() ? `: «${quoted(value.result)}»` : ''}. Исправьте то, о чём он сообщает. ${again}`;
       if (typeof value.result !== 'string' || !value.result.trim()) return `Запуск в ${code(result)} не содержит ревью в \`result\`. ${again}`;
       if (typeof value.session_id !== 'string' || !value.session_id) return `В запуске в ${code(result)} нет \`session_id\`, значит, это не тот JSON, который сохраняет \`claude -p\`. ${again}`;

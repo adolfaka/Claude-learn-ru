@@ -180,8 +180,8 @@ export function removedWorktrees(snapshot) {
       return left.map((r) => {
         const at = named(r.path);
         const path = shell(at);
-        if (r.locked && sessionRunning(r.locked)) return `\`${at}\` всё ещё существует, и сессия Claude Code в нём ещё работает: когда его ветка будет слита, выполните \`/exit\` в этой сессии и выберите удаление worktree или оставьте его, а затем выполните \`git worktree remove ${path}\` из основного checkout.`;
-        if (r.locked) return `\`${at}\` всё ещё существует и заблокирован: выйдите из всех сессий Claude Code, открытых в нём. Когда его ветка будет слита, выполните \`git worktree remove ${path}\` из основного checkout, а если git пишет, что он всё ещё заблокирован, — сначала \`git worktree unlock\`.`;
+        if (r.locked && sessionRunning(r.locked)) return `\`${at}\` всё ещё существует, и сессия Claude Code в нём ещё работает: выполните \`/exit\` в ней, затем \`git worktree remove ${path}\`.`;
+        if (r.locked) return `\`${at}\` всё ещё существует и заблокирован: выйдите из сессий Claude Code в нём. Когда ветка будет слита, выполните \`git worktree remove ${path}\`; если git пишет, что он заблокирован, — сначала \`git worktree unlock\`.`;
         if (r.prunable) return `git всё ещё перечисляет \`${r.path}\`, хотя его папки уже нет: выполните \`git worktree prune\`.`;
         return `\`${at}\` всё ещё существует: когда его ветка будет слита, выполните \`git worktree remove ${path}\` из основного checkout.`;
       }).join(' ');

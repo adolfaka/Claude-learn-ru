@@ -125,7 +125,7 @@ test('a-1 is not fooled by a global excludes file that ignores .claude/', () => 
     const { code, out } = a1(dir);
     assert.equal(code, 1, out);
     assert.match(out, /Ни один закоммиченный `\.gitignore` не игнорирует `\.claude\/worktrees\/`/);
-    assert.match(out, /глобальном файле исключений git не считается/);
+    assert.match(out, /Глобальный файл исключений git не считается/);
   });
 });
 
@@ -281,7 +281,7 @@ test('a-1 says to exit any session in a locked worktree it can\'t tell is a runn
   withRepo(parallelRepo({ lock: ['test-pass'] }), (dir) => {
     const { code, out } = a1(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /`\.claude\/worktrees\/test-pass` всё ещё существует и заблокирован: выйдите из всех сессий Claude Code, открытых в нём\. Когда его ветка будет слита, выполните `git worktree remove \.claude\/worktrees\/test-pass` из основного checkout, а если git пишет, что он всё ещё заблокирован, — сначала `git worktree unlock`\./);
+    assert.match(out, /`\.claude\/worktrees\/test-pass` всё ещё существует и заблокирован: выйдите из сессий Claude Code в нём\. Когда ветка будет слита, выполните `git worktree remove \.claude\/worktrees\/test-pass`; если git пишет, что он заблокирован, — сначала `git worktree unlock`\./);
     // It can't see every session's lock, so it never says none is running.
     assert.doesNotMatch(out, /нет ни одной сессии Claude Code|сессия Claude Code не работает/);
   });
@@ -290,7 +290,7 @@ test('a-1 says to exit any session in a locked worktree it can\'t tell is a runn
   withRepo(parallelRepo({ lock: ['test-pass'], reason: `claude session test-pass (pid ${gone} start Sun Oct 25 10:43:31 2026)` }), (dir) => {
     const { code, out } = a1(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /всё ещё существует и заблокирован: выйдите из всех сессий Claude Code, открытых в нём\. Когда его ветка будет слита, выполните `git worktree remove [^`]+` из основного checkout, а если git пишет, что он всё ещё заблокирован, — сначала `git worktree unlock`\./);
+    assert.match(out, /всё ещё существует и заблокирован: выйдите из сессий Claude Code в нём\. Когда ветка будет слита, выполните `git worktree remove [^`]+`; если git пишет, что он заблокирован, — сначала `git worktree unlock`\./);
     assert.doesNotMatch(out, /нет ни одной сессии Claude Code|сессия Claude Code не работает/);
   });
   withRepo(parallelRepo({ prune: ['test-pass'] }), (dir) => {
@@ -305,7 +305,7 @@ test('a-1 says to exit a Claude Code session still running in a worktree once it
   withRepo(parallelRepo({ lock: ['test-pass'], reason: `claude session test-pass (pid ${process.pid} start Sun Oct 25 10:43:31 2026)` }), (dir) => {
     const { code, out } = a1(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /`\.claude\/worktrees\/test-pass` всё ещё существует, и сессия Claude Code в нём ещё работает: когда его ветка будет слита, выполните `\/exit` в этой сессии и выберите удаление worktree или оставьте его, а затем выполните `git worktree remove \.claude\/worktrees\/test-pass` из основного checkout\./);
+    assert.match(out, /`\.claude\/worktrees\/test-pass` всё ещё существует, и сессия Claude Code в нём ещё работает: выполните `\/exit` в ней, затем `git worktree remove \.claude\/worktrees\/test-pass`\./);
     assert.doesNotMatch(out, /unlock/);
   });
 });
@@ -587,7 +587,7 @@ test('a-2 says how to start the logging session when there is no log, and to sav
   withRepo(patternRepo({ log: null, hook: null }), (dir) => {
     const { code, out } = a2(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /Сохраните файл hook из урока 6 среднего уровня как `\.practice\/i-6-hook\.json`, затем выполните задачу 1 в сессии, запущенной командой `claude --settings \.practice\/i-6-hook\.json`\./);
+    assert.match(out, /Сохраните файл hook из урока 6 среднего уровня как `\.practice\/i-6-hook\.json`\./);
   });
 });
 
@@ -596,7 +596,7 @@ test('a-2 points at jq for an empty log, ignoring blank lines', () => {
     withRepo(patternRepo({ log }), (dir) => {
       const { code, out } = a2(dir);
       assert.equal(code, 1, out);
-      assert.match(out, /пуст\. Команда hook создаёт файл до запуска `jq`, поэтому проверьте, что работает `jq --version`/);
+      assert.match(out, /пуст\. Команда hook создаёт файл до запуска `jq`, поэтому проверьте `jq --version`/);
     });
   }
 });
@@ -606,7 +606,7 @@ test('a-2 fails for a log with one subagent for job 1, or only lesson 6\'s, and 
     withRepo(patternRepo({ log }), (dir) => {
       const { code, out } = a2(dir);
       assert.equal(code, 1, out);
-      assert.ok(out.includes(`показывает ${shows}, а задаче 1 нужно как минимум два субагента. В сессии, запущенной командой \`claude --settings .practice/i-6-hook.json\`, попросите по одному субагенту на файл, параллельно.`), out);
+      assert.ok(out.includes(`показывает ${shows}, а задаче 1 нужно как минимум два субагента. Попросите по субагенту на файл, параллельно.`), out);
     });
   }
 });
@@ -777,7 +777,7 @@ test('a-3 fails for a meta with anything but literal values, naming it and the l
       const { code, out } = a3(dir);
       assert.equal(code, 1, `${meta}: ${out}`);
       assert.ok(out.includes(what), `${meta}: missing "${what}" in ${out}`);
-      assert.match(out, /Claude Code убирает `\/<name>` из автодополнения `\/`/);
+      assert.match(out, /Claude Code убирает `\/<name>` из автодополнения\./);
     });
   }
 });
@@ -822,7 +822,7 @@ test('a-3 fails when the script never reads the args global, saying why', () => 
       const { code, out } = a3(dir);
       assert.equal(code, 1, out);
       assert.match(out, why);
-      assert.match(out, /Выполните `\/workflow-authoring`, попросите Claude изменить скрипт так, чтобы он брал папку из `args`, выполните `\/reload-skills` и закоммитьте\./);
+      assert.match(out, /Выполните `\/workflow-authoring`, попросите Claude брать папку из `args`, затем `\/reload-skills` и закоммитьте\./);
     });
   }
 });
@@ -841,7 +841,7 @@ test('a-3 fails for a script with one agent() call, where no second agent checks
   withRepo(workflowRepo({ script: once }), (dir) => {
     const { code, out } = a3(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /`\.claude\/workflows\/audit-dropped-errors\.js` вызывает `agent\(\)` только один раз, поэтому никакой второй агент не проверяет то, что находит первый\./);
+    assert.match(out, /`\.claude\/workflows\/audit-dropped-errors\.js` вызывает `agent\(\)` только один раз, поэтому второй агент ничего не проверяет\./);
   });
 });
 
@@ -924,7 +924,7 @@ test('a-3 fails while the old form still matches in every folder at HEAD, and sa
     const { code, out } = a3(dir);
     assert.equal(code, 1, out);
     assert.match(out, /`import\\\.meta\\\.url` всё ещё находит совпадения в папке `src\/` и папке `test\/` — в каждой папке, где они когда-либо были/);
-    assert.match(out, /Снова задайте цель для папки, которую переводите/);
+    assert.match(out, /Снова задайте цель для переводимой папки/);
   });
   withRepo(workflowRepo({ migrate: [], after: (dir) => write(dir, inFolders(NEW, ['test'])) }), (dir) => {
     const { code, out } = a3(dir);
@@ -1074,7 +1074,7 @@ test('a-4 says to write the script, commit it or make it executable', () => {
   withRepo(reviewRepo({ mode: 0o644 }), (dir) => {
     const { code, out } = a4(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /не исполняемый\. Выполните `chmod \+x scripts\/review-staged\.sh`, затем `git add scripts\/review-staged\.sh` и закоммитьте\. В Windows выполните `git update-index --chmod=\+x scripts\/review-staged\.sh`/);
+    assert.match(out, /не исполняемый\. Выполните `chmod \+x scripts\/review-staged\.sh`, затем `git add scripts\/review-staged\.sh` и закоммитьте\. В Windows: `git update-index --chmod=\+x scripts\/review-staged\.sh`/);
     assert.match(out, /Пройдено 3 из 4/);
   });
 });
@@ -1349,7 +1349,7 @@ test('a-4 reads the saved run, and says what is wrong with it', () => {
     ['Looks good to me.\n', /`\.practice\/a-4-result\.json` — не JSON\./],
     [{ ...REAL_RUN, type: 'assistant' }, /— не результат запуска `claude -p` с `--output-format json`/],
     [{ ...REAL_RUN, session_id: STUB_SESSION }, /содержит ответ подставной замены из проверки, а не настоящий запуск/],
-    [{ ...REAL_RUN, subtype: 'error_max_turns', is_error: true, result: undefined }, /остановился раньше времени \(`error_max_turns`\) и не содержит ревью\. Поднимите предел, но не выше 10, сузьте промпт или проверьте флаги\. Затем снова подготовьте изменение и запустите `scripts\/review-staged\.sh`\./],
+    [{ ...REAL_RUN, subtype: 'error_max_turns', is_error: true, result: undefined }, /остановился раньше времени \(`error_max_turns`\) и не содержит ревью\. Поднимите предел \(до 10\), сузьте промпт или флаги\. Затем запустите скрипт снова\./],
     [{ ...REAL_RUN, is_error: true, result: 'Not logged in · Please run /login' }, /Запуск в `\.practice\/a-4-result\.json` завершился сбоем: «Not logged in · Please run \/login»\. Исправьте то, о чём он сообщает\./],
     [{ ...REAL_RUN, result: '  ' }, /не содержит ревью в `result`/],
     [{ ...REAL_RUN, num_turns: 7 }, /занял 7 ходов — больше, чем позволяет `--max-turns 5`, значит, он шёл с более высоким пределом\./],
@@ -1655,7 +1655,7 @@ test('a-5 names what the first item finds wrong, in the file and on its line', (
     [reportWith(['${{ secrets.ANTHROPIC_API_KEY }}', KEY_TEXT]), /Строка 20 содержит то, что похоже на ключ API или токен Claude\. Считайте его утёкшим: сразу удалите ключ в Claude Console, потому что удаление из файла не убирает его из истории\./],
     [reportWith(['name: Link check report', `name: Link check report # was ${KEY_TEXT}`]), /Строка 1 содержит то, что похоже на ключ API или токен Claude/],
     [reportWith(['${{ secrets.ANTHROPIC_API_KEY }}', '${{ env.CLAUDE_KEY }}']), /`anthropic_api_key` в строке 20 берётся не из секрета\. Напишите `anthropic_api_key: \$\{\{ secrets\.<NAME> \}\}`/],
-    [reportWith(['          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}\n', '']), /Шаг в строке 18 не передаёт учётных данных\. Добавьте под `with:` строку `anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}`/],
+    [reportWith(['          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}\n', '']), /Шаг в строке 18 не передаёт учётных данных\. Добавьте под `with:` `anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}`/],
     [reportWith(['  workflow_dispatch:', '  workflow_dispatch:\n  pull_request_target:']), /Уберите `pull_request_target` из `on:`\. GitHub предупреждает, что запуск недоверенного кода на этом событии может дать непредусмотренный доступ к правам на запись или к секретам\./],
   ]) {
     withRepo(actionsRepo({ workflow }), (dir) => {
@@ -1696,7 +1696,7 @@ test('a-5 names each limit the second item finds missing or too loose', () => {
     [reportWith(['contents: read', 'contents: write']), /`contents: write` в строке 7 даёт токену задания доступ на запись, а это задание только читает\. Поставьте ему `read` или уберите его\./],
     [reportWith(['contents: read', 'contents: read\n  issues: write\n  pull-requests: write']), /`issues: write` и `pull-requests: write` в строках 8 и 9 дают токену задания доступ на запись/],
     [reportWith(['permissions:\n  contents: read', 'permissions: write-all']), /`permissions: write-all` в строке 6 даёт токену задания доступ на запись ко всему\. Используйте `contents: read`\./],
-    [reportWith(['          github_token: ${{ github.token }}\n', '']), /Шаг в строке 18 не передаёт `github_token`, поэтому действие аутентифицируется как Claude GitHub App, которого в этой копии нет\. Добавьте под `with:` строку `github_token: \$\{\{ github\.token \}\}`/],
+    [reportWith(['          github_token: ${{ github.token }}\n', '']), /Шаг в строке 18 не передаёт `github_token`, поэтому действие аутентифицируется как Claude GitHub App, которого в этой копии нет\. Добавьте под `with:` `github_token: \$\{\{ github\.token \}\}`/],
     [reportWith(['${{ github.token }}', '${{ secrets.MY_TOKEN }}']), /`github_token` в строке 21 — не собственный токен этого задания, поэтому `permissions` задания его не ограничивают\./],
   ]) {
     withRepo(actionsRepo({ workflow }), (dir) => {
@@ -1720,7 +1720,7 @@ test('a-5 says to commit a workflow that is only in the working tree, and points
   withRepo(actionsRepo({ commitWorkflow: false }), (dir) => {
     const { code, out } = a5(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /`\.github\/workflows\/linkcheck-report\.yml` не закоммичен\. Выполните `git add \.github\/workflows\/linkcheck-report\.yml`, закоммитьте и отправьте\. GitHub запускает рабочий процесс вручную, только когда его файл лежит в ветке по умолчанию\./);
+    assert.match(out, /`\.github\/workflows\/linkcheck-report\.yml` не закоммичен\. Выполните `git add \.github\/workflows\/linkcheck-report\.yml`, закоммитьте и отправьте\. Вручную GitHub запускает только файл из ветки по умолчанию\./);
     assert.match(out, /Нет закоммиченного рабочего процесса, который запускается на `workflow_dispatch` и запускает `anthropics\/claude-code-action`, поэтому проверка не может прочитать его лимиты\./);
   });
   withRepo(actionsRepo({ workflow: reportWith([`@${PIN} # v1.0.237`, '@v1']), after: (dir) => write(dir, { [WORKFLOW]: LINKCHECK_REPORT }) }), (dir) => {
@@ -1733,13 +1733,13 @@ test('a-5 says to commit a workflow that is only in the working tree, and points
 
 test('a-5 says the @claude workflow is not the one the lesson asks for, and names the events of one that starts otherwise', () => {
   withRepo(actionsRepo({ workflow: CLAUDE_YML, path: '.github/workflows/claude.yml' }), (dir) => {
-    assert.match(String(setupHint(dir)), /В `\.github\/workflows\/claude\.yml` нет `prompt`, поэтому он ждёт `@claude` \(интерактивный режим\)\. Нужен второй рабочий процесс, `\.github\/workflows\/linkcheck-report\.yml`, который запускается через `on: workflow_dispatch` и содержит `prompt`\. Напишите его, как описано в разделе «Ваша очередь», затем закоммитьте и отправьте\./);
+    assert.match(String(setupHint(dir)), /В `\.github\/workflows\/claude\.yml` нет `prompt`, поэтому он ждёт `@claude` \(интерактивный режим\)\. Нужен второй рабочий процесс, `\.github\/workflows\/linkcheck-report\.yml`, запускаемый через `on: workflow_dispatch`, с `prompt`\. Напишите его, закоммитьте и отправьте\./);
   });
   withRepo(actionsRepo({ workflow: reportWith(['on:\n  workflow_dispatch:', 'on:\n  push:\n    branches: [main]']) }), (dir) => {
     assert.match(String(setupHint(dir)), /`\.github\/workflows\/linkcheck-report\.yml` запускает Claude с `prompt`, но запускается на `push`\. Запускайте его через `on: workflow_dispatch`, затем закоммитьте и отправьте\./);
   });
   withRepo(actionsRepo({ workflow: null }), (dir) => {
-    assert.match(String(setupHint(dir)), /^Нет закоммиченного рабочего процесса, который запускает `anthropics\/claude-code-action`\. Напишите `\.github\/workflows\/linkcheck-report\.yml`, как описано в разделе «Ваша очередь», затем закоммитьте и отправьте\./);
+    assert.match(String(setupHint(dir)), /^Нет закоммиченного рабочего процесса, который запускает `anthropics\/claude-code-action`\. Напишите `\.github\/workflows\/linkcheck-report\.yml` по разделу «Ваша очередь», закоммитьте и отправьте\./);
   });
 });
 
@@ -1849,7 +1849,7 @@ test('a-5 reads the saved runs, and says what is wrong with them', () => {
     [(sha) => [runOf(sha, { url: undefined })], /Запуск 123456789 в `\.practice\/a-5-runs\.json` не содержит адреса запуска на GitHub/],
     [(sha) => [runOf(sha, { headSha: undefined })], /Запуск 123456789 не содержит `headSha`/],
     [() => [runOf('0123456789abcdef0123456789abcdef01234567')], /Запуск 123456789 выполнялся на коммите 0123456, которого нет в этом репозитории\. Выполните `git pull`, чтобы получить его, затем снова запустите проверку\./],
-    [(sha, start) => [runOf(start)], /выполнялся на коммите [0-9a-f]{7}, где `\.github\/workflows\/linkcheck-report\.yml` не запускает `anthropics\/claude-code-action` с `prompt`\. Когда ваш рабочий процесс будет отправлен, запустите его командой `gh workflow run linkcheck-report\.yml`/],
+    [(sha, start) => [runOf(start)], /выполнялся на коммите [0-9a-f]{7}, где `\.github\/workflows\/linkcheck-report\.yml` не запускает `anthropics\/claude-code-action` с `prompt`\. Отправьте рабочий процесс, запустите его: `gh workflow run linkcheck-report\.yml`/],
     [(sha) => [runOf(sha, { event: 'issues' }), runOf(sha, { conclusion: 'failure', databaseId: 7 })], /Запуск 7 завершился с `failure`/],
   ]) {
     withRepo(actionsRepo({ runs }), (dir) => {
@@ -2107,7 +2107,7 @@ test('a-6 fails a marketplace file that isn\'t JSON, or has no owner name or no 
 test('a-6 names what is wrong with each kind of entry', () => {
   for (const [entry, hint] of [
     [{ source: './plugins/team-kit' }, /Запись номер 1 в `team-marketplace\/\.claude-plugin\/marketplace\.json`: нужен `name`/],
-    [{ name: 'team-kit', source: { source: 'github', repo: 'acme/team-kit' } }, /Запись `team-kit` в .* берёт плагин из источника `github`, и каждому коллеге пришлось бы его устанавливать\. Держите плагин внутри папки marketplace и укажите его относительным путём, например `"source": "\.\/plugins\/team-kit"`/],
+    [{ name: 'team-kit', source: { source: 'github', repo: 'acme/team-kit' } }, /Запись `team-kit` в .* берёт плагин из источника `github`, и каждому коллеге пришлось бы его ставить\. Держите плагин в папке marketplace с относительным путём, например `"source": "\.\/plugins\/team-kit"`/],
     [{ name: 'team-kit' }, /: нет `source`/],
     [{ name: 'team-kit', source: 'plugins/team-kit' }, /: `source` равен `plugins\/team-kit`\. Относительный путь должен начинаться с `\.\/`: напишите `"source": "\.\/plugins\/team-kit"`/],
     [{ name: 'team-kit', source: './plugins/../../team-kit' }, /и `\.\.` в нём выводит за пределы папки marketplace/],
@@ -2179,7 +2179,7 @@ test('a-6 fails a registration under another key, or under the alias beside extr
     assert.match(String(settingsHint(dir)), /Закоммиченный `\.claude\/settings\.json` не регистрирует ни одного marketplace\. Добавьте `"extraKnownMarketplaces"/);
   });
   withRepo(shareRepo({ settings: { ...SHARED_SETTINGS, extraKnownMarketplaces: {}, additionalMarketplaces: SHARED_SETTINGS.extraKnownMarketplaces } }), (dir) => {
-    assert.match(String(settingsHint(dir)), /заданы и `extraKnownMarketplaces`, и другое его написание, `additionalMarketplaces`; тогда Claude Code читает только `extraKnownMarketplaces`/);
+    assert.match(String(settingsHint(dir)), /заданы и `extraKnownMarketplaces`, и его другое написание, `additionalMarketplaces`; Claude Code читает только первое/);
   });
 });
 
@@ -2246,7 +2246,7 @@ test('a-6 fails until a component of your own is in the plugin and gone from .cl
   });
   // Copied, not moved.
   withRepo(shareRepo({ move: [], files: { [`${TEAM_KIT}/agents/test-gaps.md`]: TEST_GAPS } }), (dir) => {
-    assert.equal(movedHint(dir), '`team-marketplace/plugins/team-kit/agents/test-gaps.md` лежит в плагине, но `.claude/agents/test-gaps.md` всё ещё закоммичен, поэтому субагент загружается дважды: как `test-gaps` и как `team-kit:test-gaps`. Выполните `git rm .claude/agents/test-gaps.md` и закоммитьте.');
+    assert.equal(movedHint(dir), '`team-marketplace/plugins/team-kit/agents/test-gaps.md` лежит в плагине, но `.claude/agents/test-gaps.md` всё ещё закоммичен, поэтому субагент загружается дважды: как `test-gaps` и `team-kit:test-gaps`. Выполните `git rm .claude/agents/test-gaps.md` и закоммитьте.');
   });
   // The same subagent name in a file of another name.
   withRepo(shareRepo({ move: [], files: { [`${TEAM_KIT}/agents/review/gaps.md`]: TEST_GAPS } }), (dir) => {
@@ -2342,7 +2342,7 @@ test('a-6 fails while git tracks a personal file, or only an uncommitted or unco
     assert.match(hint, /^`CLAUDE\.local\.md` всё ещё есть в вашем последнем коммите\. Закоммитьте его удаление\. Ни один закоммиченный `\.gitignore` не игнорирует `\.claude\/settings\.local\.json`\./);
   });
   withRepo(shareRepo({ gitignore: '.practice/\n' }), (dir) => {
-    assert.equal(personalHint(dir), 'Ни один закоммиченный `.gitignore` не игнорирует `.claude/settings.local.json` и `CLAUDE.local.md`. Добавьте строки `.claude/settings.local.json` и `CLAUDE.local.md` в `.gitignore` и закоммитьте. Правило в вашем глобальном файле исключений git не считается: его нет в репозитории.');
+    assert.equal(personalHint(dir), 'Ни один закоммиченный `.gitignore` не игнорирует `.claude/settings.local.json` и `CLAUDE.local.md`. Добавьте строки `.claude/settings.local.json` и `CLAUDE.local.md` в `.gitignore` и закоммитьте. Глобальный файл исключений git не считается.');
   });
   withRepo(shareRepo({ gitignore: '.practice/\nCLAUDE.local.md\n', after: (dir) => write(dir, { '.git/info/exclude': '.practice/\n.claude/settings.local.json\n' }) }), (dir) => {
     assert.match(String(personalHint(dir)), /^`\.claude\/settings\.local\.json` игнорирует только `\.git\/info\/exclude`/);
@@ -2355,7 +2355,7 @@ test('a-6 fails while git tracks a personal file, or only an uncommitted or unco
       git(dir, 'config', 'core.excludesFile', join(dir, '.git', 'global-ignore'));
     },
   }), (dir) => {
-    assert.match(String(personalHint(dir)), /^Ни один закоммиченный `\.gitignore` не игнорирует `\.claude\/settings\.local\.json`\..*глобальном файле исключений git не считается/);
+    assert.match(String(personalHint(dir)), /^Ни один закоммиченный `\.gitignore` не игнорирует `\.claude\/settings\.local\.json`\..*Глобальный файл исключений git не считается/);
   });
   withRepo(shareRepo({ gitignore: '.practice/\n', after: (dir) => write(dir, { '.gitignore': PERSONAL_IGNORE }) }), (dir) => {
     const hint = String(personalHint(dir));
@@ -2558,7 +2558,7 @@ test('a-7 says to write the runner, commit it or make it executable', () => {
   withRepo(boundedRepo({ mode: 0o644 }), (dir) => {
     const { code, out } = a7(dir);
     assert.equal(code, 1, out);
-    assert.match(out, /не исполняемый\. Выполните `chmod \+x scripts\/bounded-run\.sh`, затем `git add scripts\/bounded-run\.sh` и закоммитьте\. В Windows выполните `git update-index --chmod=\+x scripts\/bounded-run\.sh`/);
+    assert.match(out, /не исполняемый\. Выполните `chmod \+x scripts\/bounded-run\.sh` и `git add scripts\/bounded-run\.sh`, затем закоммитьте\. В Windows вместо chmod: `git update-index --chmod=\+x scripts\/bounded-run\.sh`/);
     assert.match(out, /Пройдено 4 из 5/);
   });
 });
@@ -2643,7 +2643,7 @@ test('a-7 wants one claude -p call, and says how a runner that never makes one e
     assert.match(String(runnerHint(dir)), /С одной задачей он запустил `claude -p` 2 раза\. Запускайте его один раз\./);
   });
   withRepo(boundedRepo({ script: runner(['claude -p "$1"', 'claude "$1"']) }), (dir) => {
-    assert.match(String(runnerHint(dir)), /При запуске как `scripts\/bounded-run\.sh "<task>" <result\.json>` `scripts\/bounded-run\.sh` запустил `claude` без `-p` \(или `--print`\), а так начинается интерактивная сессия, которая ждёт вас\./);
+    assert.match(String(runnerHint(dir)), /Скрипт запустил `claude` без `-p`, а так начинается интерактивная сессия, которая ждёт вас\./);
   });
   withRepo(boundedRepo({ script: runner(['set -u\n', 'set -u\nclaude --version > /dev/null || exit 1\n']) }), (dir) => {
     assert.equal(runnerHint(dir), true);
@@ -2651,7 +2651,7 @@ test('a-7 wants one claude -p call, and says how a runner that never makes one e
   // A runner with another interface: the stand-in sees no call, so the
   // other items read the call from the script's text.
   withRepo(boundedRepo({ script: runner(['if [ $# -ne 2 ]', 'if [ $# -ne 3 ]']) }), (dir) => {
-    assert.match(String(runnerHint(dir)), /При запуске как `scripts\/bounded-run\.sh "<task>" <result\.json>` `scripts\/bounded-run\.sh` ни разу не запустил `claude -p`\. Он завершился с кодом 2: Usage: scripts\/bounded-run\.sh "<task>" <result\.json>$/);
+    assert.match(String(runnerHint(dir)), /Скрипт ни разу не запустил `claude -p`\. Он завершился с кодом 2: Usage: scripts\/bounded-run\.sh "<task>" <result\.json>$/);
     assert.deepEqual(committedHints(dir).slice(1), [true, true, true]);
   });
   withRepo(boundedRepo({ script: runner(['if [ $# -ne 2 ]', 'if [ $# -ne 3 ]'], ['--max-turns 15', '--max-turns "$TURNS"'], ['--max-budget-usd 2', '--max-budget-usd 0']) }), (dir) => {
@@ -2660,7 +2660,7 @@ test('a-7 wants one claude -p call, and says how a runner that never makes one e
   withRepo(boundedRepo({ script: '#!/bin/bash\necho "Not written yet." >&2\nexit 1\n' }), (dir) => {
     const hints = committedHints(dir);
     assert.match(String(hints[0]), /ни разу не запустил `claude -p`\. Он завершился с кодом 1: Not written yet\./);
-    for (const hint of hints.slice(1)) assert.match(String(hint), /`scripts\/bounded-run\.sh` ни разу не запустил `claude -p`, и проверка не нашла вызова `claude -p` в его тексте\. Он завершился с кодом 1: Not written yet\./);
+    for (const hint of hints.slice(1)) assert.match(String(hint), /Скрипт ни разу не запустил `claude -p`, и проверка не нашла вызова `claude -p` в его тексте\. Он завершился с кодом 1: Not written yet\./);
   });
 });
 
@@ -2693,7 +2693,7 @@ test('a-7 refuses to run a runner that could reach the real Claude Code, and rea
 test('a-7 says what is wrong with the settings file the call names', () => {
   withRepo(boundedRepo({ script: runner([`  --settings ${BOUNDS_PATH} \\\n`, '']) }), (dir) => {
     assert.match(String(runnerHint(dir)), /Он не передаёт файл настроек: добавьте `--settings` с закоммиченным файлом, в котором лежат границы, например `--settings \.claude\/bounded-run\.json`\./);
-    assert.match(String(sandboxHint(dir)), /Запуск не получает файла настроек, поэтому песочницу ничто не включает: передайте файл границ через `--settings`/);
+    assert.match(String(sandboxHint(dir)), /Запуск не получает файла настроек, поэтому песочницу ничто не включает\. Передайте `--settings`/);
   });
   withRepo(boundedRepo({ commitBounds: false }), (dir) => {
     const hint = String(runnerHint(dir));
@@ -2797,7 +2797,7 @@ test('a-7 counts a deny rule as stopping a git command only when it matches ever
 
 test('a-7 names allow rules wider than one folder or one command, wherever the run reads them', () => {
   withRepo(boundedRepo({ bounds: boundsWith((b) => b.permissions.allow.push('Bash(npm *)', 'Edit(**)')) }), (dir) => {
-    assert.equal(ruleHint(dir), '`Bash(npm *)` в `.claude/bounded-run.json` пропускает каждую команду `npm`, какими бы ни были её аргументы. `Edit(**)` в `.claude/bounded-run.json` позволяет запуску править любой файл. Разрешайте одну папку или одну команду на правило, как в `Edit(./src/**)` или `Bash(npm test *)`.');
+    assert.equal(ruleHint(dir), '`Bash(npm *)` в `.claude/bounded-run.json` пропускает каждую команду `npm`, какими бы ни были её аргументы. `Edit(**)` в `.claude/bounded-run.json` позволяет запуску править любой файл. Разрешайте одну папку или команду, как в `Edit(./src/**)` или `Bash(npm test *)`.');
   });
   withRepo(boundedRepo({ script: runner(['--permission-mode dontAsk', '--permission-mode dontAsk --allowedTools "Read,Edit(./src/**)"']) }), (dir) => {
     assert.match(String(ruleHint(dir)), /^`Read` в `--allowedTools` позволяет запуску читать любой файл\. Разрешайте одну папку/);
@@ -2819,7 +2819,7 @@ test('a-7 names allow rules wider than one folder or one command, wherever the r
 });
 
 test('a-7 fails bounds that allow nothing of their own', () => {
-  const hint = /Ничто из переданного запуску не разрешает ни одного вызова, поэтому в режиме `dontAsk` он не может ни править файлы, ни запускать ваши тесты\. В `permissions\.allow` файла границ/;
+  const hint = /Ничто из переданного запуску не разрешает ни одного вызова, поэтому в режиме `dontAsk` он не может ни править файлы, ни запускать тесты\. В `permissions\.allow` разрешите/;
   withRepo(boundedRepo({ bounds: boundsWith((b) => delete b.permissions.allow) }), (dir) => {
     assert.match(String(ruleHint(dir)), hint);
   });
@@ -2856,7 +2856,7 @@ test('a-7 names each sandbox setting the bounds file leaves out', () => {
     ['enabled', /Задайте `"enabled": true` в `sandbox`: песочница выключена, пока её не включит файл настроек\./],
     ['failIfUnavailable', /Задайте `"failIfUnavailable": true`: без этого запуск, у которого песочница не стартует, выполняет команды вне песочницы\./],
     ['allowUnsandboxedCommands', /Задайте `"allowUnsandboxedCommands": false`: без этого Claude может повторить заблокированную песочницей команду вне песочницы\./],
-    ['autoAllowBashIfSandboxed', /Задайте `"autoAllowBashIfSandboxed": false`: без этого команды в песочнице выполняются без участия ваших правил allow и режима разрешений, и остановить такую команду могут только правила deny\./],
+    ['autoAllowBashIfSandboxed', /Задайте `"autoAllowBashIfSandboxed": false`: иначе команды в песочнице идут в обход ваших правил allow, и остановить их могут только правила deny\./],
   ]) {
     withRepo(boundedRepo({ bounds: boundsWith((b) => delete b.sandbox[key]) }), (dir) => {
       const result = String(sandboxHint(dir));
@@ -2887,17 +2887,17 @@ test('a-7 reads the saved slice, and says what is wrong with it', () => {
   }
   for (const [slice, hint] of [
     [null, /^Файла `\.practice\/a-7-slice\.json` пока нет: запустите свой скрипт на части задачи, как в разборе на примере: `scripts\/bounded-run\.sh "<небольшая часть задачи>" \.practice\/a-7-slice\.json`\.$/],
-    ['Added a test for total(). npm test passes.\n', /`\.practice\/a-7-slice\.json` — не JSON\. Сохраните туда только то, что `claude -p --output-format json` выводит в стандартный вывод\. Затем снова запустите часть задачи\./],
+    ['Added a test for total(). npm test passes.\n', /`\.practice\/a-7-slice\.json` — не JSON\. Сохраните туда только то, что `claude -p --output-format json` выводит в стандартный вывод\. Затем повторите запуск\./],
     [`${stream.split('\n').slice(0, 2).join('\n')}\n`, /`\.practice\/a-7-slice\.json` не содержит результата: запуск не завершился\./],
     [{ ...SLICE_RUN, type: 'assistant' }, /— не результат запуска `claude -p` с `--output-format json`/],
     [{ ...SLICE_RUN, session_id: STUB_SESSION }, /содержит подставной ответ проверки, а не настоящий запуск/],
-    [{ ...SLICE_RUN, subtype: 'error_max_budget_usd', is_error: true }, /Часть задачи остановилась на вашем лимите расходов \(`error_max_budget_usd`\), значит, лимит ниже стоимости одной части\. Поднимите `--max-budget-usd` в `scripts\/bounded-run\.sh` и закоммитьте\. Затем снова запустите часть задачи\./],
-    [{ ...SLICE_RUN, subtype: 'error_max_turns', is_error: true }, /Часть задачи остановилась на вашем лимите ходов \(`error_max_turns`\), не закончив работу\. Поднимите `--max-turns` в `scripts\/bounded-run\.sh` или дайте часть поменьше\./],
+    [{ ...SLICE_RUN, subtype: 'error_max_budget_usd', is_error: true }, /Часть задачи остановилась на вашем лимите расходов \(`error_max_budget_usd`\): он ниже её стоимости\. Поднимите `--max-budget-usd` в `scripts\/bounded-run\.sh` и закоммитьте\. Затем повторите запуск\./],
+    [{ ...SLICE_RUN, subtype: 'error_max_turns', is_error: true }, /Часть задачи остановилась на вашем лимите ходов \(`error_max_turns`\)\. Поднимите `--max-turns` в `scripts\/bounded-run\.sh` или дайте часть поменьше\./],
     [{ ...SLICE_RUN, subtype: 'error_during_execution', is_error: true }, /Часть задачи завершилась с `error_during_execution`, а не с `success`/],
     [{ ...SLICE_RUN, is_error: true, result: 'Not logged in · Please run /login' }, /Запуск на части задачи упал: «Not logged in · Please run \/login»\. Исправьте то, о чём он сообщает\./],
-    [{ ...SLICE_RUN, total_cost_usd: undefined }, /нет оценки стоимости в `total_cost_usd`, а часть задачи нужна именно ради неё/],
+    [{ ...SLICE_RUN, total_cost_usd: undefined }, /нет оценки стоимости в `total_cost_usd`, а часть нужна именно ради неё/],
     [{ ...SLICE_RUN, num_turns: undefined }, /нет числа ходов в `num_turns`/],
-    [{ ...SLICE_RUN, total_cost_usd: 2.37 }, /Часть задачи обошлась примерно в \$2\.37 \(`total_cost_usd`\), а ваш лимит расходов, `--max-budget-usd 2`, не выше этой суммы\. Задайте лимит выше стоимости части, с поправкой на всю задачу, и закоммитьте `scripts\/bounded-run\.sh`\./],
+    [{ ...SLICE_RUN, total_cost_usd: 2.37 }, /Часть задачи обошлась примерно в \$2\.37 \(`total_cost_usd`\), а ваш лимит расходов, `--max-budget-usd 2`, не выше этой суммы\. Задайте лимит выше с поправкой на всю задачу и закоммитьте `scripts\/bounded-run\.sh`\./],
     [{ ...SLICE_RUN, total_cost_usd: 2 }, /не выше этой суммы/],
   ]) {
     withRepo(boundedRepo({ slice }), (dir) => {
@@ -3275,7 +3275,7 @@ test('the Advanced capstone wants a saved workflow whose second agent checks the
   });
   const once = FILE_REVIEW.replace(/const listed[\s\S]*$/, "const found = await agent('Review each file under src/ for bugs.')\nreturn found\n");
   withRepo(capstoneRepo({ workflow: once }), (dir) => {
-    assert.match(String(capstoneHint(dir, /\.claude\/workflows\//)), /вызывает `agent\(\)` только один раз, поэтому никакой второй агент не проверяет то, что находит первый/);
+    assert.match(String(capstoneHint(dir, /\.claude\/workflows\//)), /вызывает `agent\(\)` только один раз, поэтому второй агент ничего не проверяет/);
   });
   // Lesson 3's workflow, which also reads args, passes too.
   withRepo(capstoneRepo({ workflow: AUDIT }), (dir) => {
@@ -3294,7 +3294,7 @@ test('the Advanced capstone holds the review script to lesson 4\'s rules', () =>
     assert.match(String(capstoneHint(dir, /^его `claude -p`/)), /Он работает в режиме `acceptEdits`: используйте `--permission-mode dontAsk`/);
   });
   withRepo(capstoneRepo({ run: { ...REAL_RUN, subtype: 'error_max_turns', is_error: true } }), (dir) => {
-    assert.match(String(capstoneHint(dir, /a-capstone-run\.json/)), /Запуск в `\.practice\/a-capstone-run\.json` остановился раньше времени \(`error_max_turns`\).* Поднимите предел, но не выше 10, сузьте промпт или проверьте флаги\./);
+    assert.match(String(capstoneHint(dir, /a-capstone-run\.json/)), /Запуск в `\.practice\/a-capstone-run\.json` остановился раньше времени \(`error_max_turns`\).* Поднимите предел \(до 10\), сузьте промпт или флаги\./);
   });
 });
 
@@ -3304,7 +3304,7 @@ test('the Advanced capstone wants the review workflow on pull_request, and lesso
     assert.match(String(capstoneHint(dir, CI_ITEM)), /`\.github\/workflows\/linkcheck-report\.yml` запускает Claude с `prompt`, но запускается на `workflow_dispatch`\. Запускайте его через `on: pull_request`, затем закоммитьте и отправьте\./);
   });
   withRepo(capstoneRepo({ ci: null }), (dir) => {
-    assert.match(String(capstoneHint(dir, CI_ITEM)), /Напишите `\.github\/workflows\/claude-review\.yml`, как описано в части 5 `capstone\/advanced-brief\.md`/);
+    assert.match(String(capstoneHint(dir, CI_ITEM)), /Напишите `\.github\/workflows\/claude-review\.yml` по части 5 `capstone\/advanced-brief\.md`/);
   });
   // A later manual workflow doesn't shadow the review, and a review that
   // also starts by hand still counts.
@@ -3334,8 +3334,8 @@ test('the Advanced capstone reports what is wrong with the review workflow\'s se
   const bare = reviewWith(['          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}\n', ''], ['          github_token: ${{ github.token }}\n', '']);
   withRepo(capstoneRepo({ ci: bare }), (dir) => {
     const got = String(capstoneHint(dir, CI_ITEM));
-    assert.match(got, /не передаёт учётных данных\. Добавьте под `with:` строку `anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}` или, для токена подписки, `claude_code_oauth_token: \$\{\{ secrets\.CLAUDE_CODE_OAUTH_TOKEN \}\}`, указав секрет, который вы сохранили командой `gh secret set`\./);
-    assert.match(got, /не передаёт `github_token`, поэтому действие аутентифицируется как Claude GitHub App, которого итоговый проект не настраивает\. Добавьте под `with:` строку `github_token: \$\{\{ github\.token \}\}`/);
+    assert.match(got, /не передаёт учётных данных\. Добавьте под `with:` `anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}` \(или `claude_code_oauth_token`\), указав секрет, который вы сохранили командой `gh secret set`\./);
+    assert.match(got, /не передаёт `github_token`, поэтому действие аутентифицируется как Claude GitHub App, которого итоговый проект не настраивает\. Добавьте под `with:` `github_token: \$\{\{ github\.token \}\}`/);
     assert.doesNotMatch(got, /quick setup/);
   });
   withRepo(capstoneRepo({ ci: reviewWith(['${{ secrets.ANTHROPIC_API_KEY }}', '${{ env.CLAUDE_KEY }}']) }), (dir) => {

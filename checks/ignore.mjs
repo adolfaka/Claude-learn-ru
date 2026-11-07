@@ -88,7 +88,7 @@ export function committedIgnore(repo, probe) {
 // the Learner should add, such as `.claude/worktrees/`.
 export function ignoreHint(result, line) {
   if (result.problem === 'negated') return `Строка ${result.line} в \`${result.source}\`, \`${result.pattern}\`, не даёт игнорировать \`${line}\`. Удалите её, добавьте строку \`${line}\` в \`.gitignore\` и закоммитьте.`;
-  if (result.problem === 'exclude') return `\`${line}\` игнорирует только \`.git/info/exclude\`, а git никогда не коммитит этот файл, поэтому у коллег этого правила не будет. Добавьте строку \`${line}\` в \`.gitignore\` и закоммитьте.`;
+  if (result.problem === 'exclude') return `\`${line}\` игнорирует только \`.git/info/exclude\`: git его не коммитит, и у коллег правила не будет. Добавьте строку \`${line}\` в \`.gitignore\` и закоммитьте.`;
   if (result.problem === 'uncommitted') return `\`${result.source}\` игнорирует \`${line}\`, но это правило не закоммичено. Выполните \`git add ${result.source}\` и закоммитьте.`;
-  return `Ни один закоммиченный \`.gitignore\` не игнорирует \`${line}\`. Добавьте строку \`${line}\` в \`.gitignore\` и закоммитьте. Правило в вашем глобальном файле исключений git не считается: его нет в репозитории.`;
+  return `Ни один закоммиченный \`.gitignore\` не игнорирует \`${line}\`. Добавьте строку \`${line}\` в \`.gitignore\` и закоммитьте. Глобальный файл исключений git не считается.`;
 }

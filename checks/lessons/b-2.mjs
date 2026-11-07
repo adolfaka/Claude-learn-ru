@@ -47,7 +47,7 @@ export const items = [
       const before = repo.read('.practice/b-2-before.txt');
       if (before === null) return SAVE_BEFORE;
       const changed = statusPaths(before);
-      if (changed.length) return `Файлы изменились ещё до того, как вы одобрили план: ${changed.join(', ')}. Начните с чистого рабочего дерева (закоммитьте их или отложите командой \`git stash push --include-untracked\`) и оставайтесь в plan mode, пока не одобрите план.`;
+      if (changed.length) return `Файлы изменились до одобрения плана: ${changed.join(', ')}. Начните с чистого дерева (закоммитьте их или отложите: \`git stash push --include-untracked\`) и оставайтесь в plan mode до одобрения.`;
       return true;
     },
   },
@@ -64,7 +64,7 @@ export const items = [
       // keeps step 7's "or No" so it never says to approve every request,
       // and stays five lines in a 60x20 hint box so the card keeps its Goal
       // and border.
-      if (!statusPaths(after).length) return '`.practice/b-2-after.txt` пока не содержит изменённых файлов. Одобрите проверенный план; если Claude Code спрашивает, читайте каждый запрос: Yes, если он в рамках плана, иначе No. Когда `git status` покажет изменения, сохраните снова.';
+      if (!statusPaths(after).length) return '`.practice/b-2-after.txt` пока не содержит изменённых файлов. Одобрите план; если Claude Code спрашивает, читайте каждый запрос: Yes, если он в рамках плана, иначе No. Когда `git status` покажет изменения, сохраните снова.';
       const planned = planPaths(plan, repo.dir);
       const extra = statusPaths(after).filter((path) => !inPlan(planned, path));
       if (extra.length) return `Изменены, но не указаны в плане: ${extra.join(', ')}. Сравните одобренный план с тем, что изменил Claude.`;

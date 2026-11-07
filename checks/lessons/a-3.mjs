@@ -32,19 +32,19 @@ function scriptHint({ path, result, changed }) {
   const p = code(path);
   const hint = {
     first: () => `${p} не начинается с \`export const meta\`${result.found ? `: его код начинается с ${code(result.found)}` : ''}. Claude Code нужен \`export const meta = { ... }\` первой инструкцией скрипта. Перенесите его наверх (комментарии могут остаться над ним) и закоммитьте.`,
-    literal: () => `Строка ${result.line} в ${p}: \`meta\` содержит ${result.what}. Если в \`meta\` есть что-то кроме литеральных значений, Claude Code убирает \`/<name>\` из автодополнения \`/\`. Запишите каждое значение явно — строкой, числом, списком или объектом — и закоммитьте.`,
+    literal: () => `Строка ${result.line} в ${p}: \`meta\` содержит ${result.what}. Если в \`meta\` есть что-то кроме литеральных значений, Claude Code убирает \`/<name>\` из автодополнения. Запишите значения явно и закоммитьте.`,
     fields: () => `В \`meta\` в ${p} ${result.missing.length > 1 ? 'нужны' : 'нужна'} ${result.missing.map((f) => `непустая строка \`${f}\``).join(' и ')}. Добавьте ${result.missing.length > 1 ? 'их' : 'её'} и закоммитьте.`,
     compile: () => `${p} не компилируется${result.line ? ` (строка ${result.line})` : ''}: ${result.message}. Исправьте его сами или попросите Claude и закоммитьте.`,
     args: () => {
       const why = result.declared
-        ? `Строка ${result.declared} в ${p} объявляет собственную переменную \`args\`, и она скрывает входные данные, которые Claude передаёт workflow.`
+        ? `Строка ${result.declared} в ${p} объявляет собственную переменную \`args\`, она скрывает входные данные workflow.`
         : result.mentioned
-          ? `${p} упоминает \`args\` только в комментарии, строке или имени свойства, поэтому так и не читает входные данные.`
+          ? `${p} упоминает \`args\` только в комментарии, строке или имени свойства, поэтому не читает входные данные.`
           : `${p} нигде не читает \`args\`, поэтому не может получить папку на вход.`;
-      return `${why} Выполните \`/workflow-authoring\`, попросите Claude изменить скрипт так, чтобы он брал папку из \`args\`, выполните \`/reload-skills\` и закоммитьте.`;
+      return `${why} Выполните \`/workflow-authoring\`, попросите Claude брать папку из \`args\`, затем \`/reload-skills\` и закоммитьте.`;
     },
     agent: () => `${p} нигде не вызывает \`agent()\`, поэтому не запускает ни одного субагента. Попросите Claude снова написать workflow для этой задачи, сохраните запуск из \`/workflows\` и закоммитьте.`,
-    check: () => `${p} вызывает \`agent()\` только один раз, поэтому никакой второй агент не проверяет то, что находит первый. Выполните \`/workflow-authoring\`, попросите Claude поручить второму агенту проверять каждую находку, прежде чем о ней сообщать, и закоммитьте.`,
+    check: () => `${p} вызывает \`agent()\` только один раз, поэтому второй агент ничего не проверяет. Выполните \`/workflow-authoring\`, попросите Claude поручить второму агенту проверять каждую находку, и закоммитьте.`,
   }[result.problem]();
   const pending = changed ? ` В вашей копии ${p} есть незакоммиченные изменения: если они это исправляют, закоммитьте их.` : '';
   return `${hint}${pending}`;
@@ -165,16 +165,16 @@ export const migratedFolder = {
     if (!pattern) return `${code(PATTERN)} пуст. Сохраните в нём одной строкой шаблон \`git grep -E\`, который находит старую форму.`;
     const shown = code(pattern);
     const now = grep(repo, pattern, '.', ['HEAD']);
-    if (now?.error) return `git не может использовать шаблон из ${code(PATTERN)}, ${shown}: ${now.error}. Запишите его так, как его читает \`git grep -E\`, и проверьте командой \`git grep -n -E '<pattern>' -- <folder>\`.`;
+    if (now?.error) return `git не может использовать шаблон из ${code(PATTERN)}, ${shown}: ${now.error}. Проверьте: \`git grep -n -E '<pattern>' -- <folder>\`.`;
     const folders = matchedFolders(repo, pattern, recentCommits(repo));
-    if (!folders.length) return `${shown} не находит ничего в недавних коммитах этого репозитория, поэтому проверка не видит миграции. Запишите шаблон для старой формы и проверьте его на коммите до миграции: \`git grep -n -E '<pattern>' <commit> -- <folder>\` должна показать старую форму.`;
+    if (!folders.length) return `${shown} не находит ничего в недавних коммитах этого репозитория, поэтому проверка не видит миграции. Проверьте шаблон на коммите до миграции: \`git grep -n -E '<pattern>' <commit> -- <folder>\`.`;
     if (folders.some((folder) => grep(repo, pattern, folder, ['HEAD']) === false)) return true;
     const where = (folder) => (folder === '.' ? 'вашем репозитории' : `папке ${code(`${folder}/`)}`);
     const clean = folders.find((folder) => grep(repo, pattern, folder) === false);
     if (clean) return `В рабочем дереве в ${where(clean)} миграция уже сделана, но в \`HEAD\` ${shown} там всё ещё находит совпадения. Просмотрите изменения и закоммитьте их.`;
     const named = folders.slice(0, 3).map(where);
     const more = folders.length > 3 ? ` и ещё ${folders.length - 3}` : '';
-    return `В \`HEAD\` ${shown} всё ещё находит совпадения в ${and(named)}${more} — в каждой папке, где они когда-либо были: \`git grep -n -E '${pattern}'\` покажет эти строки. Снова задайте цель для папки, которую переводите, просмотрите изменения и закоммитьте их.`;
+    return `В \`HEAD\` ${shown} всё ещё находит совпадения в ${and(named)}${more} — в каждой папке, где они когда-либо были: \`git grep -n -E '${pattern}'\` покажет их. Снова задайте цель для переводимой папки и закоммитьте.`;
   },
 };
 

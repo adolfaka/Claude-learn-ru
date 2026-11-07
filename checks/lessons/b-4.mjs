@@ -47,7 +47,7 @@ export const items = [
       if (!laterCommits(repo, CHECK).length) return 'Ни один коммит после первого коммита вашей копии не меняет `src/check-links.js`. Закончите рефакторинг из шага 5 разбора на примере и закоммитьте его.';
       const text = withoutComments(repo.gitLocal('show', `HEAD:${CHECK}`));
       if (!hasExport(text, 'brokenLinks')) {
-        return '`src/check-links.js` в последнем коммите не экспортирует `brokenLinks`, а `src/cli.js` импортирует его под этим именем. Попросите Claude оставить экспорт `brokenLinks`, как требует шаг 5 разбора на примере, и закоммитьте.';
+        return '`src/check-links.js` в последнем коммите не экспортирует `brokenLinks`, а `src/cli.js` его импортирует. Попросите Claude оставить экспорт (шаг 5 разбора) и закоммитьте.';
       }
       if (/\basync\b|\bawait\b|fs\/promises|\.then\(/.test(text)) {
         return '`src/check-links.js` в последнем коммите всё ещё асинхронный. Попросите Claude снова сделать `brokenLinks` синхронным, как требует шаг 5 разбора на примере, и закоммитьте.';

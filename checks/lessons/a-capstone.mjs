@@ -95,7 +95,7 @@ export const noCommittedKey = {
       const places = found.slice(0, 3).map((f) => `строка ${f.line} в \`${f.path}\``);
       const more = found.length > 3 ? `, и ещё ${found.length - 3}` : '';
       const where = commit === head ? 'В `HEAD`' : `В коммите ${short(commit)}, из которого проверка читает ваш рабочий процесс`;
-      return `${where}, ${places.join(', ')}${more} ${found.length > 1 ? 'содержат' : 'содержит'} что-то похожее на ключ API или токен Claude. Считайте, что он утёк: удаление из файла не убирает его из истории. Сразу удалите ключ API в Claude Console (для токена от \`claude setup-token\` прочитайте предупреждение на странице итогового проекта) и храните учётные данные только в секрете репозитория.`;
+      return `${where}, ${places.join(', ')}${more} ${found.length > 1 ? 'содержат' : 'содержит'} что-то похожее на ключ API или токен Claude. Считайте, что он утёк: из истории он не уйдёт. Сразу удалите ключ API в Claude Console (токен от \`claude setup-token\` — см. предупреждение на странице итогового проекта), храните учётные данные только в секрете.`;
     }
     return true;
   },

@@ -17,7 +17,7 @@ const lines = (text) => (text ?? '').split(/\r?\n/).map((l) => l.trim()).filter(
 const SAVE_COMMIT = '`git rev-parse HEAD > .practice/capstone-commit.txt`';
 const AMEND = `выполните \`git commit --amend\` и снова ${SAVE_COMMIT}`;
 // A test committed after its fix: the saved commit holds no fix to test.
-const ONLY_TESTS = `Коммит меняет только тесты. Объедините его с исправлением перед ним, если ещё не отправляли их, или дополните его исправлением через \`git commit --amend\`. Затем снова выполните ${SAVE_COMMIT}.`;
+const ONLY_TESTS = `Коммит меняет только тесты. Объедините его с исправлением перед ним или дополните исправлением (\`git commit --amend\`), затем снова ${SAVE_COMMIT}.`;
 
 // The commit the Learner saved and the files it changes, or what to fix.
 function savedCommit(repo) {
@@ -62,7 +62,7 @@ export const items = [
       const before = repo.read('.practice/capstone-before.txt');
       if (before === null) return 'Пока план на экране, выполните `git status --porcelain > .practice/capstone-before.txt`.';
       const changed = statusPaths(before);
-      return changed.length ? `Файлы изменились ещё до того, как вы одобрили план: ${changed.join(', ')}. Закоммитьте их или отложите в stash, затем снова сохраните снимок в plan mode.` : true;
+      return changed.length ? `Файлы изменились до одобрения плана: ${changed.join(', ')}. Закоммитьте их или отложите в stash и повторите в plan mode.` : true;
     },
   },
   {
@@ -85,11 +85,11 @@ export const items = [
     check(repo) {
       const { sha, files, error } = savedCommit(repo);
       if (error) return error;
-      if (!files.some(isTestFile)) return `Коммит не меняет ни одного тестового файла, поэтому без исправления запускать нечего. Попросите Claude добавить тест в коммит с исправлением, затем ${AMEND}.`;
+      if (!files.some(isTestFile)) return `Коммит не трогает тесты: без исправления запускать нечего. Попросите Claude добавить тест в коммит с исправлением, затем ${AMEND}.`;
       if (files.every(isTestFile)) return ONLY_TESTS;
       const result = testsWithoutFix(repo, sha, files);
       if (result.error) return result.error;
-      return result.passed ? `Без исправления \`npm test\` всё равно проходит, значит, новый тест не ловит ошибку. Добавьте регрессионный тест, который падает на старом коде, дополните коммит с исправлением и снова выполните ${SAVE_COMMIT}.` : true;
+      return result.passed ? `Без исправления \`npm test\` всё равно проходит: тест не ловит ошибку. Добавьте тест, падающий на старом коде, дополните коммит с исправлением и снова ${SAVE_COMMIT}.` : true;
     },
   },
   {

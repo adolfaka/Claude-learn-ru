@@ -9,7 +9,7 @@ export const title = 'Установка, вход и первый осмотр'
 export const VERSION_LIMIT = 30_000;
 
 const VERSION = /^\d+\.\d+\.\d+ \(Claude Code\)/m;
-const FIX_PATH = 'Откройте новый терминал. Если ошибка останется, исправьте PATH по шагу 2 разбора на примере в уроке 1 и повторите.';
+const FIX_PATH = 'Откройте новый терминал. Не помогло: исправьте PATH по шагу 2 разбора в уроке 1.';
 
 export const claudeVersion = {
   text: '`claude --version` выводит версию Claude Code',
@@ -103,7 +103,7 @@ export const noteCorrected = {
     }
     const exits = claims(text).filter((claim) => EXIT.test(claim) || CANT_FAIL.test(claim));
     const stale = exits.find((claim) => exitClaim(claim) === 'stale');
-    if (stale) return `В заметке всё ещё написано: «${stale.replace(/^[-*+]\s+/, '').replace(/[.\s]+$/, '').slice(0, 160)}». Спросите Claude, какой файл решает, с каким кодом завершается linkcheck, сами откройте эту строку и напишите, что делает код.`;
+    if (stale) return `В заметке всё ещё написано: «${stale.replace(/^[-*+]\s+/, '').replace(/[.\s]+$/, '').slice(0, 160)}». Спросите Claude, какой файл решает, с каким кодом завершается linkcheck; сами откройте строку и опишите, что делает код.`;
     if (!exits.some((claim) => exitClaim(claim) === 'right')) return 'Ни одна строка заметки не говорит, с каким кодом завершается linkcheck при битой ссылке. Откройте строку, которую для этого указал Claude, и впишите этот код в утверждение: от него зависит CI.';
     return true;
   },
