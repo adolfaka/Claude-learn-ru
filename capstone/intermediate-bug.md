@@ -1,12 +1,12 @@
-# Bug: a malformed percent escape crashes linkcheck
+# Ошибка: неверная percent-последовательность роняет linkcheck
 
-A teammate copied `[broken](bad%.md)` into a Markdown file. Running linkcheck on its folder throws `URIError: URI malformed`, so the remaining links are never checked.
+Коллега скопировал `[broken](bad%.md)` в Markdown-файл. Запуск linkcheck для этой папки выбрасывает `URIError: URI malformed`, и остальные ссылки так и не проверяются.
 
-Reproduce this outside `samples/`, then fix the checker:
+Воспроизведите это вне `samples/`, затем исправьте проверку:
 
-- Malformed percent escapes are broken links; valid percent-encoded paths must still resolve.
-- Report malformed targets with the same file, line and target fields as other broken links, then continue checking later links.
-- A folder containing broken links exits with code 1. A folder whose links all resolve exits with code 0.
-- Keep the existing sample fixtures unchanged.
+- Неверные percent-последовательности — это битые ссылки; корректно закодированные пути должны по-прежнему находиться.
+- Сообщайте о неверных адресах с теми же полями файла, строки и адреса, что и для других битых ссылок, затем продолжайте проверять следующие ссылки.
+- Папка с битыми ссылками завершается с кодом 1. Папка, где все ссылки находятся, завершается с кодом 0.
+- Не меняйте существующие файлы образцов.
 
-Add a regression test that fails before the repair and passes after it. Cover a malformed escape, a valid encoded filename and a later broken link so a catch that simply stops the scan cannot pass. Don't commit until the fix has been reviewed; then commit the source fix and its regression test together.
+Добавьте регрессионный тест, который падает до исправления и проходит после него. Охватите неверную последовательность, корректно закодированное имя файла и битую ссылку после них, чтобы не прошёл `catch`, который просто останавливает проверку. Не коммитьте, пока исправление не прошло ревью; затем закоммитьте исправление кода вместе с его регрессионным тестом.

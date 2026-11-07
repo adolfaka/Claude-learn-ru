@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { committedMode, editWriteScripts, missingJq } from '../hooks.mjs';
 
-export const title = 'Enforce a rule with a hook';
+export const title = 'Закрепляем правило с помощью hook';
 
 const HOOK = '.claude/hooks/protect-files.sh';
 const GATE = '.claude/hooks/test-gate.sh';
@@ -86,57 +86,57 @@ function runGateScript(repo, { testsPass, retried, missingFile = false }) {
 
 export const items = [
   {
-    text: '`.claude/hooks/protect-files.sh` and `.claude/hooks/test-gate.sh` are committed and executable',
+    text: '`.claude/hooks/protect-files.sh` и `.claude/hooks/test-gate.sh` закоммичены и исполняемые',
     check(repo) {
       for (const path of [HOOK, GATE]) {
         const mode = committedMode(repo, path);
-        if (mode === null) return repo.exists(path) ? `${path} is not committed. Run \`git add ${path}\` and commit it.` : `There is no ${path}. Save it as the lesson shows, then commit it.`;
-        if (mode !== '100755') return `${path} isn't executable. Run \`chmod +x ${path}\`, then stage it and commit.`;
+        if (mode === null) return repo.exists(path) ? `${path} не закоммичен. Выполните \`git add ${path}\` и закоммитьте.` : `Файла ${path} нет. Сохраните его, как показано в уроке, затем закоммитьте.`;
+        if (mode !== '100755') return `${path} не исполняемый. Выполните \`chmod +x ${path}\`, затем добавьте его в индекс и закоммитьте.`;
       }
       return true;
     },
   },
   {
-    text: 'the committed `.claude/settings.json` runs protect-files.sh as a `PreToolUse` hook for Edit and Write, with `"onFailure": "block"`',
+    text: 'закоммиченный `.claude/settings.json` запускает protect-files.sh как hook `PreToolUse` для Edit и Write с `"onFailure": "block"`',
     check(repo) {
       const { missing, error, value } = committedSettings(repo);
-      if (missing) return `There is no committed ${SETTINGS}. Add the hooks block from the lesson and commit it.`;
-      if (error) return `The committed ${SETTINGS} is not valid JSON: ${error}`;
-      if (!editWriteScripts(value).includes(HOOK)) return `${SETTINGS} doesn't run protect-files.sh as a PreToolUse hook for Edit and Write. Use \`"matcher": "Edit|Write"\`.`;
+      if (missing) return `Закоммиченного ${SETTINGS} нет. Добавьте блок hooks из урока и закоммитьте его.`;
+      if (error) return `Закоммиченный ${SETTINGS} — некорректный JSON: ${error}`;
+      if (!editWriteScripts(value).includes(HOOK)) return `${SETTINGS} не запускает protect-files.sh как hook PreToolUse для Edit и Write. Используйте \`"matcher": "Edit|Write"\`.`;
       // The same scripts, counting only the hook entries that fail closed.
       const groups = value.hooks.PreToolUse.map((g) => ({ ...g, hooks: (g?.hooks ?? []).filter((h) => h?.onFailure === 'block') }));
-      return editWriteScripts({ hooks: { PreToolUse: groups } }).includes(HOOK) ? true : 'Add `"onFailure": "block"` to the protect-files.sh hook, so a hook that can\'t start or crashes blocks the edit instead of letting it through.';
+      return editWriteScripts({ hooks: { PreToolUse: groups } }).includes(HOOK) ? true : 'Добавьте `"onFailure": "block"` в hook protect-files.sh, чтобы hook, который не смог запуститься или упал, блокировал правку, а не пропускал её.';
     },
   },
   {
-    text: 'the committed test gate exits 2 with a reason while the tests fail, and 0 once they pass or after one retry',
+    text: 'закоммиченный заслон тестов завершается с кодом 2 и причиной, пока тесты падают, и с кодом 0, когда они проходят или после одной повторной попытки',
     check(repo) {
       const failing = runGateScript(repo, { testsPass: false, retried: false });
-      if (failing === null) return `Commit ${GATE}: the check runs the committed gate, the one your teammates get.`;
-      if (failing.error) return `The gate couldn't run: ${failing.error.message}`;
-      if (missingJq(failing)) return 'The gate needs `jq`, which isn\'t installed. Install it and run the check again.';
-      if (!failing.ranTests) return 'The gate ran no test command the check can stand in for. Run your test command by name, such as `npm test` or `pytest`.';
-      if (failing.status !== 2) return `While the tests fail, the gate exits ${failing.status}, so Claude stops anyway. Exit 2 when the test command fails.`;
-      if (!failing.stderr.trim()) return 'The gate blocks without a reason on stderr. Print why to stderr, so Claude knows what to fix.';
+      if (failing === null) return `Закоммитьте ${GATE}: проверка запускает закоммиченный заслон — тот, который получат ваши коллеги.`;
+      if (failing.error) return `Заслон не удалось запустить: ${failing.error.message}`;
+      if (missingJq(failing)) return 'Заслону нужен `jq`, а он не установлен. Установите его и запустите проверку снова.';
+      if (!failing.ranTests) return 'Заслон не запустил ни одной команды тестов, которую проверка может подменить. Запускайте команду тестов по имени, например `npm test` или `pytest`.';
+      if (failing.status !== 2) return `Пока тесты падают, заслон завершается с кодом ${failing.status}, и Claude всё равно останавливается. Завершайтесь с кодом 2, если команда тестов упала.`;
+      if (!failing.stderr.trim()) return 'Заслон блокирует без причины в stderr. Выводите причину в stderr, чтобы Claude знал, что исправить.';
       const passing = runGateScript(repo, { testsPass: true, retried: false });
-      if (passing.status !== 0) return `With the tests passing, the gate exits ${passing.status}. Exit 0 then, so Claude can stop.`;
+      if (passing.status !== 0) return `Когда тесты проходят, заслон завершается с кодом ${passing.status}. В этом случае завершайтесь с кодом 0, чтобы Claude мог остановиться.`;
       const retried = runGateScript(repo, { testsPass: false, retried: true });
-      if (retried.status !== 0) return 'With `stop_hook_active` true, the gate still blocks. Exit 0 then, so a failure Claude can\'t fix doesn\'t keep it working.';
+      if (retried.status !== 0) return 'При `stop_hook_active`, равном true, заслон всё равно блокирует. В этом случае завершайтесь с кодом 0, чтобы сбой, который Claude не может исправить, не держал его в работе.';
       const missing = runGateScript(repo, { testsPass: false, retried: false, missingFile: true });
-      if (missing.status !== 2) return `While the tests fail, the gate exits ${missing.status}, so Claude stops anyway. Exit 2 when the test command fails.`;
-      if (!missing.stdout.trim() && /no such file or directory/i.test(missing.stderr)) return 'A failing test\'s missing-file error reaches the gate\'s stderr with nothing on stdout, so Claude can still stop. Run `npm test 2>&1` and print only your reason to stderr.';
+      if (missing.status !== 2) return `Пока тесты падают, заслон завершается с кодом ${missing.status}, и Claude всё равно останавливается. Завершайтесь с кодом 2, если команда тестов упала.`;
+      if (!missing.stdout.trim() && /no such file or directory/i.test(missing.stderr)) return 'Ошибка падающего теста об отсутствующем файле попадает в stderr заслона, а в stdout пусто, поэтому Claude всё же может остановиться. Запускайте `npm test 2>&1` и выводите в stderr только свою причину.';
       return true;
     },
   },
   {
-    text: 'the committed `.claude/settings.json` runs test-gate.sh as a `Stop` hook',
+    text: 'закоммиченный `.claude/settings.json` запускает test-gate.sh как hook `Stop`',
     check(repo) {
       const { missing, error, value } = committedSettings(repo);
-      if (missing) return `There is no committed ${SETTINGS}. Add the Stop hook from the lesson and commit it.`;
-      if (error) return `The committed ${SETTINGS} is not valid JSON: ${error}`;
+      if (missing) return `Закоммиченного ${SETTINGS} нет. Добавьте hook Stop из урока и закоммитьте его.`;
+      if (error) return `Закоммиченный ${SETTINGS} — некорректный JSON: ${error}`;
       // A Stop hook takes no matcher: read its groups as matching every tool.
       const stop = Array.isArray(value?.hooks?.Stop) ? value.hooks.Stop.map((g) => ({ ...g, matcher: '' })) : [];
-      return editWriteScripts({ hooks: { PreToolUse: stop } }).includes(GATE) ? true : `${SETTINGS} doesn't run test-gate.sh as a \`Stop\` hook. Add it under \`hooks.Stop\`, as the lesson shows.`;
+      return editWriteScripts({ hooks: { PreToolUse: stop } }).includes(GATE) ? true : `${SETTINGS} не запускает test-gate.sh как hook \`Stop\`. Добавьте его в \`hooks.Stop\`, как показано в уроке.`;
     },
   },
 ];

@@ -18,7 +18,7 @@ import { items as mcp } from './i-7.mjs';
 import { items as plugins } from './i-8.mjs';
 import { testsPass, nothingUncommitted } from './b-3.mjs';
 
-export const title = 'Intermediate capstone';
+export const title = 'Итоговый проект среднего уровня';
 
 // Tools that only read code, as lesson 6 narrows them.
 const READ_ONLY = new Set(['Read', 'Grep', 'Glob', 'LSP']);
@@ -46,14 +46,14 @@ const words = (text) => String(text ?? '').split(/\s+/).filter((w) => w && w !==
 const LINKCHECK = /npm run linkcheck|src\/cli\.js/;
 
 const skill = {
-  text: 'a committed project skill that runs the link checker by name and can load on its own',
+  text: 'закоммиченный skill проекта запускает проверку ссылок, вызывается по имени и может загружаться сам',
   check(repo) {
     const ok = committedFiles(repo, '.claude/skills', '/SKILL.md').some((path) => {
       const file = committedFile(repo, path);
       const f = file?.fields;
       return f && LINKCHECK.test(file.body) && words(f.description) >= 8 && String(f['disable-model-invocation']) !== 'true' && String(f['user-invocable']) !== 'false';
     });
-    return ok ? true : 'Commit a skill in `.claude/skills/<name>/SKILL.md` whose body runs the link checker (`npm run linkcheck -- <folder>`), with a description of what it does and when to use it, and no `disable-model-invocation: true` (lesson 1).';
+    return ok ? true : 'Закоммитьте skill в `.claude/skills/<name>/SKILL.md`, текст которого запускает проверку ссылок (`npm run linkcheck -- <folder>`), с описанием того, что он делает и когда его использовать, и без `disable-model-invocation: true` (урок 1).';
   },
 };
 
@@ -68,22 +68,22 @@ function reviewers(repo) {
 }
 
 const reviewer = {
-  text: 'a committed reviewer subagent with only tools that read code',
+  text: 'закоммиченный субагент-ревьюер, у которого есть только инструменты для чтения кода',
   check(repo) {
-    return reviewers(repo).length ? true : 'Commit a reviewer in `.claude/agents/`: a subagent whose name or description says it reviews changes, with a `tools` list of tools that only read code, such as `Read, Grep, Glob`, as in lesson 6.';
+    return reviewers(repo).length ? true : 'Закоммитьте ревьюера в `.claude/agents/`: субагента, в имени или описании которого сказано, что он проверяет изменения, со списком `tools` только из инструментов для чтения кода, например `Read, Grep, Glob`, как в уроке 6.';
   },
 };
 
 // The review the bug fix gets, logged by the capstone's copy of lesson 6's
 // SubagentStart hook.
 const delegated = {
-  text: '`.practice/i-capstone-agents.txt` shows Claude delegating to the committed reviewer',
+  text: '`.practice/i-capstone-agents.txt` показывает, что Claude передал работу закоммиченному ревьюеру',
   local: true,
   check(repo) {
     const log = repo.read('.practice/i-capstone-agents.txt');
-    if (log === null) return 'There is no delegation log. Start a session with `claude --settings .practice/i-capstone-hook.json`, the hook file the capstone gives, and have your reviewer review the fix.';
+    if (log === null) return 'Журнала делегирования нет. Запустите сессию командой `claude --settings .practice/i-capstone-hook.json` (файл hook из итогового проекта) и поручите своему ревьюеру проверить исправление.';
     const ran = log.split(/\r?\n/).map((l) => l.trim());
-    return reviewers(repo).some((name) => ran.includes(name)) ? true : 'The log names no committed reviewer. In a session started with the hook file, ask Claude to have your reviewer review the fix.';
+    return reviewers(repo).some((name) => ran.includes(name)) ? true : 'В журнале нет ни одного закоммиченного ревьюера. В сессии, запущенной с файлом hook, попросите Claude поручить своему ревьюеру проверить исправление.';
   },
 };
 
@@ -101,38 +101,38 @@ function committedSettings(repo) {
 const SAMPLES_DENY = /^Edit\((?:\.\/|\/|\*\*\/)?samples\/(?:\*\*)?\)$/;
 
 const hook = {
-  text: 'Claude\'s file-editing tools can\'t change `samples/` but can edit the rest: a committed `Edit` deny rule, or a fail-closed `PreToolUse` hook',
+  text: 'инструменты Claude для правки файлов не могут менять `samples/`, но могут править остальное: закоммиченное правило deny для `Edit` или hook `PreToolUse`, который при сбое блокирует правку',
   check(repo) {
     const settings = committedSettings(repo);
     if ((settings?.permissions?.deny ?? []).some((rule) => SAMPLES_DENY.test(rule))) return true;
     const scripts = editWriteScripts(settings).filter((s) => committedMode(repo, s) === '100755');
-    if (!scripts.length) return 'Keep Claude out of samples/: commit an `Edit` deny rule such as `Edit(./samples/**)` in `.claude/settings.json`, as in lesson 4, or an executable `PreToolUse` hook for `Edit|Write`, as in lesson 5.';
+    if (!scripts.length) return 'Не пускайте Claude в samples/: закоммитьте правило deny для `Edit`, например `Edit(./samples/**)`, в `.claude/settings.json`, как в уроке 4, или исполняемый hook `PreToolUse` для `Edit|Write`, как в уроке 5.';
     const samples = scripts.map((s) => runCommitted(repo, s, 'samples/guide.md'));
     const source = scripts.flatMap((s) => [runCommitted(repo, s, 'src/cli.js'), runCommitted(repo, s, 'src/samples.js')]);
-    if ([...samples, ...source].some(missingJq)) return 'A hook needs `jq`, which isn\'t installed. Install it and run the check again.';
+    if ([...samples, ...source].some(missingJq)) return 'Hook нужен `jq`, а он не установлен. Установите его и запустите проверку снова.';
     const blocking = scripts.filter((_, i) => samples[i]?.status === 2);
-    if (!blocking.length) return 'No Edit|Write hook exits with 2 for `samples/guide.md`, so Claude can still edit samples/.';
-    if (!source.every((r) => r?.status === 0)) return 'An Edit|Write hook also blocks `src/cli.js` or `src/samples.js`: block the samples/ folder only.';
+    if (!blocking.length) return 'Ни один hook Edit|Write не завершается с кодом 2 для `samples/guide.md`, поэтому Claude всё ещё может править samples/.';
+    if (!source.every((r) => r?.status === 0)) return 'Hook Edit|Write блокирует ещё и `src/cli.js` или `src/samples.js`: блокируйте только папку samples/.';
     // The same scripts, counting only the hook entries that fail closed.
     const groups = settings.hooks.PreToolUse.map((g) => ({ ...g, hooks: (g?.hooks ?? []).filter((h) => h?.onFailure === 'block') }));
     const closed = editWriteScripts({ hooks: { PreToolUse: groups } });
-    return blocking.some((s) => closed.includes(s)) ? true : 'Add `"onFailure": "block"` to the hook that protects samples/, as in lesson 5, so a hook that can\'t run blocks the edit instead of letting it through.';
+    return blocking.some((s) => closed.includes(s)) ? true : 'Добавьте `"onFailure": "block"` в hook, который защищает samples/, как в уроке 5, чтобы hook, который не смог запуститься, блокировал правку, а не пропускал её.';
   },
 };
 
 // The brief puts the sandbox in the team's committed settings.
 const sandbox = {
-  text: 'the committed `.claude/settings.json` turns the sandbox on, and `.claude/settings.local.json` stays out of git',
+  text: 'закоммиченный `.claude/settings.json` включает песочницу, а `.claude/settings.local.json` не попадает в git',
   check(repo) {
-    if (repo.git('ls-files', '--', '.claude/settings.local.json')) return '.claude/settings.local.json is committed, but it holds your own settings. Run `git rm --cached .claude/settings.local.json`, commit, and add it to `.gitignore`.';
-    return committedSettings(repo)?.sandbox?.enabled === true ? true : 'The committed .claude/settings.json doesn\'t turn the sandbox on. Add `"sandbox": {"enabled": true}` to it and commit: `/sandbox` saves to your local file, which teammates don\'t get.';
+    if (repo.git('ls-files', '--', '.claude/settings.local.json')) return '.claude/settings.local.json закоммичен, но в нём ваши личные настройки. Выполните `git rm --cached .claude/settings.local.json`, закоммитьте и добавьте файл в `.gitignore`.';
+    return committedSettings(repo)?.sandbox?.enabled === true ? true : 'Закоммиченный .claude/settings.json не включает песочницу. Добавьте в него `"sandbox": {"enabled": true}` и закоммитьте: `/sandbox` сохраняет настройку в ваш локальный файл, которого у коллег нет.';
   },
 };
 
 // Run the committed CLI in a disposable local copy. A working-tree-only fix
 // must not satisfy the handoff that the teammate receives from git.
 const bugFix = {
-  text: 'the committed CLI reports malformed percent escapes as broken links and still resolves valid encoded paths',
+  text: 'закоммиченный CLI сообщает о неверных percent-последовательностях как о битых ссылках и по-прежнему находит корректно закодированные пути',
   check(repo) {
     let sources;
     try {
@@ -140,7 +140,7 @@ const bugFix = {
       if (!paths.includes('src/cli.js')) throw new Error('missing CLI');
       sources = paths.map(path => [path, repo.gitLocal('show', `HEAD:${path}`)]);
     } catch {
-      return 'Commit the CLI source for the malformed percent fix. See capstone/intermediate-bug.md.';
+      return 'Закоммитьте исходный код CLI с исправлением неверных percent-последовательностей. См. capstone/intermediate-bug.md.';
     }
     const dir = mkdtempSync(join(tmpdir(), 'intermediate-bug-'));
     try {
@@ -159,11 +159,11 @@ const bugFix = {
       for (const example of cases) {
         writeFileSync(join(fixture, 'guide.md'), example.markdown);
         const run = spawnSync(process.execPath, [join(dir, 'src', 'cli.js'), fixture], { cwd: dir, encoding: 'utf8', timeout: 5_000, maxBuffer: 128 * 1024 });
-        if (run.error) return `The committed CLI could not run (${run.error.code}). Fix the malformed percent case without hanging.`;
+        if (run.error) return `Закоммиченный CLI не смог отработать (${run.error.code}). Исправьте случай с неверной percent-последовательностью так, чтобы программа не зависала.`;
         const report = run.stdout.split(/\r?\n/).filter(line => line.includes(': broken link to '));
         if (run.status !== example.status || run.stderr.trim() || report.length !== example.targets.length ||
           !example.targets.every(target => report.some(line => line.endsWith(`: broken link to ${target}`)))) {
-          return 'The committed CLI mishandles malformed percent links or valid encoded paths. Recheck capstone/intermediate-bug.md.';
+          return 'Закоммиченный CLI неправильно обрабатывает ссылки с неверными percent-последовательностями или корректно закодированные пути. Перечитайте capstone/intermediate-bug.md.';
         }
       }
       return true;
@@ -188,11 +188,11 @@ function asCapstone(item, ...swaps) {
 }
 
 const pinnedServer = asCapstone(mcp[0],
-  ['Save the partial file from the lesson\'s Your turn there.', 'Write the one the capstone asks for there, as in lesson 7.'],
-  ['Add it under `mcpServers`, as in the lesson.', 'Add it under `mcpServers`, as in lesson 7.']);
-const setupPlugin = asCapstone(plugins[0], ['Add the `enabledPlugins` entry from the lesson and commit it.', 'Add the `enabledPlugins` entry the capstone asks for and commit it, as in lesson 8.']);
-const teamRules = asCapstone(scopes[0], ['Save the partial file from the lesson\'s Your turn there.', 'Write the team settings the capstone asks for there, as in lesson 4.']);
-const imports = asCapstone(memory[0], ['Commit the one you organize in this lesson.', 'Commit the one the capstone asks for, as in lesson 2.']);
+  ['Сохраните туда заготовку из раздела «Ваша очередь» урока.', 'Напишите туда тот, о котором просит итоговый проект, как в уроке 7.'],
+  ['Добавьте его в `mcpServers`, как в уроке.', 'Добавьте его в `mcpServers`, как в уроке 7.']);
+const setupPlugin = asCapstone(plugins[0], ['Добавьте запись `enabledPlugins` из урока и закоммитьте.', 'Добавьте запись `enabledPlugins`, о которой просит итоговый проект, и закоммитьте, как в уроке 8.']);
+const teamRules = asCapstone(scopes[0], ['Сохраните туда заготовку файла из раздела «Ваша очередь».', 'Напишите туда настройки команды, о которых просит итоговый проект, как в уроке 4.']);
+const imports = asCapstone(memory[0], ['Закоммитьте тот, который вы приводите в порядок в этом уроке.', 'Закоммитьте тот, о котором просит итоговый проект, как в уроке 2.']);
 
 // The items that start a process keep their places, 1, 9 and 11, which the
 // app's list of slow items names.

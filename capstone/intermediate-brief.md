@@ -1,22 +1,22 @@
-# Brief: get linkcheck ready for a new teammate
+# Задание: подготовить linkcheck для нового коллеги
 
-**From:** the team lead
+**От:** руководителя команды
 
-A new teammate starts Monday with only what's in git: commit a setup that works like ours. Each need says what goes wrong today; you choose how to solve it.
+В понедельник выходит новый коллега, у которого будет только то, что есть в git: закоммитьте настройку, которая работает так же, как у нас. В каждой потребности сказано, что сегодня идёт не так; как это решить, выбираете вы.
 
-## What we need
+## Что нам нужно
 
-1. **Team boundaries.** Claude must never read `.env` files. It may run `npm test` without asking, but a person approves a `git push` before it runs, even in auto mode. Shell commands run in the sandbox for everyone, not only for whoever ran `/sandbox`.
-2. **`samples/` must not change.** The tests depend on the exact files there, including the link that's broken on purpose, and last week a session edited one. Claude's file-editing tools must not be able to change them, while Claude can still edit everything else. If the protection runs a script, a script that can't run must still block the edit.
-3. **Memory that stays short.** Claude should know the npm scripts without anyone pasting them, and our testing conventions should load only when Claude works on the files under `test/`.
-4. **A job we repeat.** We keep asking Claude to run the link checker on a folder and explain each broken link. Anyone should be able to start it by name, and Claude should pick it up on its own when someone asks to check links.
-5. **A second opinion that can't change anything.** Before we commit, we want each change reviewed by something that can only read the code.
-6. **The docs in a browser.** Claude should open the docs in a browser through Chrome DevTools MCP, which we reviewed at one version. Everyone runs that version, and nothing leaves our machines that doesn't need to: usage statistics, CrUX lookups and update checks stay off.
-7. **One official plugin.** Everyone in the repository gets `claude-code-setup` from the official marketplace.
+1. **Границы команды.** Claude никогда не должен читать файлы `.env`. Он может запускать `npm test` без вопросов, но `git push` одобряет человек до его запуска, даже в auto mode. Команды оболочки работают в песочнице у всех, а не только у того, кто выполнил `/sandbox`.
+2. **`samples/` не должна меняться.** Тесты зависят именно от этих файлов, включая намеренно битую ссылку, а на прошлой неделе одна сессия правила один из них. Инструменты Claude для правки файлов не должны иметь возможности их менять, а всё остальное Claude по-прежнему должен мочь править. Если защита запускает скрипт, правка должна блокироваться и тогда, когда скрипт не может запуститься.
+3. **Короткая память.** Claude должен знать скрипты npm, чтобы никому не приходилось их вставлять, а наши соглашения о тестировании должны загружаться, только когда Claude работает с файлами в `test/`.
+4. **Повторяющаяся работа.** Мы то и дело просим Claude запустить проверку ссылок для папки и объяснить каждую битую ссылку. Любой должен иметь возможность запустить это по имени, а Claude должен подхватывать это сам, когда кто-то просит проверить ссылки.
+5. **Второе мнение, которое ничего не может изменить.** Перед коммитом мы хотим, чтобы каждое изменение проверял кто-то, кто может только читать код.
+6. **Документация в браузере.** Claude должен открывать документацию в браузере через Chrome DevTools MCP, который мы проверили в одной версии. У всех запускается именно эта версия, и с наших машин не уходит ничего лишнего: статистика использования, обращения к CrUX и проверка обновлений остаются выключенными.
+7. **Один официальный плагин.** Все в репозитории получают `claude-code-setup` из официального marketplace.
 
-8. **A real bug, fixed with your setup.** Reproduce the malformed-percent crash in `capstone/intermediate-bug.md` with your link-check workflow, fix it while `samples/` stays protected, add a regression test, and have your reviewer review the fix before you commit the source fix and its regression test together. Log that review as the capstone page shows.
+8. **Настоящая ошибка, исправленная вашей настройкой.** Воспроизведите падение из-за неверной percent-последовательности из `capstone/intermediate-bug.md` своим workflow проверки ссылок, исправьте его, пока `samples/` остаётся под защитой, добавьте регрессионный тест и поручите своему ревьюеру проверить исправление, прежде чем закоммитить исправление кода вместе с его регрессионным тестом. Запишите это ревью в журнал, как показано на странице итогового проекта.
 
-## Done when
+## Готово, когда
 
-- `npm test` passes and nothing is left uncommitted.
-- `npm run check -- i-capstone` passes.
+- `npm test` проходит и ничего не осталось незакоммиченным.
+- `npm run check -- i-capstone` проходит.
