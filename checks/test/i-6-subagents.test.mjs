@@ -26,7 +26,7 @@ for (const [words, accepted] of [
       write(dir, { '.practice/i-6-agents.txt': 'test-gaps\n' });
       const result = check(['i-6', '--dir', dir]);
       assert.equal(result.code, accepted ? 0 : 1, result.out);
-      if (!accepted) assert.match(result.out, /Write a description of a sentence or two/);
+      if (!accepted) assert.match(result.out, /Напишите описание в одно-два предложения/);
     });
   });
 }

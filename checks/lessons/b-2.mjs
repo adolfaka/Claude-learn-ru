@@ -64,7 +64,7 @@ export const items = [
       // keeps step 7's "or No" so it never says to approve every request,
       // and stays five lines in a 60x20 hint box so the card keeps its Goal
       // and border.
-      if (!statusPaths(after).length) return '`.practice/b-2-after.txt` пока не содержит изменённых файлов. Одобрите проверенный план; если Claude Code спрашивает, читайте каждый запрос: простое Yes или No, если он делает больше, чем нужно плану. Когда `git status` покажет изменения, сохраните снова.';
+      if (!statusPaths(after).length) return '`.practice/b-2-after.txt` пока не содержит изменённых файлов. Одобрите проверенный план; если Claude Code спрашивает, читайте каждый запрос: Yes, если он в рамках плана, иначе No. Когда `git status` покажет изменения, сохраните снова.';
       const planned = planPaths(plan, repo.dir);
       const extra = statusPaths(after).filter((path) => !inPlan(planned, path));
       if (extra.length) return `Изменены, но не указаны в плане: ${extra.join(', ')}. Сравните одобренный план с тем, что изменил Claude.`;

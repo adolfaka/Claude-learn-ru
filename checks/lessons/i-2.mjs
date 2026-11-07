@@ -8,7 +8,7 @@ import { isAbsolute, posix } from 'node:path';
 import { homedir } from 'node:os';
 import { frontmatter } from '../frontmatter.mjs';
 
-export const title = 'Организуем память проекта и смотрим, что загрузилось';
+export const title = 'Организуем память и смотрим, что загрузилось';
 
 const START = 'Запустите сессию с файлом hook из урока: `claude --settings .practice/i-2-hook.json`';
 

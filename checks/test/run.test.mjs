@@ -61,8 +61,8 @@ test('b-1 refuses another repository without the exercise note', () => {
   try {
     const { code, out } = check(['b-1', '--dir', dir], versionEnv(dir));
     assert.equal(code, 1, out);
-    assert.match(out, /Your turn uses the note in your practice copy/);
-    assert.match(out, /without `--dir`/);
+    assert.match(out, /в «Вашей очереди» используется заметка из учебной копии/);
+    assert.match(out, /без `--dir`/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -71,7 +71,7 @@ test('b-1 does not let a saved version hide a missing executable', () => {
   try {
     const { code, out } = check(['b-1', '--dir', dir], { PATH: '' });
     assert.equal(code, 1, out);
-    assert.match(out, /couldn't find `claude`/);
+    assert.match(out, /Проверка не нашла `claude`/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -81,7 +81,7 @@ test('b-1 rejects empty, malformed and unsuccessful version output', () => {
     for (const [output, exit] of [['', 0], ['command not found: claude\n', 0], ['2.1.292 (Claude Code)\n', 1]]) {
       const { code, out } = check(['b-1', '--dir', dir], versionEnv(dir, output, exit));
       assert.equal(code, 1, out);
-      assert.match(out, /not a line such as/);
+      assert.match(out, /а не строку вида/);
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -91,7 +91,7 @@ test('b-1 still fails when the note gives broken links a successful exit code', 
   try {
     const { code, out } = check(['b-1', '--dir', dir], versionEnv(dir));
     assert.equal(code, 1, out);
-    assert.match(out, /The note still says/);
+    assert.match(out, /В заметке всё ещё написано/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -100,7 +100,7 @@ test('the progress summary never fails and marks saved-state items as checked lo
   try {
     const { code, out } = check(['all', '--summary', '--dir', dir], { GITHUB_ACTIONS: 'true' });
     assert.equal(code, 0, out);
-    assert.match(out, /\| b-2 \|.*\| checked locally \|/);
+    assert.match(out, /\| b-2 \|.*\| проверено локально \|/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -129,7 +129,7 @@ test('a folder given without --dir is refused, not silently ignored', () => {
   try {
     const { code, out } = check(['b-1', dir]);
     assert.equal(code, 2, out);
-    assert.match(out, /unexpected argument/);
+    assert.match(out, /лишний аргумент/);
     assert.match(out, /node checks\/run\.mjs b-1 --dir/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -233,7 +233,7 @@ test('b-2 fails when files had changed before the plan was approved, and says ho
   try {
     const { code, out } = check(['b-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /before you approved/);
+    assert.match(out, /до того, как вы одобрили план/);
     assert.match(out, /git stash push --include-untracked/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -272,7 +272,7 @@ test('b-2 fails for a new folder when the plan names nothing inside it', () => {
   try {
     const { code, out } = check(['b-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /not in the plan: notes\//);
+    assert.match(out, /не указаны в плане: notes\//);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -305,8 +305,8 @@ test('b-2 asks for the after snapshot when it is missing', () => {
   try {
     const { code, out } = check(['b-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /After Claude finishes the edits, run `git status --porcelain > \.practice\/b-2-after\.txt`\./);
-    assert.doesNotMatch(out, /lists no changed file yet/);
+    assert.match(out, /Когда Claude закончит правки, выполните `git status --porcelain > \.practice\/b-2-after\.txt`\./);
+    assert.doesNotMatch(out, /пока не содержит изменённых файлов/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -319,13 +319,13 @@ test('b-2 says the after snapshot lists no changed file yet, and what to do firs
   try {
     const { code, out } = check(['b-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /`\.practice\/b-2-after\.txt` lists no changed file yet\./);
-    assert.match(out, /Approve the plan you reviewed; if Claude Code asks, read each request/);
+    assert.match(out, /`\.practice\/b-2-after\.txt` пока не содержит изменённых файлов\./);
+    assert.match(out, /Одобрите проверенный план; если Claude Code спрашивает, читайте каждый запрос/);
     // Step 7's whole rule: read each request, and No where a command does
     // more than the plan needs, never Yes to every request.
-    assert.match(out, /read each request: plain Yes, or No if it does more than the plan needs\./);
-    assert.match(out, /Once `git status` lists changes, save it again\./);
-    assert.doesNotMatch(out, /After Claude finishes the edits/);
+    assert.match(out, /читайте каждый запрос: Yes, если он в рамках плана, иначе No\./);
+    assert.match(out, /Когда `git status` покажет изменения, сохраните снова\./);
+    assert.doesNotMatch(out, /Когда Claude закончит правки/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -367,7 +367,7 @@ test('b-3 fails when the commit changes no test file, and says to amend it', () 
   try {
     const { code, out } = check(['b-3', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /no test file/);
+    assert.match(out, /не меняет ни одного тестового файла/);
     assert.match(out, /git commit --amend/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -379,8 +379,8 @@ test('b-3 fails when the commit changes only tests, and says to combine it with 
   try {
     const { code, out } = check(['b-3', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /only tests/);
-    assert.match(out, /combine/);
+    assert.match(out, /меняет только тесты/);
+    assert.match(out, /объединить/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -404,8 +404,8 @@ test('b-3 counts test files named the pytest, Java and .NET way', () => {
 test('b-3 checks the changes a merge introduces relative to its first parent', () => {
   for (const [files, expected] of [
     [{ 'src/fix.js': '// fix\n', 'test/fix.test.js': '// test\n' }, true],
-    [{ 'docs.md': 'notes\n' }, /no test file/],
-    [{ 'test/fix.test.js': '// test\n' }, /only tests/],
+    [{ 'docs.md': 'notes\n' }, /не меняет ни одного тестового файла/],
+    [{ 'test/fix.test.js': '// test\n' }, /меняет только тесты/],
   ]) {
     const dir = repo({ 'README.md': 'initial\n' });
     const git = (...args) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd: dir, encoding: 'utf8' }).trim();
@@ -431,7 +431,7 @@ test('b-3 checks the changes a merge introduces relative to its first parent', (
 test('b-3 does not count a file whose name merely ends in "test"', () => {
   const dir = committedRepo({ files: { 'src/Latest.java': 'class Latest {}\n', 'contest.py': 'x = 1\n' } });
   try {
-    assert.match(b3Items[3].check(openRepo(dir)), /no test file/);
+    assert.match(b3Items[3].check(openRepo(dir)), /не меняет ни одного тестового файла/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -455,7 +455,7 @@ test('the shared test-result item reads saved exit codes when no npm test script
   try {
     assert.match(testsPass.check(openRepo(dir)), /\$LASTEXITCODE > \.practice\/b-3-tests\.txt/);
     writeFileSync(saved, 'True\n');
-    assert.match(testsPass.check(openRepo(dir)), /not an exit code/);
+    assert.match(testsPass.check(openRepo(dir)), /а не код выхода/);
     writeFileSync(saved, '0\n');
     assert.equal(testsPass.check(openRepo(dir)), true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -468,7 +468,7 @@ test('b-3 fails when changes are left uncommitted, and says how to set aside new
     writeFileSync(join(dir, 'notes.txt'), 'scratch\n');
     const { code, out } = check(['b-3', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /uncommitted: src\/links\.js/);
+    assert.match(out, /не закоммичены: src\/links\.js/);
     assert.match(out, /git stash push --include-untracked/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -503,7 +503,7 @@ test('b-4 fails when the before snapshot omits the script change', () => {
   try {
     const { code, out } = check(['b-4', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /doesn't list `src\/links\.js`/);
+    assert.match(out, /нет `src\/links\.js`/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -523,8 +523,8 @@ test('b-4 explains why a command change can be restored for a file edited earlie
   try {
     const { code, out } = check(['b-4', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /Claude had already edited/);
-    assert.match(out, /new session/);
+    assert.match(out, /Claude уже правил этот файл/);
+    assert.match(out, /новую сессию/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -563,7 +563,7 @@ test('b-5 fails when CLAUDE.md is not committed', () => {
   try {
     const { code, out } = check(['b-5', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /no committed CLAUDE\.md/i);
+    assert.match(out, /Закоммиченного CLAUDE\.md нет/i);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -574,7 +574,7 @@ test('b-5 explains the header rule when committed memory lacks it', () => {
   try {
     const { code, out } = check(['b-5', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /has no line like/);
+    assert.match(out, /нет строки вроде/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -586,8 +586,8 @@ test('b-5 fails when a new file violates the rule, and asks for a new-session ch
     const { code, out } = check(['b-5', '--dir', dir]);
     assert.equal(code, 1, out);
     assert.match(out, /src\/stats\.js/);
-    assert.match(out, /new session/);
-    assert.match(out, /different new file/);
+    assert.match(out, /новой сессии/);
+    assert.match(out, /другой новый файл/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -599,7 +599,7 @@ test('b-5 says when the new file is there but not committed yet', () => {
     const { code, out } = check(['b-5', '--dir', dir]);
     assert.equal(code, 1, out);
     assert.match(out, /src\/stats\.js/);
-    assert.match(out, /not committed/);
+    assert.match(out, /не закоммичены/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -669,7 +669,7 @@ test('the Beginner capstone fails while the reported bug is still there', () => 
   try {
     const { code, out } = check(['b-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /FAIL .*exit with code 2/);
+    assert.match(out, /FAIL .*завершиться с кодом 2/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -690,8 +690,8 @@ test('the Beginner capstone fails when files had changed before approval, and sa
   try {
     const { code, out } = check(['b-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /before you approved the plan: src\/cli\.js/);
-    assert.match(out, /Commit or stash them/);
+    assert.match(out, /до того, как вы одобрили план: src\/cli\.js/);
+    assert.match(out, /Закоммитьте их или отложите в stash/);
     assert.match(out, /plan mode/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -704,7 +704,7 @@ test('the Beginner capstone fails when the commit changes a file the plan did no
     const { code, out } = check(['b-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
     assert.match(out, /test\/links\.test\.js/);
-    assert.match(out, /add them to `\.practice\/capstone-plan\.txt`/);
+    assert.match(out, /добавьте их в `\.practice\/capstone-plan\.txt`/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -715,8 +715,8 @@ test('the Beginner capstone fails when the test is not in the fix commit, and sa
   try {
     const { code, out } = check(['b-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /no test file/);
-    assert.match(out, /same commit as the fix/);
+    assert.match(out, /не меняет ни одного тестового файла/);
+    assert.match(out, /в том же коммите, что и исправление/);
     assert.match(out, /git rev-parse HEAD > \.practice\/capstone-commit\.txt/);
   } finally {
     rmSync(dir, { recursive: true, force: true });

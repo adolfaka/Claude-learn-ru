@@ -1,26 +1,26 @@
-   B1   Install, sign in and look around                               GUIDED ★☆☆
-  ●━━●━━●──○──○──○──○   ◇──◇──◇   ☆──☆                                step 3 of 12
+   B1   Установка, вход и первый осмотр                             С ПОМОЩЬЮ ★☆☆
+  ●━━●━━●──○──○──○──○   ◇──◇──◇   ☆──☆                                 шаг 3 из 12
   ━━━━━━━━━━━━━───────────────────────────────────────────────────────────────────
 
-  ╭─  💻 in your other terminal  ──────────────────────────────────────── [●‿●] ──
+  ╭─  💻 в другом терминале  ──────────────────────────────────────────── [●‿●] ──
   │
   │  Save the version
-  │  Why: "the version, because features and defaults change between releases;"
+  │  Зачем: "the version, because features and defaults change between releases;"
   │
   │  Go to your practice copy and save that output for the check:
   │
   │   $ cd /home/sam/claude-code-practice
-  │   $ mkdir -p .practice                              ✔ .practice/ exists
+  │   $ mkdir -p .practice                              ✔ .practice/ есть
   │   $ claude --version > .practice/version.txt
   │
-  │  Done when .practice/version.txt holds a line such as X.Y.Z (Claude Code).
+  │  Готово, когда .practice/version.txt holds a line such as X.Y.Z (Claude Code).
   │
-  │  👀 Part of this check takes a while, so it runs only when you ask: press r
-  │  when you are ready.
+  │  👀 Часть этой проверки идёт долго, поэтому она запускается только по вашей
+  │  просьбе: нажмите r, когда будете готовы.
   ╰───────────────────────────────────────────────────────────────────────────────
 
 
 
 
   ────────────────────────────────────────────────────────────────────────────────
-  r check now    w why    m map    ? more    c card    q quit
+  r проверить    w зачем    m карта    ? ещё    c карточка    q выйти

@@ -62,12 +62,12 @@ export const C = {
   levelPath: (level) => `Путь ${levelGen(level)} уровня`,
   pathLabel: (level, done, total) => `${C.levelPath(level)} · пройдено ${done} из ${total}`,
   pathHint: 'каждая остановка чуть сложнее',
-  hi: (name) => `Привет, ${name || 'друг'}! Давайте изучать Claude Code, работая в нём.`,
-  pip1: 'Я Pip. Я слежу за вашей учебной копией и загораюсь',
-  pip2: 'в ту секунду, когда шаг получился.',
+  hi: (name) => `Привет, ${name || 'друг'}! Учимся Claude Code на практике.`,
+  pip1: 'Я Pip. Слежу за вашей учебной копией и загораюсь,',
+  pip2: 'когда шаг получился.',
   // A lesson may use more than one other window (ticket 103), so the
   // welcome promises none in particular.
-  twoWindows: 'Это окно работает рядом с одним или несколькими терминалами:',
+  twoWindows: 'Это окно работает рядом с вашими терминалами:',
   thisWindow: 'это окно',
   thisWindowLines: ['один шаг за раз,', 'проверяет работу'],
   otherWindow: 'ваши терминалы',
@@ -80,7 +80,7 @@ export const C = {
 
   whyLead: 'Зачем:',
   youllBeAble: 'После урока вы сможете',
-  helpShrinks: 'Подсказок меньше всякий раз, когда навык встречается снова:',
+  helpShrinks: 'Подсказок меньше, когда навык встречается снова:',
   tierHelp: TERMS.tierHelp,
   startLesson: (n) => `Начать урок ${n}`,
   startCapstone: 'Начать итоговый проект',
@@ -169,19 +169,19 @@ export const C = {
   // The not-yet line folded under "The check says:", which says why.
   notYetShort: 'Пока нет.',
   pressH: 'Нажмите h, чтобы получить подсказку.',
-  pressHAgain: 'Нажмите h ещё раз, чтобы получить больше подсказок.',
+  pressHAgain: 'Нажмите h ещё раз: будут ещё подсказки.',
   checkSays: 'Проверка говорит:',
   showExact: 'Показать точную команду? y / n',
   // A check that answers the same after the learner redid the step (ticket
   // 192). The app can't see why, so it points earlier, and to the step a
   // lesson's back line names, which e goes back to.
   sameAnswer: 'Вы переделали этот шаг, а проверка отвечает так же, значит, причина, скорее всего, в одном из прошлых шагов.',
-  goBack: (n, title) => `Нажмите e, чтобы вернуться к шагу ${n}: ${title}. Ваши файлы и отметки останутся.`,
+  goBack: (n, title) => `Нажмите e — назад к шагу ${n}: ${title}. Всё сохранится.`,
   // The note's shorter forms, for a window with fewer spare rows: the note
   // takes only the rows the screen has free, so nothing on it moves.
   sameShort: 'Тот же ответ: причина, скорее всего, раньше.',
-  goBackTo: (n, title) => `Нажмите e, чтобы вернуться к шагу ${n}: ${title}.`,
-  sameBack: (n, title) => (title ? `Тот же ответ. Нажмите e, чтобы вернуться к шагу ${n}: ${title}.` : `Тот же ответ. Нажмите e, чтобы вернуться к шагу ${n}.`),
+  goBackTo: (n, title) => `Нажмите e — назад к шагу ${n}: ${title}.`,
+  sameBack: (n, title) => (title ? `Тот же ответ. Нажмите e — назад к шагу ${n}: ${title}.` : `Тот же ответ. Нажмите e — назад к шагу ${n}.`),
   stuckOffer: 'Застряли? Нажмите h, чтобы получить подсказку.',
   broken: (error) => `Проверка не смогла запуститься: ${error}. Ваша работа тут ни при чём. Нажмите r, чтобы повторить.`,
   gitFailAfter: 'Нажмите r, чтобы посмотреть ещё раз.',
@@ -255,12 +255,12 @@ export const C = {
   strayIn: (place) => `Это похоже на команду. Введите её в терминале, ${place}, а не здесь.`,
   // Which folder a line that sends the learner to another terminal means,
   // where the level's work folder isn't the copy (ticket 86).
-  inFolder: (name) => `в папке ${name}`,
+  inFolder: (name) => `в ${name}`,
   inCopy: 'в вашей учебной копии',
   inNewCopy: 'в вашей новой копии',
 
   // Drawn in art.mjs's banner font: only the letters it has.
-  levelUp: 'НОВЫЙ УРОВЕНЬ',
+  levelUp: 'ПОВЫШЕНИЕ',
   toHinted: ['Каждое из этих заданий вы сделали один раз, с показанными командами.', 'Дальше показана цель. Нажмите h, когда понадобится подсказка.'],
   toChallenge: ['Теперь по памяти: только цель.', 'Сначала попробуйте сами, потом нажмите h, если нужна подсказка.'],
   nextCounts: (h, c) => `Впереди: ${[h && `${h} ${pl(h, 'шаг', 'шага', 'шагов')} с подсказками`, c && `${c} ${pl(c, 'испытание', 'испытания', 'испытаний')}`].filter(Boolean).join(' и ')}.`,
@@ -278,13 +278,13 @@ export const C = {
   answeredSummary: (n) => `Отвечено на ${n} ${pl(n, 'вопрос', 'вопроса', 'вопросов')}`,
   yourClimb: 'Ваш путь вверх',
   nextUp: 'Следующий',
-  notchHarder: 'Чуть сложнее: подсказок с самого начала меньше.',
+  notchHarder: 'Чуть сложнее: сразу меньше подсказок.',
   savedBreak: 'Прогресс сохранён, так что можно сделать перерыв. Вернуться: npm run learn.',
   goFurther: 'Дальше:',
 
   map: 'КАРТА',
   help: 'Подсказки:',
-  mapFooter: 'Каждый урок опирается на предыдущие, поэтому начинается с меньшим числом подсказок.',
+  mapFooter: 'Каждый урок начинается с меньшей помощью, чем прошлый.',
   mapDone: 'готово',
   mapNext: 'дальше',
   // A lesson whose Check passed with its Tear down still to do (ticket 102).
@@ -319,7 +319,7 @@ export const C = {
   folderEmpty: 'Пустая строка — эта учебная копия.',
   // The notes name no folder: the header and the Work folder line do, so a
   // long name costs no row.
-  notGit: 'git говорит, что эта рабочая папка — не git-репозиторий. Нажмите f, чтобы выбрать другую папку.',
+  notGit: 'git говорит, что эта рабочая папка не git-репозиторий. Нажмите f, чтобы выбрать другую папку.',
   noPractice: 'Git не игнорирует .practice/ в этой рабочей папке, а уроки хранят там свои файлы: добавьте строку .practice/ в её .git/info/exclude или .gitignore.',
   folderGitBroken: (error) => `git не смог заглянуть в эту рабочую папку: ${error}.`,
   // A new copy given as this practice copy, in the prompt or with --dir.
@@ -408,9 +408,9 @@ export const C = {
     itsOpen: 'открыт', quit: 'выйти', choose: 'выбрать', start: 'начать', map: 'карта', more: 'ещё', checkNow: 'проверить',
     checkAgain: 'ещё раз', moreHelp: 'больше помощи', help: 'помощь', hint: 'подсказка', anotherHint: 'ещё подсказка', why: 'зачем', back: 'назад',
     next: 'дальше', nextTo: (title) => `дальше: ${title}`, answer: 'ответить', showAnswer: 'показать ответ', letsGo: 'поехали',
-    bringIt: 'давайте', whatsNext: 'что дальше', startN: (label) => `начать ${label}`, open: 'открыть',
+    bringIt: 'давайте', whatsNext: 'что дальше', startN: (label) => `начать ${label}`, open: 'урок',
     useIt: 'выбрать', cancel: 'отмена', folder: 'папка', giveFolder: 'указать папку',
-    continue: 'продолжить', startOver: 'заново', yesStartOver: 'да, заново', keep: 'нет, оставить', close: 'закрыть', scroll: 'листать', level: 'уровень', card: 'карточка', yes: 'показать', no: 'пока нет', page: 'страница', clear: 'очистить',
-    copy: 'копировать', earlier: 'прошлый шаг', earlierShort: 'назад', skip: 'пропустить',
+    continue: 'продолжить', startOver: 'заново', yesStartOver: 'да, заново', keep: 'нет, оставить', close: 'закрыть', scroll: 'листать', level: 'ур.', card: 'карточка', yes: 'показать', no: 'пока нет', page: 'страница', clear: 'очистить',
+    copy: 'копия', earlier: 'прошлый шаг', earlierShort: 'назад', skip: 'пропустить',
   },
 };

@@ -601,10 +601,10 @@ test('a file check is done once its file holds a line, and a fresh one once it c
   d.key('r');
   d.send({ type: 'file', path: '.practice/b-2-plan.txt', read: null, stamp: 'B', asked: d.state.beat.asked });
   assert.equal(d.state.beat.status, 'fail');
-  assert.equal(d.state.beat.fail.hint, '.practice/b-2-plan.txt is not there yet.', 'a missing file is not there, not empty (r27 E1)');
+  assert.equal(d.state.beat.fail.hint, C.noFile('.practice/b-2-plan.txt'), 'a missing file is not there, not empty (r27 E1)');
   d.send({ type: 'file', path: '.practice/b-2-plan.txt', read: Buffer.from('src/config.js\nsrc/cli.js\n'), stamp: 'C' });
   assert.equal(d.state.beat.status, 'done');
-  assert.equal(d.state.beat.evidence, 'src/config.js and 1 more line', 'a list shows how long it is');
+  assert.equal(d.state.beat.evidence, C.andMore('src/config.js', 1), 'a list shows how long it is');
 });
 
 test('fresh since: the file is compared with how it was when an earlier step opened', () => {
@@ -2000,12 +2000,12 @@ test('json: done once the file parses and holds the key; the not-yet line names 
   const path = '.claude/settings.json';
   const d = onReading(`json ${path} permissions.deny`);
   assert.deepEqual(watching(d.state), { file: path, dir: FACTS.root });
-  assert.match(tryNow(d, path, null).fail.hint, /\.claude\/settings\.json is not there yet/);
+  assert.match(tryNow(d, path, null).fail.hint, /\.claude\/settings\.json пока нет/);
   const broken = '{"permissions": {"deny": [] ';
   const st = tryNow(d, path, broken);
   assert.equal(st.status, 'fail');
   assert.ok(st.fail.hint.includes(parseError(broken)), st.fail.hint);
-  assert.match(tryNow(d, path, '{"permissions": {"allow": []}}').fail.hint, /\.claude\/settings\.json has no permissions\.deny yet/);
+  assert.match(tryNow(d, path, '{"permissions": {"allow": []}}').fail.hint, /В \.claude\/settings\.json пока нет permissions\.deny\./);
   const done = tryNow(d, path, '{\n  "permissions": {\n    "deny": ["Read(./.env)"]\n  }\n}\n');
   assert.equal(done.status, 'done');
   assert.equal(done.evidence, 'permissions.deny = ["Read(./.env)"]');
@@ -2014,7 +2014,7 @@ test('json: done once the file parses and holds the key; the not-yet line names 
 test('json with a value: done once the key equals it, as text or as JSON; the not-yet line names the key and what it holds', () => {
   const path = '.practice/a-4-run.json';
   const d = onReading(`json ${path} subtype=success`);
-  assert.equal(tryNow(d, path, '{"type": "result", "subtype": "error_max_turns"}').fail.hint, '.practice/a-4-run.json has subtype error_max_turns, not success, yet.');
+  assert.equal(tryNow(d, path, '{"type": "result", "subtype": "error_max_turns"}').fail.hint, C.notValue('.practice/a-4-run.json', 'subtype', 'error_max_turns', 'success'));
   const done = tryNow(d, path, '{"type": "result", "subtype": "success"}');
   assert.equal(done.status, 'done');
   assert.equal(done.evidence, 'subtype = success');
@@ -2062,14 +2062,14 @@ test('fresh match and no-match on a log that only grew: the not-yet line is abou
   const old = 'loaded: CLAUDE.md\n';
   const started = `${old}session started\n`;
   const d = onReading(`match ${LOG} ^loaded: fresh`, { stamps: { 'Y1.0': asRead(old).stamp } });
-  assert.equal(tryNow(d, LOG, started, asRead(started).stamp).fail.hint, '.practice/i-2-loaded.txt has no new line like that yet.');
+  assert.equal(tryNow(d, LOG, started, asRead(started).stamp).fail.hint, C.noNewLine('.practice/i-2-loaded.txt'));
   const no = onReading(`no-match ${LOG} ^loaded: fresh`, { stamps: { 'Y1.0': asRead(old).stamp } });
   no.send({ type: 'file', path: LOG, ...asRead(old) });
   assert.equal(no.state.beat.status, 'waiting', 'nothing added yet');
   assert.equal(tryNow(no, LOG, started, asRead(started).stamp).status, 'done', 'the line from before is not read');
   const again = onReading(`no-match ${LOG} ^loaded: fresh`, { stamps: { 'Y1.0': asRead(started).stamp } });
   const loaded = `${started}loaded: .claude/rules/style.md\n`;
-  assert.equal(tryNow(again, LOG, loaded, asRead(loaded).stamp).fail.hint, '.practice/i-2-loaded.txt still has: loaded: .claude/rules/style.md');
+  assert.equal(tryNow(again, LOG, loaded, asRead(loaded).stamp).fail.hint, C.stillHas('.practice/i-2-loaded.txt', 'loaded: .claude/rules/style.md'));
 });
 
 test('fresh match on a log that was rewritten: the whole file is read', () => {
@@ -2112,7 +2112,7 @@ test('fresh since a step on a log that only grew: what was added since that step
   const plain = onY1('fresh');
   assert.equal(plain.state.beat.status, 'waiting', 'Y1 opened on the grown log: nothing added since');
   const later = `${grown}session ended\n`;
-  assert.equal(tryNow(plain, LOG, later, asRead(later).stamp).fail.hint, '.practice/i-2-loaded.txt has no new line like that yet.');
+  assert.equal(tryNow(plain, LOG, later, asRead(later).stamp).fail.hint, C.noNewLine('.practice/i-2-loaded.txt'));
 });
 
 test('fresh match before its stamp lands: the read that sets the stamp is judged as every later one, and a look that turns done differs', () => {
@@ -2121,7 +2121,7 @@ test('fresh match before its stamp lands: the read that sets the stamp is judged
   const d = onReading(`match ${LOG} ^loaded: fresh`);
   d.send({ type: 'file', path: LOG, ...asRead(old) });
   assert.equal(d.state.beat.status, 'waiting');
-  assert.equal(d.state.beat.baseline, '.practice/i-2-loaded.txt has no new line like that yet.');
+  assert.equal(d.state.beat.baseline, C.noNewLine('.practice/i-2-loaded.txt'));
   const started = `${old}session started\n`;
   d.send({ type: 'file', path: LOG, ...asRead(started) });
   assert.equal(d.state.beat.status, 'waiting', 'a line that does not match is no "not yet"');
@@ -2140,15 +2140,15 @@ test('fresh no-match on a file saved with the same bytes: the line it forbids st
   assert.equal(d.state.beat.status, 'waiting');
   const touched = tryNow(d, path, kept, asRead(kept, 2000).stamp);
   assert.equal(touched.status, 'fail');
-  assert.equal(touched.fail.hint, '.claude/settings.json still has: deny: rm');
+  assert.equal(touched.fail.hint, C.stillHas('.claude/settings.json', 'deny: rm'));
 });
 
 test('match: done once a line matches, front matter included, and the evidence is that line', () => {
   const path = '.claude/skills/tdd/SKILL.md';
   const d = onReading(`match ${path} ^disable-model-invocation: true$`);
   assert.deepEqual(watching(d.state), { file: path, dir: FACTS.root });
-  assert.equal(tryNow(d, path, null).fail.hint, '.claude/skills/tdd/SKILL.md is not there yet.');
-  assert.equal(tryNow(d, path, '---\nname: tdd\n---\n\nWrite the test first.\n').fail.hint, '.claude/skills/tdd/SKILL.md has no line like that yet.');
+  assert.equal(tryNow(d, path, null).fail.hint, C.noFile('.claude/skills/tdd/SKILL.md'));
+  assert.equal(tryNow(d, path, '---\nname: tdd\n---\n\nWrite the test first.\n').fail.hint, C.noLine('.claude/skills/tdd/SKILL.md'));
   const done = tryNow(d, path, '---\nname: tdd\r\ndisable-model-invocation: true\r\n---\n\nWrite the test first.\n');
   assert.equal(done.status, 'done');
   assert.equal(done.evidence, 'disable-model-invocation: true');
@@ -2157,8 +2157,8 @@ test('match: done once a line matches, front matter included, and the evidence i
 test('no-match: done once the file is there and no line matches; the not-yet line names the line that does', () => {
   const path = '.claude/skills/tdd/SKILL.md';
   const d = onReading(`no-match ${path} \\bTODO\\b`);
-  assert.equal(tryNow(d, path, null).fail.hint, '.claude/skills/tdd/SKILL.md is not there yet.', 'a missing file is not done');
-  assert.equal(tryNow(d, path, '---\nname: tdd\n---\n\n  - TODO: write the steps\n').fail.hint, '.claude/skills/tdd/SKILL.md still has: - TODO: write the steps');
+  assert.equal(tryNow(d, path, null).fail.hint, C.noFile('.claude/skills/tdd/SKILL.md'), 'a missing file is not done');
+  assert.equal(tryNow(d, path, '---\nname: tdd\n---\n\n  - TODO: write the steps\n').fail.hint, C.stillHas('.claude/skills/tdd/SKILL.md', '- TODO: write the steps'));
   assert.equal(tryNow(d, path, '---\nname: tdd\n---\n\nTODOS are words, not a TODO-free line.\n').status, 'fail', 'TODO- still matches \\bTODO\\b');
   assert.equal(tryNow(d, path, '---\nname: tdd\n---\n\nWrite the test first.\n').status, 'done');
 });
@@ -2168,7 +2168,7 @@ test('evidence skips a leading front matter block and lines that are only ---, {
   const file = onReading('file .claude/agents/reviewer.md');
   tryNow(file, '.claude/agents/reviewer.md', null);
   // It shows the first line that says something, and counts every line.
-  assert.equal(tryNow(file, '.claude/agents/reviewer.md', '---\nname: reviewer\n---\nReview the diff.\nThen say what is wrong.\n').evidence, 'Review the diff. and 4 more lines');
+  assert.equal(tryNow(file, '.claude/agents/reviewer.md', '---\nname: reviewer\n---\nReview the diff.\nThen say what is wrong.\n').evidence, C.andMore('Review the diff.', 4));
   // A check beat: the evidence is its evidence file's, as main read it.
   const check = driver({ course: courseWith({ 'b-2': DEMO_B2 }), saved: { format: 1, welcomed: true, lessons: { 'b-1': b1Done, 'b-2': { warm: ['R1', 'R2', 'R3'], done: ['R1', 'R2', 'R3'], step: 'W1', beat: 0 } } } });
   check.key('enter');
@@ -2184,7 +2184,7 @@ test('evidence skips a leading front matter block and lines that are only ---, {
   // With no closing line it is no front matter: only the --- line goes.
   const open = onReading('file notes.md');
   tryNow(open, 'notes.md', null);
-  assert.equal(tryNow(open, 'notes.md', '---\nname: tdd\n').evidence, 'name: tdd and 1 more line');
+  assert.equal(tryNow(open, 'notes.md', '---\nname: tdd\n').evidence, C.andMore('name: tdd', 1));
 });
 
 test('a file beat is done once its file holds any line, front matter or a lone --- included; a file that only opens a block shows that line', () => {
@@ -2193,21 +2193,21 @@ test('a file beat is done once its file holds any line, front matter or a lone -
   tryNow(d, path, null);
   const st = tryNow(d, path, '---\nname: tdd\ndescription: x\n---\n');
   assert.equal(st.status, 'done');
-  assert.equal(st.evidence, 'name: tdd and 3 more lines');
+  assert.equal(st.evidence, C.andMore('name: tdd', 3));
   const lone = onReading('file notes.md');
   tryNow(lone, 'notes.md', null);
   assert.equal(tryNow(lone, 'notes.md', '\n---\n').evidence, '---');
   const blank = onReading('file notes.md');
-  assert.equal(tryNow(blank, 'notes.md', ' \n\n').fail.hint, 'notes.md has no line in it yet.');
+  assert.equal(tryNow(blank, 'notes.md', ' \n\n').fail.hint, C.fileEmpty('notes.md'));
   // A missing file is not there yet, not a file with no line (r27 E1).
   const gone = onReading('file notes.md');
-  assert.equal(tryNow(gone, 'notes.md', null).fail.hint, 'notes.md is not there yet.');
+  assert.equal(tryNow(gone, 'notes.md', null).fail.hint, C.noFile('notes.md'));
 });
 
 test('a json key path follows an array only by its indexes: length is no key of one', () => {
   const path = '.claude/settings.json';
   const d = onReading(`json ${path} permissions.deny.length`);
-  assert.equal(tryNow(d, path, '{"permissions": {"deny": []}}').fail.hint, '.claude/settings.json has no permissions.deny.length yet.');
+  assert.equal(tryNow(d, path, '{"permissions": {"deny": []}}').fail.hint, C.noKey('.claude/settings.json', 'permissions.deny.length'));
   const first = onReading(`json ${path} permissions.deny.0`);
   assert.equal(tryNow(first, path, '{"permissions": {"deny": []}}').status, 'fail');
   assert.equal(tryNow(first, path, '{"permissions": {"deny": ["Read(./.env)"]}}').evidence, 'permissions.deny.0 = Read(./.env)');
@@ -2220,14 +2220,14 @@ test('what the screen shows of a file is one row: no line break, tab or escape s
   // V8's parse error quotes the file, line breaks and all.
   const broken = onReading(`json ${path} permissions.deny`);
   const hint = tryNow(broken, path, 'deny:\n{\n  "permissions": {}\n}\n').fail.hint;
-  assert.match(hint, /^\.claude\/settings\.json does not parse as JSON yet \(/);
+  assert.match(hint, /^\.claude\/settings\.json пока не читается как JSON \(/);
   assert.doesNotMatch(hint, /\p{Cc}/u, hint);
   const value = onReading('json .practice/i-2-hook.json prompt');
   assert.equal(tryNow(value, '.practice/i-2-hook.json', '{"prompt": "line one\\nline two\\tthree"}').evidence, 'prompt = line one line two three');
   const match = onReading('match notes.md TODO');
   assert.equal(tryNow(match, 'notes.md', 'a\tTODO \x1b[31mred\x1b[0m\r\n').evidence, 'a TODO red');
   const no = onReading('no-match notes.md TODO');
-  assert.equal(tryNow(no, 'notes.md', 'TODO \x1b[2J\x07X 🚀 ship 🎉 it\n').fail.hint, 'notes.md still has: TODO X 🚀 ship * it');
+  assert.equal(tryNow(no, 'notes.md', 'TODO \x1b[2J\x07X 🚀 ship 🎉 it\n').fail.hint, C.stillHas('notes.md', 'TODO X 🚀 ship * it'));
   const file = onReading('file notes.md');
   tryNow(file, 'notes.md', null);
   assert.equal(tryNow(file, 'notes.md', '\x1b]8;;https://example.com\x07link\x1b]8;;\x07 text\n').evidence, 'link text');
@@ -2243,7 +2243,7 @@ test('json, match and no-match on a binary file: not yet, and the line names its
     d.key('r');
     d.send({ type: 'file', path, read: png, stamp: 'b', asked: d.state.beat.asked });
     assert.equal(d.state.beat.status, 'fail', verify);
-    assert.equal(d.state.beat.fail.hint, '.practice/i-7-page.png is not a text file yet: it holds a PNG image, 800 x 600.', verify);
+    assert.equal(d.state.beat.fail.hint, C.notText('.practice/i-7-page.png', C.pngImage(800, 600)), verify);
     assert.equal(d.state.beat.evidence ?? null, null, verify);
   }
 });
@@ -2254,17 +2254,17 @@ test('a binary file\'s evidence is its kind and size, never its bytes: a PNG is 
   d.key('r');
   d.send({ type: 'file', path, read: Buffer.concat([PNG, Buffer.alloc(3000, 7)]), stamp: 'b', asked: d.state.beat.asked });
   assert.equal(d.state.beat.status, 'done');
-  assert.equal(d.state.beat.evidence, 'a PNG image, 800 x 600');
+  assert.equal(d.state.beat.evidence, C.pngImage(800, 600));
   const other = onReading('file .practice/blob.bin');
   tryNow(other, '.practice/blob.bin', null);
   other.key('r');
   other.send({ type: 'file', path: '.practice/blob.bin', read: Buffer.concat([Buffer.from('\x00\x01text'), Buffer.alloc(2042, 0)]), stamp: 'b', asked: other.state.beat.asked });
-  assert.equal(other.state.beat.evidence, 'binary data, 2 KB');
+  assert.equal(other.state.beat.evidence, C.binaryData(C.kilobytes(2)));
   // A check's evidence file too.
   const check = driver({ course: courseWith({ 'b-2': DEMO_B2 }), saved: { format: 1, welcomed: true, lessons: { 'b-1': b1Done, 'b-2': { warm: ['R1', 'R2', 'R3'], done: ['R1', 'R2', 'R3'], step: 'W1', beat: 0 } } } });
   check.key('enter');
   check.send({ type: 'check', lesson: 'b-2', items: [{ index: 0, text: 'x', pass: true, hint: '' }], read: Buffer.from('\x00\x00\x00'), path: '.practice/b-2-before.txt' });
-  assert.equal(check.state.beat.evidence, 'binary data, 3 bytes');
+  assert.equal(check.state.beat.evidence, C.binaryData(C.bytes(3)));
 });
 
 test('a Your turn step that json, match or no-match verifies counts as checked: the last one gets a notch less help, as a check step does', () => {
@@ -2338,15 +2338,15 @@ test('git-changed: done once git status lists something under the path; the firs
   d.key('r');
   d.send(gitLists(['README.md'], [], { asked: d.state.beat.asked }));
   assert.equal(d.state.beat.status, 'fail');
-  assert.equal(d.state.beat.fail.hint, 'git status lists no change under src/ yet.');
+  assert.equal(d.state.beat.fail.hint, C.noChangeUnder('src/'));
   d.send(gitLists(['README.md', 'src/config.js', 'src/new/']));
   assert.equal(d.state.beat.status, 'done');
-  assert.equal(d.state.beat.evidence, 'Changed: src/config.js, src/new/');
+  assert.equal(d.state.beat.evidence, C.changedShows('src/config.js, src/new/'));
   // A change there already when the step opens counts, as a check that already passes does.
   const already = onReading('git-changed src');
   already.send(gitLists(['src/a.js', 'src/b.js', 'src/c.js', 'src/d.js']));
   assert.equal(already.state.beat.status, 'already');
-  assert.equal(already.state.beat.evidence, 'Changed: src/a.js, src/b.js, src/c.js and 1 more');
+  assert.equal(already.state.beat.evidence, C.changedShows('src/a.js, src/b.js, src/c.js', 1));
   // A whole-tree result decides nothing.
   const whole = onReading('git-changed src/');
   whole.send({ type: 'git', paths: ['src/'] });
@@ -2360,15 +2360,15 @@ test('git-only: done once git status lists something, all of it under the path; 
   assert.equal(d.state.beat.status, 'waiting');
   d.key('r');
   d.send(gitLists([], [], { asked: d.state.beat.asked }));
-  assert.equal(d.state.beat.fail.hint, 'git status lists no change yet.');
+  assert.equal(d.state.beat.fail.hint, C.noChange);
   d.send(gitLists(['.claude/skills/five-whys/SKILL.md', 'README.md', '.claudeignore']));
   assert.equal(d.state.beat.status, 'fail');
-  assert.equal(d.state.beat.fail.hint, '2 files changed outside .claude/: README.md, .claudeignore');
+  assert.equal(d.state.beat.fail.hint, C.changedOutside(2, '.claude/', 'README.md, .claudeignore'));
   d.send(gitLists(['.claude/skills/five-whys/SKILL.md', 'notes.md']));
-  assert.equal(d.state.beat.fail.hint, '1 file changed outside .claude/: notes.md');
+  assert.equal(d.state.beat.fail.hint, C.changedOutside(1, '.claude/', 'notes.md'));
   d.send(gitLists(['.claude/skills/five-whys/SKILL.md', '.claude/skills/five-whys/notes.md']));
   assert.equal(d.state.beat.status, 'done');
-  assert.equal(d.state.beat.evidence, 'Changed: .claude/skills/five-whys/SKILL.md, .claude/skills/five-whys/notes.md');
+  assert.equal(d.state.beat.evidence, C.changedShows('.claude/skills/five-whys/SKILL.md, .claude/skills/five-whys/notes.md'));
 });
 
 test('git-staged: done once git status says a path is staged; a change not yet added is not', () => {
@@ -2379,10 +2379,10 @@ test('git-staged: done once git status says a path is staged; a change not yet a
   assert.equal(d.state.beat.status, 'waiting');
   d.key('r');
   d.send(gitLists(['src/config.js'], [], { asked: d.state.beat.asked }));
-  assert.equal(d.state.beat.fail.hint, 'git status lists nothing staged yet.');
+  assert.equal(d.state.beat.fail.hint, C.nothingStaged);
   d.send(gitLists(['src/config.js', 'test/config.test.js'], ['src/config.js']));
   assert.equal(d.state.beat.status, 'done');
-  assert.equal(d.state.beat.evidence, 'Staged: src/config.js');
+  assert.equal(d.state.beat.evidence, C.stagedShows('src/config.js'));
 });
 
 test('a Your turn step that git-clean on paths, git-changed, git-only or git-staged verifies counts as checked: the last one gets a notch less help', () => {
@@ -2480,13 +2480,13 @@ test('the same answer after a redo: not when the message changes, nor before a F
 test('the same answer after a redo: on a beat that reads its file too, with no back line to offer (192)', () => {
   const path = '.practice/b-2-plan.txt';
   const d = onReading(`match ${path} ^src/`);
-  assert.equal(tryNow(d, path, null, '').fail.hint, `${path} is not there yet.`);
+  assert.equal(tryNow(d, path, null, '').fail.hint, C.noFile(path));
   d.send({ type: 'file', path, read: null, stamp: '' });
   assert.equal(Boolean(d.state.beat.same), false, 'still not there: nothing was redone');
   d.send({ type: 'file', path, read: Buffer.from(''), stamp: 'x1' });
   assert.equal(Boolean(d.state.beat.same), false, 'a new message');
   d.send({ type: 'file', path, read: Buffer.from('lib/a.js\n'), stamp: 'x2' });
-  assert.equal(d.state.beat.fail.hint, `${path} has no line like that yet.`);
+  assert.equal(d.state.beat.fail.hint, C.noLine(path));
   assert.equal(d.state.beat.same, true);
   assert.equal(backOffered(d.state), null, 'the demo lesson names no step to go back to');
   const before = { ...d.state.pos };
@@ -2719,7 +2719,7 @@ test('optional steps: the card says when to skip, x skips, and skipping changes 
     const card = screenText(d.state, cols, rows).map((l) => l.replace(/^\s*│|│\s*$/g, '')).join(' ').replace(/\s+/g, ' ');
     assert.ok(card.includes(C.optional('Skip this part in the cheap variant.')), `${cols}x${rows}: ${card}`);
   }
-  assert.ok(screenText(d.state, 60, 20).join('\n').includes('x skip') || screenText(d.state, 80, 24).join('\n').includes('x skip'), 'the key bar offers x');
+  assert.ok(screenText(d.state, 60, 20).join('\n').includes(`x ${C.k.skip}`) || screenText(d.state, 80, 24).join('\n').includes(`x ${C.k.skip}`), 'the key bar offers x');
   fitsBoth(d.state);
   d.key('x');
   assert.equal(stepOf(d.state).id, 'C', 'x goes on to the next step');
@@ -2816,7 +2816,7 @@ test('a second session, the browser and long waits: the card labels its window a
   fitsBoth(w1.state);
   const browser = onWaitB2('Y2');
   assert.ok(cardTop(browser.state).includes(`🌐 ${C.where.browser}`), cardTop(browser.state));
-  assert.ok(cardTop(browser.state, 60, 20, false).includes(`[BROWSER] ${C.where.browser}`), cardTop(browser.state, 60, 20, false));
+  assert.ok(cardTop(browser.state, 60, 20, false).includes(`[БРАУЗЕР] ${C.where.browser}`), cardTop(browser.state, 60, 20, false));
   fitsBoth(browser.state);
   const second = onWaitB2('Y2', 1);
   assert.ok(cardTop(second.state).includes(`💬 ${C.terminalN(2)}`), cardTop(second.state));
@@ -3252,7 +3252,7 @@ test('r27 E2: a matched line too long for its row ends in …, and a hint that q
   assert.equal(width(evidence), 60);
   const no = onReading('no-match notes.md node:test');
   const hint = tryNow(no, 'notes.md', `${line}\n`).fail.hint;
-  assert.equal(hint, `notes.md still has: ${line.slice(0, 59)}…`);
+  assert.equal(hint, C.stillHas('notes.md', `${line.slice(0, 59)}…`));
   assert.doesNotMatch(hint, /\x1b/, 'cut\'s reset goes: the row sits inside a sentence');
   const fits = 'x'.repeat(60);
   assert.equal(tryNow(onReading('match notes.md x'), 'notes.md', `${fits}\n`).evidence, fits, 'a row that fits stays whole');
@@ -3298,14 +3298,14 @@ test('r27 E5: an eased step says so on its first beat when that beat was already
 });
 
 test('r27 E6: a watch that sees an earlier step\'s state says it turns green once that changes, not "make it again"', () => {
-  assert.deepEqual(C.staleWatch('git branch'), ['Watching ', 'git branch', ". It's from an earlier step: I'll turn green once it changes."]);
+  assert.deepEqual(C.staleWatch('git branch'), ['Слежу за ', 'git branch', '. Это осталось с прошлого шага: загорюсь зелёным, когда это изменится.']);
   const d = intoY1('probe branch-ahead docs-pass');
   d.send({ type: 'stamp', key: 'Y1.0', stamp: 'sha-1', dir: FACTS.root });
   d.send(probeResult('branch-ahead', ['docs-pass'], true, 'sha-1'));
   assert.deepEqual([d.state.beat.status, d.state.beat.stale], ['waiting', true]);
   const screen = flat(d.state, 80, 24);
-  assert.ok(screen.includes("It's from an earlier step: I'll turn green once it changes."), screen);
-  assert.ok(!screen.includes('make it again'), screen);
+  assert.ok(screen.includes('Это осталось с прошлого шага: загорюсь зелёным, когда это изменится.'), screen);
+  assert.ok(!screen.includes('сделайте заново'), screen);
 });
 
 test('r27 E7: on a Claude Code beat, a command that starts Claude Code shows the shell\'s prompt; a prompt for the session keeps ›', () => {
@@ -3331,21 +3331,21 @@ test('r27 E9: a beat whose check includes a slow item says to press r from the s
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const card = flat(d.state, cols, rows);
     assert.ok(card.includes(C.slowWait), `${cols}x${rows}: ${card}`);
-    assert.ok(!card.includes("I'll turn green the moment it's right"), `${cols}x${rows}: ${card}`);
+    assert.ok(!card.includes('Загорюсь зелёным, как только всё будет верно'), `${cols}x${rows}: ${card}`);
   }
   // A beat with no slow item still watches.
   const fast = onB2At(DEMO_B2);
   fast.send({ type: 'check', lesson: 'b-2', items: [{ index: 0, text: 'x', pass: false, hint: 'not yet' }] });
   assert.equal(fast.state.beat.status, 'waiting');
-  assert.ok(flat(fast.state, 80, 24).includes("I'll turn green the moment it's right"), flat(fast.state, 80, 24));
+  assert.ok(flat(fast.state, 80, 24).includes('Загорюсь зелёным, как только всё будет верно'), flat(fast.state, 80, 24));
   assert.ok(!flat(fast.state, 80, 24).includes(C.slowWait));
 });
 
 test('r27 E11: the shell label names no ordinal, so it agrees with a page\'s "the second terminal"', () => {
-  assert.equal(C.where.shell, 'in a terminal beside Claude Code');
+  assert.equal(C.where.shell, 'в терминале рядом с Claude Code');
   const d = onB2At(DEMO_B2);
   assert.ok(cardTop(d.state).includes(`💻 ${C.where.shell}`), cardTop(d.state));
-  assert.ok(!screenText(d.state).join('\n').includes('third terminal'));
+  assert.ok(!screenText(d.state).join('\n').includes('третьем терминале'));
   fitsBoth(d.state);
   // Done at 60x20, the top row has no room for the long words beside DONE
   // and Pip: it keeps both, with the brief words.
@@ -3368,13 +3368,13 @@ test('r27 E12: a json verify\'s evidence names its key; a matched line drops a t
 });
 
 test('r27 E13: a git-clean scope of one file that is the one change says the file has uncommitted changes, not "1 file changed under" it', () => {
-  assert.equal(C.fileUncommitted('.claude/settings.json'), '.claude/settings.json has uncommitted changes.');
+  assert.equal(C.fileUncommitted('.claude/settings.json'), 'В .claude/settings.json есть незакоммиченные изменения.');
   const one = onB2At(DEMO_B2.replace('- where: shell\n- beat: do\n- verify: check 0\n- watching: .practice/b-2-before.txt\n- evidence: .practice/b-2-before.txt\n', '- where: shell\n- beat: do\n- verify: git-clean .claude/settings.json\n'));
   one.send(gitLists(['.claude/settings.json', 'src/a.js']));
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const card = flat(one.state, cols, rows);
     assert.ok(card.includes(C.fileUncommitted('.claude/settings.json')), `${cols}x${rows}: ${card}`);
-    assert.ok(!card.includes('changed under'), `${cols}x${rows}: ${card}`);
+    assert.ok(!card.includes('изменён в'), `${cols}x${rows}: ${card}`);
   }
   fitsBoth(one.state);
   // A folder scope still counts and lists what changed under it.
@@ -3418,21 +3418,21 @@ test('r27: the goodbye with no .practice/ yet gives the command, not a Beginner 
 });
 
 test('r27 E16: a fresh push beat that sees an earlier push says everything is pushed and it waits for the next push', () => {
-  assert.deepEqual(C.stalePush('git status'), ['Watching ', 'git status', ": everything here is already pushed, so I'll turn green after your next push."]);
+  assert.deepEqual(C.stalePush('git status'), ['Слежу за ', 'git status', ': всё здесь уже отправлено, поэтому загорюсь зелёным после вашего следующего push.']);
   const d = intoY1('probe pushed fresh');
   d.send({ type: 'stamp', key: 'Y1.0', stamp: 'pushed-1', dir: FACTS.root });
   d.send(probeResult('pushed', [], true, 'pushed-1'));
   assert.deepEqual([d.state.beat.status, d.state.beat.stale], ['waiting', true]);
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const screen = flat(d.state, cols, rows);
-    assert.ok(screen.includes("everything here is already pushed, so I'll turn green after your next push."), screen);
-    assert.ok(!screen.includes("It's from an earlier step"), screen);
+    assert.ok(screen.includes('всё здесь уже отправлено, поэтому загорюсь зелёным после вашего следующего push.'), screen);
+    assert.ok(!screen.includes('Это осталось с прошлого шага'), screen);
   }
   // Another stale probe keeps its line.
   const other = intoY1('probe branch-ahead docs-pass');
   other.send({ type: 'stamp', key: 'Y1.0', stamp: 'sha-1', dir: FACTS.root });
   other.send(probeResult('branch-ahead', ['docs-pass'], true, 'sha-1'));
-  assert.ok(flat(other.state, 80, 24).includes("It's from an earlier step: I'll turn green once it changes."));
+  assert.ok(flat(other.state, 80, 24).includes('Это осталось с прошлого шага: загорюсь зелёным, когда это изменится.'));
 });
 
 // Ticket 27's verify pass (pattern E): a beat with a done-label waits for

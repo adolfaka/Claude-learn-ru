@@ -10,12 +10,15 @@ import { liveCourse, driver, finishedBefore } from './learn-drive.mjs';
 import { render } from '../../learn/lib/render.mjs';
 import { strip, width } from '../../learn/lib/text.mjs';
 import { theme } from '../../learn/lib/theme.mjs';
+import { C } from '../../learn/lib/copy.mjs';
 import { rungsOf, stepOf } from '../../learn/lib/flow.mjs';
 import { lessons } from '../lessons/index.mjs';
 import { openRepo } from '../repo.mjs';
 import { commit, repo, withRepo, write } from './helpers.mjs';
 
-const flat = text => text.replace(/[`*]/g, '').replace(/\s+/g, '');
+// ASCII mode spells «», „“ and — as plain characters (render.mjs), so the
+// comparison ignores quote marks and folds dashes and ellipses.
+const flat = text => text.replace(/[`*«»„“”"]/g, '').replace(/[—–]/g, '-').replace(/…/g, '...').replace(/\s+/g, '');
 
 const failure = (id, sc) => withRepo(() => repo(), dir => {
   if (sc.files) write(dir, sc.files);
@@ -75,8 +78,8 @@ for (const lesson of liveCourse.filter(l => l.content)) {
               for (const line of beat.lines.filter(line => ['goal', 'do', 'say'].includes(line.key))) {
                 assert.ok(screen.includes(flat(line.text)), `instruction gone: ${diagnostic}`);
               }
-              assert.ok(screen.includes(flat('The check says:')), `hint box gone: ${diagnostic}`);
-              const hintBox = screen.slice(screen.indexOf(flat('The check says:')));
+              assert.ok(screen.includes(flat(C.checkSays)), `hint box gone: ${diagnostic}`);
+              const hintBox = screen.slice(screen.indexOf(flat(C.checkSays)));
               assert.ok(hintBox.includes(flat(hint)), `check message cut: ${diagnostic}`);
               // The hint box's own corner is ╰…╯; the card's bottom rule has no right corner.
               const { bl, rule, br } = themeForScreen.glyph;

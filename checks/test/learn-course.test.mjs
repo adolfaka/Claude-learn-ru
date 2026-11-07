@@ -49,29 +49,29 @@ const flat = (text) => text.replaceAll('`', '').replace(/\s+/g, ' ');
 
 // The guide's pages and the time each page's header line gives.
 const PAGES = [
-  ['b-1', 'beginner', '01-install-and-look-around', 'about 20 minutes'],
-  ['b-2', 'beginner', '02-permission-modes-and-plan-mode', 'about 25 minutes'],
-  ['b-3', 'beginner', '03-first-change', 'about 20 minutes'],
-  ['b-4', 'beginner', '04-keep-a-session-on-track', 'about 25 minutes'],
-  ['b-5', 'beginner', '05-project-memory', 'about 20 minutes'],
-  ['b-capstone', 'beginner', 'capstone', '30 to 60 minutes'],
-  ['i-1', 'intermediate', '01-first-skill', 'about 20 minutes'],
-  ['i-2', 'intermediate', '02-organize-memory', 'about 20 minutes'],
-  ['i-3', 'intermediate', '03-model-and-effort', 'about 20 minutes'],
-  ['i-4', 'intermediate', '04-permissions-and-sandbox', 'about 20 minutes'],
-  ['i-5', 'intermediate', '05-hooks', 'about 20 minutes'],
-  ['i-6', 'intermediate', '06-subagents', 'about 25 minutes'],
-  ['i-7', 'intermediate', '07-mcp', 'about 25 minutes'],
-  ['i-8', 'intermediate', '08-plugins', 'about 25 minutes'],
-  ['i-capstone', 'intermediate', 'capstone', '30 to 60 minutes'],
-  ['a-1', 'advanced', '01-parallel-sessions', 'about 20 minutes'],
-  ['a-2', 'advanced', '02-orchestration-patterns', 'about 20 minutes'],
-  ['a-3', 'advanced', '03-dynamic-workflows', 'about 20 minutes, plus run time'],
-  ['a-4', 'advanced', '04-headless', 'about 20 minutes'],
-  ['a-5', 'advanced', '05-github-actions', 'about 20 minutes, plus run time'],
-  ['a-6', 'advanced', '06-share-your-setup', 'about 20 minutes'],
-  ['a-7', 'advanced', '07-bounded-runs', 'about 20 minutes, plus run time'],
-  ['a-capstone', 'advanced', 'capstone', '60 to 90 minutes, plus run time'],
+  ['b-1', 'beginner', '01-install-and-look-around', 'около 20 минут'],
+  ['b-2', 'beginner', '02-permission-modes-and-plan-mode', 'около 25 минут'],
+  ['b-3', 'beginner', '03-first-change', 'около 20 минут'],
+  ['b-4', 'beginner', '04-keep-a-session-on-track', 'около 25 минут'],
+  ['b-5', 'beginner', '05-project-memory', 'около 20 минут'],
+  ['b-capstone', 'beginner', 'capstone', 'от 30 до 60 минут'],
+  ['i-1', 'intermediate', '01-first-skill', 'около 20 минут'],
+  ['i-2', 'intermediate', '02-organize-memory', 'около 20 минут'],
+  ['i-3', 'intermediate', '03-model-and-effort', 'около 20 минут'],
+  ['i-4', 'intermediate', '04-permissions-and-sandbox', 'около 20 минут'],
+  ['i-5', 'intermediate', '05-hooks', 'около 20 минут'],
+  ['i-6', 'intermediate', '06-subagents', 'около 25 минут'],
+  ['i-7', 'intermediate', '07-mcp', 'около 25 минут'],
+  ['i-8', 'intermediate', '08-plugins', 'около 25 минут'],
+  ['i-capstone', 'intermediate', 'capstone', 'от 30 до 60 минут'],
+  ['a-1', 'advanced', '01-parallel-sessions', 'около 20 минут'],
+  ['a-2', 'advanced', '02-orchestration-patterns', 'около 20 минут'],
+  ['a-3', 'advanced', '03-dynamic-workflows', 'около 20 минут плюс время запуска'],
+  ['a-4', 'advanced', '04-headless', 'около 20 минут'],
+  ['a-5', 'advanced', '05-github-actions', 'около 20 минут плюс время запуска'],
+  ['a-6', 'advanced', '06-share-your-setup', 'около 20 минут'],
+  ['a-7', 'advanced', '07-bounded-runs', 'около 20 минут плюс время запуска'],
+  ['a-capstone', 'advanced', 'capstone', 'от 60 до 90 минут плюс время запуска'],
 ];
 
 test('PATH lists all 23 lessons in course order, each with its page, its level and the minutes its page\'s header line gives', () => {
@@ -96,7 +96,7 @@ test('plain output runs no slow item: it names how many slower ones npm run chec
   assert.equal(r.status, 0, r.stderr);
   const line = (label) => r.stdout.split('\n').find((l) => l.startsWith(`${label} `)) ?? '';
   for (const [label, id, n] of [['I5', 'i-5', 1], ['I7', 'i-7', 1], ['IC', 'i-capstone', 3], ['A4', 'a-4', 3], ['A7', 'a-7', 5]]) {
-    assert.match(line(label), new RegExp(`\\(npm run check -- ${id} also runs ${n} slower one${n === 1 ? '' : 's'}\\)`), r.stdout);
+    assert.match(line(label), new RegExp(`\\(npm run check -- ${id} запускает ещё ${n} ${n === 1 ? 'долгий пункт' : n < 5 ? 'долгих пункта' : 'долгих пунктов'}\\)`), r.stdout);
   }
 });
 
@@ -156,7 +156,7 @@ test('a check-only lesson is complete once a full check passes, slow items inclu
   assert.equal(d.state.progress['a-4'].complete, true);
   assert.ok(effects.some((e) => e.type === 'save'), 'saved');
   // The card says so, as a step's card does once its check passes.
-  for (const size of SIZES) assert.match(lines(d.state, size).find((l) => l.includes('╭')), /╭─ .* ✔ DONE /, size.join('x'));
+  for (const size of SIZES) assert.match(lines(d.state, size).find((l) => l.includes('╭')), new RegExp(`╭─ .* ✔ ${C.done} `), size.join('x'));
   assert.equal(snapshot(d.state).lessons['a-4'].complete, true, 'in learn.json');
   assert.equal(sanitize(JSON.parse(JSON.stringify(snapshot(d.state)))).lessons['a-4'].complete, true, 'and read back');
   // A later failing poll takes nothing back.
@@ -164,23 +164,23 @@ test('a check-only lesson is complete once a full check passes, slow items inclu
   assert.equal(d.state.progress['a-4'].complete, true);
   // The level's n of m on the map and the welcome.
   d.key('m');
-  assert.match(lines(d.state, [80, 24])[0], /Advanced path +1 of 8 done$/);
-  assert.match(mapRow(lines(d.state, [80, 24]), 'A4'), /done/);
+  assert.match(lines(d.state, [80, 24])[0], new RegExp(`${C.levelPath(C.levels.advanced)} +${C.ofDone(1, 8)}$`));
+  assert.match(mapRow(lines(d.state, [80, 24]), 'A4'), /готово/);
   const w = driver({ course: advancedCheckOnly, saved: { format: 1, welcomed: false, lessons: { ...throughIntermediate(), 'a-1': { complete: true } } } });
-  assert.match(lines(w.state, [80, 24])[0], /Advanced path · 1 of 8 done$/);
+  assert.match(lines(w.state, [80, 24])[0], new RegExp(`${C.levelPath(C.levels.advanced)} · пройдено 1 из 8$`));
 });
 
 test('a check-only lesson with no slow item is complete on any result where every item passes, and the next marker moves to the lesson after it', () => {
   const d = checkOnly('a-1', advancedCheckOnly, throughIntermediate());
-  assert.match(mapRow(lines((d.key('m'), d.state), [80, 24]), 'A1'), /next/);
+  assert.match(mapRow(lines((d.key('m'), d.state), [80, 24]), 'A1'), /дальше/);
   d.key('m');
   assert.equal(d.state.view, 'checkonly');
   d.send(result('a-1', () => true));
   assert.equal(d.state.progress['a-1'].complete, true);
   d.key('m');
   const ls = lines(d.state, [80, 24]);
-  assert.match(mapRow(ls, 'A1'), /done/, ls.join('\n'));
-  assert.match(mapRow(ls, 'A2'), /next/, ls.join('\n'));
+  assert.match(mapRow(ls, 'A1'), /готово/, ls.join('\n'));
+  assert.match(mapRow(ls, 'A2'), /дальше/, ls.join('\n'));
   // The app opens on the next lesson's map row after a restart.
   const again = driver({ course: advancedCheckOnly, saved: snapshot(d.state) });
   assert.deepEqual([again.state.view, again.state.course[again.state.mapCursor].id], ['map', 'a-2']);
@@ -224,7 +224,7 @@ test('next may name the next level\'s first lesson: the next screen offers it, w
     for (const size of SIZES) {
       const ls = lines(d.state, size);
       const where = `${opens}: ${size.join('x')}\n${ls.join('\n')}`;
-      assert.match(ls.at(-1), /enter +start I1/, where);
+      assert.match(ls.at(-1), /enter +начать I1/, where);
       const up = ls.findIndex((l) => l.includes(C.nextUp));
       assert.ok(up > 0 && ls[up].includes('I1'), where);
       assert.ok(!ls.some((l) => l.includes(C.notchHarder.slice(0, 15))), where);
@@ -247,7 +247,7 @@ test('a-5 and a-capstone run in a new copy of the template: PATH says so, and in
       const where = `${id} at ${size.join('x')}\n${ls.join('\n')}`;
       assert.ok(cardText(ls).includes(flat(C.newCopy.join(' '))), where);
       assert.ok(!cardText(ls).includes(flat(C.checkOnly.join(' '))), where);
-      assert.doesNotMatch(ls.at(-1), /check now/, where);
+      assert.doesNotMatch(ls.at(-1), new RegExp(C.k.checkNow), where);
     }
   }
   // Plain output runs no check for them, and says why.
@@ -300,10 +300,10 @@ test('the check-only card has Pip on its top border, at rest, in every lesson, a
       for (const t of [FULL, ASCII]) {
         const top = lines(done.state, size, t).find((l) => /^\s*(╭|\+-)/.test(l));
         const where = `${id} done at ${size.join('x')}${t.unicode ? '' : ' (ASCII)'}: ${top}`;
-        assert.match(top, /DONE/, where);
+        assert.match(top, new RegExp(C.done), where);
         if (t.unicode) assert.match(top, /\[●‿●\] ──$/, where);
         else if (size[0] === 80) assert.match(top, /\[o_o\] --$/, where);
-        else assert.match(top, /DONE {2}-+$/, where);
+        else assert.match(top, new RegExp(`${C.done} {2}-+$`), where);
       }
     }
   }
@@ -387,20 +387,20 @@ const slowHere = Object.keys(SLOW).filter((id) => !course.find((l) => l.id === i
 // the spinner from +160 ms, the seconds from +3 s, one frame every 240 ms
 // after +10 s. `frame(ms, size)` draws the screen `ms` after the child started.
 function slowRow(at, frame, label) {
-  const row = (ms) => frame(ms).find((l) => l.includes('Checking'));
+  const row = (ms) => frame(ms).find((l) => l.includes('Проверяю'));
   assert.ok(row(140).endsWith(label), `${at}: nothing moves before 150 ms: ${row(140)}`);
   assert.ok(row(160).endsWith(`${label} ⠋`), `${at}: ${row(160)}`);
   assert.notEqual(frame(160).at(-2), frame(140).at(-2), `${at}: the bounce`);
-  assert.match(row(2_990), /… \S$/u, `${at}: no seconds under 3 s`);
-  assert.ok(row(3_000).endsWith(`${label} ⠴  3 s`), `${at}: ${row(3_000)}`);
-  assert.ok(row(10_000).endsWith(`${label} ⠸  10 s`), `${at}: ${row(10_000)}`);
+  assert.match(row(2_990), /… \S$/u, `${at}: no seconds under 3 с`);
+  assert.ok(row(3_000).endsWith(`${label} ⠴  3 с`), `${at}: ${row(3_000)}`);
+  assert.ok(row(10_000).endsWith(`${label} ⠸  10 с`), `${at}: ${row(10_000)}`);
   for (const ms of [10_040, 10_120, 10_200]) assert.deepEqual(frame(ms), frame(10_000), `${at}: one frame every 240 ms after 10 s, +${ms} ms`);
   assert.notDeepEqual(frame(10_240), frame(10_000), at);
   for (const [cols, rows] of SIZES) {
     const late = frame(150_000, [cols, rows]);
     assert.equal(late.length, rows, at);
     for (const l of late) assert.ok(width(l) <= cols - 1, `${at} at ${cols}x${rows}: ${l}`);
-    assert.match(late.find((l) => l.includes('Checking')), / {2}150 s$/, `${at} at ${cols}x${rows}`);
+    assert.match(late.find((l) => l.includes('Проверяю')), / {2}150 с$/, `${at} at ${cols}x${rows}`);
   }
 }
 
@@ -431,11 +431,11 @@ test('r on the check-only card says its run is going until its own result lands:
     assert.deepEqual(frame(5_000, [80, 24], CALM), lines(d.state, [80, 24], CALM), id);
     // A poll's result lands first: r's run is still going.
     d.send(result(id, () => true, { slow: true }));
-    assert.ok(frame(d.now - run + 40).some((l) => l.includes('Checking')), `${id}: a poll ended r's run`);
+    assert.ok(frame(d.now - run + 40).some((l) => l.includes('Проверяю')), `${id}: a poll ended r's run`);
     // r's own result: the row and the spinner go at once.
     d.send({ ...result(id, () => true, { slow: false }), asked });
     const after = frame(d.now - run + 40);
-    assert.ok(!after.some((l) => l.includes('Checking') || /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/u.test(l)), `${id}\n${after.join('\n')}`);
+    assert.ok(!after.some((l) => l.includes('Проверяю') || /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/u.test(l)), `${id}\n${after.join('\n')}`);
   }
 });
 
@@ -470,12 +470,12 @@ test('r\'s run on the check-only card goes on through a trip to the map and back
   d.key('m');
   mapTo(d, 'i-5');
   d.key('enter');
-  assert.ok(!lines(d.state, [80, 24]).some((l) => l.includes('Checking')), 'i-5');
+  assert.ok(!lines(d.state, [80, 24]).some((l) => l.includes('Проверяю')), 'i-5');
   d.key('m');
   mapTo(d, 'a-7');
   d.key('enter');
   assert.equal(d.state.checkOnlyRun, null);
-  assert.ok(!lines(d.state, [80, 24]).some((l) => l.includes('Checking')), 'a-7 again');
+  assert.ok(!lines(d.state, [80, 24]).some((l) => l.includes('Проверяю')), 'a-7 again');
 });
 
 test('on a step card, r\'s run of a slow item spins as any check does: the seconds from 3 s, slower after 10 s', () => {
@@ -490,8 +490,8 @@ test('on a step card, r\'s run of a slow item spins as any check does: the secon
     for (const [label, x] of cards) {
       const moving = reduce(x, { type: 'run-start', now: x.now + 7 }).state;
       const frame = (ms, [cols, rows] = [80, 24]) => render(moving, { cols, rows }, MOVING, { at: moving.fx.run + ms }).map((r) => strip(r).trimEnd());
-      const row = frame(140).find((r) => r.includes('Checking'));
-      slowRow(label, frame, row.slice(row.indexOf('Checking')));
+      const row = frame(140).find((r) => r.includes('Проверяю'));
+      slowRow(label, frame, row.slice(row.indexOf('Проверяю')));
     }
   }
 });
@@ -500,13 +500,13 @@ test('the arrows move the check-only card only where it scrolls: pressed while e
   const size = [60, 20];
   const d = checkOnly('i-2');
   const first = flat(lessons['i-2'].items[0].text);
-  assert.doesNotMatch(lines(d.state, size).at(-1), /scroll/, 'every item fits');
+  assert.doesNotMatch(lines(d.state, size).at(-1), new RegExp(C.k.scroll), 'every item fits');
   for (let i = 0; i < 5; i++) arrow(d, 'down', size);
   assert.equal(d.state.itemsAt, 0, 'nothing to scroll: the arrows move nothing');
   d.send({ type: 'check-error', lesson: 'i-2', message: 'it took too long' });
   d.send({ type: 'notice', kind: 'save', message: 'EACCES: permission denied, open /home/sam/claude-code-practice/.practice/learn.json', wait: 10 });
   const ls = lines(d.state, size);
-  assert.match(ls.at(-1), /scroll/, `the card scrolls now\n${ls.join('\n')}`);
+  assert.match(ls.at(-1), new RegExp(C.k.scroll), `the card scrolls now\n${ls.join('\n')}`);
   assert.ok(cardText(ls).includes(first), `item 1 shows first\n${ls.join('\n')}`);
 });
 
@@ -515,7 +515,7 @@ test('the check-only card scrolls no further than the window that ends on the la
     for (const t of [FULL, ASCII]) {
       const at = `i-capstone at ${size.join('x')}${t.unicode ? '' : ' (ASCII)'}`;
       const d = checkOnly('i-capstone');
-      const shown = () => lines(d.state, size, t).join('\n').match(/Items? (\d+)(?: to (\d+))? of (\d+)/);
+      const shown = () => lines(d.state, size, t).join('\n').match(/Пункты? (\d+)(?:[–-](\d+))? из (\d+)/);
       const opened = shown();
       assert.ok(opened, at);
       const per = Number(opened[2] ?? opened[1]) - Number(opened[1]) + 1;
@@ -559,8 +559,8 @@ test('until a-5\'s and a-capstone\'s new copy folder is saved, the next lesson p
     const d = driver({ course: advancedCheckOnly, saved: { format: 1, welcomed: true, lessons: throughA4(), folders } });
     assert.deepEqual([d.state.view, d.state.course[d.state.mapCursor].id], ['map', 'a-6'], `${at}: the app opens on the map at a-6`);
     const ls = lines(d.state, [80, 24]);
-    assert.match(mapRow(ls, 'A6'), /next/, `${at}\n${ls.join('\n')}`);
-    assert.doesNotMatch(mapRow(ls, 'A5'), /next/, `${at}\n${ls.join('\n')}`);
+    assert.match(mapRow(ls, 'A6'), /дальше/, `${at}\n${ls.join('\n')}`);
+    assert.doesNotMatch(mapRow(ls, 'A5'), /дальше/, `${at}\n${ls.join('\n')}`);
     d.key('right');
     d.key('left');
     assert.equal(d.state.course[d.state.mapCursor].id, 'a-6', `${at}: back on Advanced, at a-6`);
@@ -568,7 +568,7 @@ test('until a-5\'s and a-capstone\'s new copy folder is saved, the next lesson p
     // Only they are left: the app opens on the map at a-5, which no marker names.
     const rest = driver({ course: advancedCheckOnly, saved: { format: 1, welcomed: true, lessons: { ...throughA4(), ...done(['a-6', 'a-7']) }, folders } });
     assert.deepEqual([rest.state.view, rest.state.course[rest.state.mapCursor].id], ['map', 'a-5'], at);
-    assert.ok(!lines(rest.state, [80, 24]).some((l) => / next/.test(l)), `${at}\n${lines(rest.state, [80, 24]).join('\n')}`);
+    assert.ok(!lines(rest.state, [80, 24]).some((l) => / дальше/.test(l)), `${at}\n${lines(rest.state, [80, 24]).join('\n')}`);
   }
 });
 
@@ -584,8 +584,8 @@ test('once a-5 or a-capstone has its new copy saved, it is the next lesson where
     assert.deepEqual([d.state.view, d.state.course[d.state.mapCursor].id], ['map', id], `the app opens on the map at ${id}`);
     for (const size of SIZES) {
       const ls = lines(d.state, size);
-      assert.match(mapRow(ls, label), /next/, ls.join('\n'));
-      if (after) assert.doesNotMatch(mapRow(ls, after), /next/, ls.join('\n'));
+      assert.match(mapRow(ls, label), /дальше/, ls.join('\n'));
+      if (after) assert.doesNotMatch(mapRow(ls, after), /дальше/, ls.join('\n'));
     }
     mapFits(d.state, id);
     d.key('right');
@@ -609,8 +609,8 @@ test('a-5\'s new copy given in the session makes it the next lesson at once, and
   d.key('m');
   for (const size of SIZES) {
     const ls = lines(d.state, size);
-    assert.match(mapRow(ls, 'A5'), /next/, ls.join('\n'));
-    assert.doesNotMatch(mapRow(ls, 'A6'), /next/, ls.join('\n'));
+    assert.match(mapRow(ls, 'A5'), /дальше/, ls.join('\n'));
+    assert.doesNotMatch(mapRow(ls, 'A6'), /дальше/, ls.join('\n'));
   }
   mapFits(d.state, 'a-5 given in the session');
   mapTo(d, 'i-1');
@@ -655,7 +655,8 @@ test('the check-only card names the lesson page as link text and points to p for
     // frame's box (191), 40 rows in a taller window, every lesson's items
     // but a-capstone's 14, which scroll there as at 100x40.
     const roomy = lines(d.state, [100, 50]);
-    if (id === 'a-capstone') assert.ok(roomy.findLast(Boolean).includes(C.k.scroll), id);
+    // Russian items are longer: i-capstone's 14 scroll here as well.
+    if (id === 'a-capstone' || id === 'i-capstone') assert.ok(roomy.findLast(Boolean).includes(C.k.scroll), id);
     else assert.ok(roomy.some((l) => l.includes(C.pageTitle + C.pageLink)), id);
   }
   // The ticket's example: i-1 at 80x24 showed its URL on two rows.

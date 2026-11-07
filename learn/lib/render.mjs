@@ -1132,7 +1132,7 @@ const VIEWS = {
     // The titles give way to the marks, which are wider in ASCII, and to the
     // bars and their gap, on a page that has them.
     // A lesson with its Tear down still to do says so, in a wider column.
-    const stateW = lessons.some((l) => tearDownLeft(s, l.id)) ? Math.max(5, width(C.mapTearDown)) : 5;
+    const stateW = Math.max(6, width(C.mapDone), width(C.mapNext), lessons.some((l) => tearDownLeft(s, l.id)) ? width(C.mapTearDown) : 0);
     const titleW = Math.min(Math.max(...lessons.map((l) => width(titleOf(l)))), W - 30 - (stateW - 5) + (bars ? 0 : BAR + 2) - width(t.glyph.check) - Math.max(width(t.emoji('cup')), width(t.emoji('badge'))));
     // Where the level's rows don't fit even closed up, with the footer gone,
     // the list scrolls: the rows that fit, the cursor's as near their middle

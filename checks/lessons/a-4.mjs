@@ -235,7 +235,7 @@ export function committedScript(script, guide = 'разделе «Ваша оч�
 
 export function scriptCall(script) {
   return {
-    text: `его вызов \`claude -p\` запрашивает JSON в режиме \`dontAsk\`, разрешает только \`Read\`, \`Grep\` и \`Glob\`, обходится без hooks и MCP-серверов, допускает не больше ${CAP_MAX} ходов, а промпт в нём стоит сразу после \`-p\``,
+    text: `его \`claude -p\` просит JSON в режиме \`dontAsk\`, разрешает только \`Read\`, \`Grep\` и \`Glob\`, без hooks и MCP, не больше ${CAP_MAX} ходов, а промпт стоит сразу после \`-p\``,
     check(repo) {
       const run = scenario(repo, script, 'review');
       const skipped = notRun(run, script);

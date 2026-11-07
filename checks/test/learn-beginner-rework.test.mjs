@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { chmodSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { liveCourse, lessonScreens, driver, finishedBefore, root } from './learn-drive.mjs';
+import { C } from '../../learn/lib/copy.mjs';
 import { render } from '../../learn/lib/render.mjs';
 import { strip, width } from '../../learn/lib/text.mjs';
 import { theme } from '../../learn/lib/theme.mjs';
@@ -40,7 +41,7 @@ test('Beginner live content teaches the promoted features and all four memory no
   // conversation; /branch and Summarize from here move to Go further.
   for (const feature of ['Restore code and conversation', '**Restore code**', 'Esc', '/compact', '/clear']) assert.ok(text('b-4').includes(feature), feature);
   for (const gone of ['/branch', 'Summarize from here']) assert.ok(!text('b-4').includes(gone), gone);
-  for (const note of ['npm run tests', '~/scratch/linkcheck-docs', 'summary at the end', 'linkcheck:']) assert.ok(text('b-5').includes(note), note);
+  for (const note of ['npm run tests', '~/scratch/linkcheck-docs', 'без резюме в конце', 'linkcheck:']) assert.ok(text('b-5').includes(note), note);
   for (const scope of ['~/.claude/CLAUDE.md', 'CLAUDE.local.md', 'Auto memory']) assert.ok(text('b-5').includes(scope), scope);
   assert.ok(!text('b-1').includes('.practice/version.txt'));
 });
@@ -109,10 +110,10 @@ test('real Beginner failures preserve the title, Goal, whole check message and b
             const lines = render(d.state, { cols, rows }, t).map(strip);
             const screen = flat(lines.map(line => line.replace(/^\s*[│|]\s*(?:[▌|]\s*)?/, '')).join(''));
             const label = `${l.id} ${index} ${sc.name} ${cols}x${rows}`;
-            assert.ok(screen.includes(flat('Check')), `${label}: title gone\n${lines.join('\n')}`);
+            assert.ok(screen.includes(flat('Проверка')), `${label}: title gone\n${lines.join('\n')}`);
             assert.ok(screen.includes(flat(goal)), `${label}: Goal gone\n${lines.join('\n')}`);
-          assert.ok(screen.includes(flat('The check says:')), `${label}: hint box gone\n${lines.join('\n')}`);
-            assert.ok(screen.includes(flat(hint)), `${label}: check message cut\n${lines.join('\n')}`);
+          assert.ok(screen.includes(flat(C.checkSays)), `${label}: hint box gone\n${lines.join('\n')}`);
+            assert.ok(screen.includes(flat(unicode ? hint : hint.replace(/[«»]/g, "\"").replace(/—/g, "-"))), `${label}: check message cut\n${lines.join('\n')}`);
             assert.ok(lines.some(line => line.includes(t.glyph.bl)), `${label}: bottom border gone`);
           }
         }

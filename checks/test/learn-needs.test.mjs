@@ -8,7 +8,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadCourse, parseLesson, PATH } from '../../learn/lib/content.mjs';
-import { C } from '../../learn/lib/copy.mjs';
+import { C, TERMS } from '../../learn/lib/copy.mjs';
 import { introAsks, pinOf } from '../../learn/lib/flow.mjs';
 import { render } from '../../learn/lib/render.mjs';
 import { snapshot } from '../../learn/lib/store.mjs';
@@ -61,9 +61,10 @@ const SIZES = [[60, 20], [80, 24]];
 const screen = (state, [cols, rows] = [80, 24], t = FULL) => render(state, { cols, rows }, t).map((l) => strip(l).trimEnd());
 // A screen's words as one line, for a sentence that wraps; code spans lose
 // their backticks on screen.
-const flat = (lines) => lines.map((l) => l.trim()).join(' ').replace(/\s+/g, ' ');
+const flat = (lines) => lines.map((l) => l.trim()).join(' ').replace(/\s+/g, ' ').replaceAll('—', '-').replace(/[«»„“”]/g, '"');
 // A quote's words as the app draws them: code spans and a link's text plain.
-const words = (text) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '');
+// The ASCII screen draws the Russian em dash as a hyphen and «», „“ as plain quotes, so they are the same in both.
+const words = (text) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '').replaceAll('—', '-').replace(/[«»„“”]/g, '"');
 // At i-1's intro, Beginner finished and Intermediate's folder answered, with
 // `opts` in its lesson file; `facts` as main found them.
 const atIntro = (opts, facts = {}, folders = { intermediate: MINE }) => {
@@ -155,7 +156,7 @@ test('the intro shows the repository line only where the level\'s work folder is
   // In the practice copy, and while the folder question waits, it says nothing.
   const copy = atIntro(repo, {}, { intermediate: COPY });
   const asking = atIntro(repo, {}, null);
-  assert.ok(flat(screen(asking.state)).includes(C.folderAsk('Intermediate')));
+  assert.ok(flat(screen(asking.state)).includes(C.folderAsk(TERMS.levels.intermediate)));
   for (const d of [copy, asking]) {
     for (const size of SIZES) assert.ok(!flat(screen(d.state, size)).includes(NEED_REPO), `${size}\n${screen(d.state, size).join('\n')}`);
   }
@@ -438,9 +439,9 @@ test('the intro\'s notes share its row plan with the Why line and the folder que
   const cases = [
     // A level's first intro: the folder question, then its answer.
     ...[0, 1].flatMap((extra) => [
-      [`first, asking, the Windows note, ${extra} more can lines`, 'i-1', windows, { extra, mode: 'asking' }, [C.folderAsk('Intermediate'), C.folderOther]],
+      [`first, asking, the Windows note, ${extra} more can lines`, 'i-1', windows, { extra, mode: 'asking' }, [C.folderAsk(TERMS.levels.intermediate), C.folderOther]],
       [`first, answered, the Windows note, ${extra} more can lines`, 'i-1', windows, { extra, mode: 'answered' }, [C.workFolder, C.startLesson(1)]],
-      [`first, asking, a command missing, ${extra} more can lines`, 'i-2', first, { extra, mode: 'asking' }, [C.folderAsk('Intermediate'), C.folderOther]],
+      [`first, asking, a command missing, ${extra} more can lines`, 'i-2', first, { extra, mode: 'asking' }, [C.folderAsk(TERMS.levels.intermediate), C.folderOther]],
     ]),
     ['first, answered, a command and a prerequisite missing', 'i-2', first, { mode: 'answered' }, [C.workFolder, C.openFirst('B5')]],
     ['saved, a prerequisite missing in my-app', 'i-2', { front: ['requires: [b-5 check 0]'] }, {}, [C.buildsOnCheck('B5', words(B5_ITEM))]],

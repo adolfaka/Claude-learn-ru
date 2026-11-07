@@ -383,7 +383,7 @@ export function playUntil(d, stop) {
     } else if (beat.ask && beat.options.length) d.key(String(beat.options.findIndex((o) => beat.kind === 'predict' || ['right', 'option', 'other'].includes(o.kind)) + 1));
     else if (v.kind === 'check') {
       const l = lessonOf(s);
-      const items = (v.all ? l.items.map((_, k) => k) : v.items).map((index) => ({ index, text: l.items[index], pass: false, hint: `${l.items[index]} is not there yet.` }));
+      const items = (v.all ? l.items.map((_, k) => k) : v.items).map((index) => ({ index, text: l.items[index], pass: false, hint: `${l.items[index]} пока нет.` }));
       d.send({ type: 'check', lesson: s.lesson, items, path: beat.evidence ?? null, stamp: 'a' });
       d.send({ type: 'check', lesson: s.lesson, items: items.map((it) => ({ ...it, pass: true, hint: '' })), path: beat.evidence ?? null, stamp: 'b' });
     } else if (v.kind === 'file') {
@@ -421,7 +421,7 @@ export function failCheck(d) {
   const v = beatOf(d.state).verify;
   if (v.kind !== 'check') return;
   const l = lessonOf(d.state);
-  const items = (v.all ? l.items.map((_, k) => k) : v.items).map((index) => ({ index, text: l.items[index], pass: false, hint: `${l.items[index]} is not there yet.` }));
+  const items = (v.all ? l.items.map((_, k) => k) : v.items).map((index) => ({ index, text: l.items[index], pass: false, hint: `${l.items[index]} пока нет.` }));
   d.send({ type: 'check', lesson: d.state.lesson, items });
   d.key('r');
   d.send({ type: 'check', lesson: d.state.lesson, items, asked: d.state.beat.asked });
@@ -543,7 +543,7 @@ export function lessonScreens(id, lessons = course, { skipped = false, folders =
     out.push([`${at} open`, d.state]);
     const v = beat.verify;
     if (v.kind === 'check') {
-      const items = (v.all ? l.items.map((_, i) => i) : v.items).map((index) => ({ index, text: l.items[index], pass: false, hint: `${l.items[index]} is not there yet: do the step, then look again.` }));
+      const items = (v.all ? l.items.map((_, i) => i) : v.items).map((index) => ({ index, text: l.items[index], pass: false, hint: `${l.items[index]} пока нет: сделайте шаг и проверьте снова.` }));
       d.send({ type: 'check', lesson: id, items, path: beat.evidence ?? null, stamp: 'a' });
       out.push([`${at} waiting`, d.state]);
       d.key('r');

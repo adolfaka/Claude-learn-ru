@@ -34,7 +34,7 @@ for (const [name, html, expected] of [
     withRepo(() => repairedRepo(html), (dir) => {
       const { code, out } = check(['i-7', '--dir', dir]);
       assert.equal(code, expected, out);
-      if (expected) assert.match(out, /demo|count/i);
+      if (expected) assert.match(out, /демо|счётчик|подсчёт/i);
     });
   });
 }

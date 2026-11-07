@@ -45,7 +45,7 @@ test('front matter: the page, its title and Stamp, the Stuck link and the next l
     assert.equal(l.source, entry.page);
     assert.equal(l.page, `${GUIDE}/blob/main/${entry.page}`);
     assert.equal(l.stuck, `${GUIDE}/issues/new?template=lesson-feedback.yml&lesson=${id}`);
-    assert.match(l.stamp, /^Verified against Claude Code v\d+\.\d+\.\d+ \(stable\) on \d{4}-\d{2}-\d{2}$/);
+    assert.match(l.stamp, /^Проверено на Claude Code v\d+\.\d+\.\d+ \(stable\) \d{4}-\d{2}-\d{2}$/);
     assert.match(l['source-commit'], /^[0-9a-f]{7,40}$/);
     // The page's heading, which holds the check's shorter title.
     assert.ok(l.title.toLowerCase().includes(lessons[id].title.toLowerCase()), `${id}: the title "${l.title}" doesn't hold its check's, "${lessons[id].title}"`);
@@ -263,10 +263,15 @@ const BANNED = [
   /\b(genius|natural|talented|brilliant|smart|clever)\b/i, /\byou(?:'re| are) (?:a |so )/i,
   /personali[sz]/i, /tailor/i, /learns? (about )?you/i,
   /\bThinking\b/i, /\bAnaly[sz]ing\b/i, /Preparing your lesson/i, /Loading your progress/i,
+  // The same claims in the Russian copy.
+  /освоил/i, /(?<![а-яё])ЗБР(?![а-яё])|зон[аеуы] ближайшего развития/i, /адаптир|подстраива/i,
+  /гени(?:й|альн)|талантлив|прирожд[её]нн|умниц/i, /(?:^|\s)вы (?:так(?:ой|ая|ие) |настоящ)/i,
+  /персонализ|персональн/i, /индивидуальн|специально для вас/i, /(?:узна[её]т|изучает) (?:о )?вас/i,
+  /(?:^|\s)Думаю|Размышля/i, /Анализиру/i, /(?:Готовлю|Подготовка) (?:ваш(?:его)? )?урок/i, /Загру(?:жаю|зка) (?:ваш(?:его)? )?прогресс/i,
 ];
 // A celebration praises the work, never how it was done: no speed, no
 // streak, no "no hints". "quick question" is a where label, not one of these.
-const CELEBRATION_BANNED = /\b(first try|no hints?|fast|quick(?:ly)?|streak)\b/i;
+const CELEBRATION_BANNED = /\b(first try|no hints?|fast|quick(?:ly)?|streak)\b|с перв(?:ой попытки|ого раза)|без подсказ|быстр|подряд|сери[яюи](?![а-яё])/i;
 // The words a celebration shows: the done feedback and burst on a step, and
 // every word the levelup, complete and next screens read (a test below
 // keeps those screens' keys on this list). Keys under C.k are 'k.<name>'.
@@ -291,16 +296,20 @@ const claims = (copy) => {
 test('the app\'s own words claim only what the app saw', () => {
   for (const k of CELEBRATIONS) assert.notEqual(at(C, k), undefined, `copy.mjs has no ${k}`);
   assert.deepEqual(claims(C), []);
-  assert.equal(C.helpShrinks, 'The help shrinks each time a skill comes back:');
-  assert.equal(C.lessonDone('B1'), 'B1 done! You practised:');
+  assert.equal(C.helpShrinks, 'Подсказок меньше, когда навык встречается снова:');
+  assert.equal(C.lessonDone('B1'), 'B1 пройден! Что вы отработали:');
   // Each pattern catches a string that breaks it, wherever it sits.
   for (const bad of ['You mastered plan mode.', 'The app adapts to you.', 'Adapting the help.', 'This is your ZPD.',
     'A natural!', "You're a star.", 'Clever!', 'You are so good at this.', 'Your personalised path', 'Help tailored for you', 'The app learns about you.',
-    'Thinking…', 'Analyzing your work…', 'Analysing', 'Preparing your lesson…', 'Loading your progress…']) {
+    'Thinking…', 'Analyzing your work…', 'Analysing', 'Preparing your lesson…', 'Loading your progress…',
+    'Вы освоили режим планирования.', 'Приложение подстраивается под вас.', 'Адаптирую подсказки.', 'Это ваша ЗБР.',
+    'Прирождённый программист!', 'Вы настоящая звезда.', 'Умница!', 'Вы такой молодец.', 'Ваш персональный путь', 'Подсказки специально для вас', 'Приложение изучает вас.',
+    'Думаю…', 'Анализирую вашу работу…', 'Готовлю ваш урок…', 'Загружаю ваш прогресс…']) {
     assert.equal(claims({ x: bad }).length, 1, bad);
     assert.equal(claims({ ...C, k: { ...C.k, x: () => [bad] } }).length, 1, `${bad}, in a function's array`);
   }
-  for (const bad of ['Done on the first try!', 'No hints needed!', 'No hint used.', 'That was fast.', 'Quick work!', 'Done quickly.', 'A 3 step streak']) {
+  for (const bad of ['Done on the first try!', 'No hints needed!', 'No hint used.', 'That was fast.', 'Quick work!', 'Done quickly.', 'A 3 step streak',
+    'Готово с первой попытки!', 'Без подсказок!', 'Обошлись без подсказки.', 'Это было быстро.', 'Быстрая работа!', 'Сделано с первого раза.', 'Серия из 3 шагов', '3 шага подряд']) {
     assert.equal(claims({ ...C, stepDone: () => bad }).length, 1, `${bad}, on a celebration`);
     assert.equal(claims({ ...C, levelUp: [bad] }).length, 1, `${bad}, on the level-up`);
     assert.deepEqual(claims({ ...C, notYet: bad }), [], `${bad}, off a celebration`);
@@ -313,11 +322,12 @@ test('the app\'s own words claim only what the app saw', () => {
   assert.equal(claims({ ...C, nextCounts: (h, c) => (h === 0 && c === 2 ? 'A fast finish.' : 'Fine.') }).length, 1);
   for (const k of ['answered', 'otherFine', 'findOutAt', 'done', 'savedBreak', 'k.bringIt', 'k.whatsNext']) {
     const [top, sub] = k.split('.');
-    const bad = 'Answered on the first try.';
-    const copy = sub ? { ...C, k: { ...C.k, [sub]: bad } } : { ...C, [top]: bad };
-    assert.equal(claims(copy).length, 1, `${k}, on a celebration`);
+    for (const bad of ['Answered on the first try.', 'Ответ с первой попытки.']) {
+      const copy = sub ? { ...C, k: { ...C.k, [sub]: bad } } : { ...C, [top]: bad };
+      assert.equal(claims(copy).length, 1, `${k}, on a celebration`);
+    }
   }
-  assert.equal(C.where.ask, 'quick question', 'the where label stays off the celebration list');
+  assert.equal(C.where.ask, 'быстрый вопрос', 'the where label stays off the celebration list');
 });
 
 // One name for each thing (TERMS in copy.mjs). An older name is an alias,
@@ -328,7 +338,11 @@ test('the app\'s own words claim only what the app saw', () => {
 // directory, a repo, the page's "template copy" for the practice copy or for
 // a new copy.
 const ALIASES = [/practice folder/i, /\byour copy\b/i, /\bgoal and hints\b/i, /\bgoal only\b/i,
-  /\bwork(ing)? dir(ector(y|ies))?\b/i, /\bworking folder\b/i, /\brepo\b/i, /\byour own repository\b/i, /\btemplate copy\b/i, /\b(fresh|second|other) copy\b/i];
+  /\bwork(ing)? dir(ector(y|ies))?\b/i, /\bworking folder\b/i, /\brepo\b/i, /\byour own repository\b/i, /\btemplate copy\b/i, /\b(fresh|second|other) copy\b/i,
+  // The Russian copy's aliases: учебная папка, ваша копия, цель и подсказки, лишь цель, рабочий каталог,
+  // репо, собственный репозиторий, шаблонная копия, свежая / вторая / другая копия.
+  /учебн\S* папк/i, /(?:^|\s)ваш\S* копи/i, /цель и подсказки/i, /лишь цель/i,
+  /рабоч\S* (?:каталог|директори)/i, /(?:^|[^а-яё])репо(?![а-яё])/i, /собственн\S* репозитори/i, /шаблонн\S* копи/i, /(?:свеж|втор|друг)\S* копи/i];
 const aliasIn = (w) => ALIASES.filter((re) => re.test(w)).map((re) => `"${w}" matches ${re}`);
 const aliases = (copy) => {
   const out = copyWords(copy).flatMap(aliasIn);
@@ -344,30 +358,33 @@ const aliases = (copy) => {
 };
 
 test('one name for each thing: the app\'s words use no alias of a TERMS name', () => {
-  assert.equal(TERMS.practiceCopy, 'practice copy');
-  assert.equal(TERMS.workFolder, 'work folder');
-  assert.equal(TERMS.yourRepository, 'your repository');
-  assert.equal(TERMS.newCopy, 'new copy');
-  assert.deepEqual(TERMS.tierHelp, { guided: 'every command shown', hinted: 'the goal, hints if you ask', challenge: 'just the goal' });
+  assert.equal(TERMS.practiceCopy, 'учебная копия');
+  assert.equal(TERMS.workFolder, 'рабочая папка');
+  assert.equal(TERMS.yourRepository, 'ваш репозиторий');
+  assert.equal(TERMS.newCopy, 'новая копия');
+  assert.deepEqual(TERMS.tierHelp, { guided: 'показана каждая команда', hinted: 'цель, подсказки по запросу', challenge: 'только цель' });
   // The guide's level names, one each: the map, the welcome and a warm-up read them here.
-  assert.deepEqual(TERMS.levels, { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' });
+  assert.deepEqual(TERMS.levels, { beginner: 'Начальный', intermediate: 'Средний', advanced: 'Продвинутый' });
   assert.equal(C.levels, TERMS.levels);
-  assert.equal(C.pathLabel(TERMS.levels.intermediate, 2, 9), 'Intermediate path · 2 of 9 done');
+  assert.equal(C.pathLabel(TERMS.levels.intermediate, 2, 9), 'Путь среднего уровня · пройдено 2 из 9');
   assert.deepEqual(aliases(C), []);
   // A lesson file's unquoted lines are the app's words too; its quotes are the guide's.
   for (const [id, l] of Object.entries(parsed)) {
     for (const step of allSteps(l)) assert.deepEqual(appWords(step).flatMap(aliasIn), [], `${id} ${step.id}`);
   }
-  assert.equal(C.pip1, "I'm Pip. I watch your practice copy and light up");
-  assert.equal(C.cleanCopy, 'Your practice copy is clean: nothing to commit.');
-  assert.equal(C.folderOther, 'In another folder, such as your repository');
-  assert.equal(C.folderPrompt('Intermediate'), 'The work folder for Intermediate');
-  assert.equal(C.folderNewCopy, 'Give the folder of your new copy');
+  assert.equal(C.pip1, 'Я Pip. Слежу за вашей учебной копией и загораюсь,');
+  assert.equal(C.cleanCopy, 'Ваша учебная копия чистая: коммитить нечего.');
+  assert.equal(C.folderOther, 'В другой папке, например в вашем репозитории');
+  assert.equal(C.folderPrompt(TERMS.levels.intermediate), 'Рабочая папка для среднего уровня');
+  assert.equal(C.folderNewCopy, 'Укажите папку вашей новой копии');
   for (const bad of ["I'm Pip. I watch your practice folder and light up", 'Your copy is clean: nothing to commit.', 'goal and hints', 'goal only',
-    'Your working directory', 'The working folder for Intermediate', 'In your repo', 'In your own repository', 'Work dir:', 'This template copy', 'Give the folder of your fresh copy']) {
+    'Your working directory', 'The working folder for Intermediate', 'In your repo', 'In your own repository', 'Work dir:', 'This template copy', 'Give the folder of your fresh copy',
+    'Я Pip. Слежу за вашей учебной папкой и загораюсь,', 'Ваша копия чистая: коммитить нечего.', 'цель и подсказки', 'лишь цель',
+    'Ваш рабочий каталог', 'В вашем репо', 'В вашем собственном репозитории', 'Рабочая директория:', 'Эта шаблонная копия', 'Укажите папку вашей свежей копии']) {
     assert.equal(aliases({ ...C, x: bad }).length, 1, bad);
   }
   assert.equal(aliases({ ...C, legend: { guided: 'all commands', hinted: 'hints on h', challenge: 'nothing more' } }).length, 1, 'a second tier description');
+  assert.equal(aliases({ ...C, legend: { guided: 'все команды', hinted: 'подсказки на h', challenge: 'ничего больше' } }).length, 1, 'a second tier description, in Russian');
   assert.deepEqual(aliases({ ...C, legend: { ...TERMS.tierHelp } }), [], 'the same words again are no alias');
 });
 
@@ -707,7 +724,9 @@ test('no key-shaped string, em dash or emoji variation selector under learn/', (
   for (const f of all) {
     const text = readFileSync(join(root, f), 'utf8');
     assert.doesNotMatch(text, /sk-ant-/, f);
-    assert.doesNotMatch(text, /—/, `${f} has an em dash`);
+    // Russian text uses the em dash as punctuation, set off by spaces; an
+    // English-style dash glued between two words is still out.
+    assert.doesNotMatch(text, /[\p{L}\p{N}]—|—[\p{L}\p{N}]/u, `${f} has an em dash glued to a word`);
     assert.doesNotMatch(text, /️/, `${f} has U+FE0F`);
   }
 });
@@ -802,7 +821,10 @@ test('a code block shows on a do, ask or self beat, and names no folder a run li
 // state comes from. b-2's after item is its one use so far; 195 and 196 add
 // the rest with each level's rework.
 // Parser failure cases use a stable synthetic lesson, independent of editorial numbering.
-const B2 = readFileSync(join(root, 'checks/test/fixtures/reducer-course/b-2.md'), 'utf8');
+// The fixture stays English; its after item's ladder heading takes the
+// check item's translated text, so the back line still finds its item.
+const B2 = readFileSync(join(root, 'checks/test/fixtures/reducer-course/b-2.md'), 'utf8')
+  .replace('### every file in `.practice/b-2-after.txt` is listed in `.practice/b-2-plan.txt`\n', `### ${lessons['b-2'].items[1].text}\n`);
 const B2_BACK = '- back: W2 The edits this step saves come from the plan you make there.\n';
 const withBack = (line, text = B2) => parseLesson(text.replace(B2_BACK, line), 'b-2.md');
 
@@ -812,7 +834,7 @@ test('back lines: b-2\'s after item goes back to the step that switches to plan 
   assert.deepEqual([rung.back.step, rung.back.quoted], ['W2', false]);
   const steps = parsed['b-2'].steps.map((s) => s.id);
   assert.equal(steps[steps.indexOf('W2') + 1], 'W3');
-  assert.ok(parsed['b-2'].steps.find((s) => s.id === 'W3').beats[0].lines.some((l) => l.key === 'goal' && /Ask for the change/.test(l.text)));
+  assert.ok(parsed['b-2'].steps.find((s) => s.id === 'W3').beats[0].lines.some((l) => l.key === 'goal' && /Попросите изменение/.test(l.text)));
 });
 
 test('back lines: a later step, a step the lesson lacks, another lesson, a warm-up or a second line fails, naming its line', () => {
@@ -1170,8 +1192,12 @@ test('help: no hint repeats a line the card already shows (27, pattern B)', () =
 // left out: one may offer a session the step doesn't need ("For a second
 // opinion, start `claude`"), or repeat the step before.
 const ORDER = String.raw`(?:^|[.,:;]\s+|\b(?:then|and)\s+)`;
-const STARTS = new RegExp(String.raw`${ORDER}start\b[^.;:]*?(?:\x60claude[\x60\s]|\bsession\b|\bClaude Code\b)`, 'gi');
-const ENDS = new RegExp(String.raw`/exit\b|${ORDER}(?:end|exit|quit|close)\b[^.;:]*?\bsession\b`, 'gi');
+// The same orders in the Russian lessons: «запустите `claude`», «начните
+// новую сессию», «завершите сессию», «выйдите из сессии».
+// A Russian imperative is an order wherever it sits in the sentence.
+const ORDER_RU = String.raw`(?:^|\s)`;
+const STARTS = new RegExp(String.raw`${ORDER}start\b[^.;:]*?(?:\x60claude[\x60\s]|\bsession\b|\bClaude Code\b)|${ORDER_RU}(?:запуст|начн)[а-яё]*[^.;:]*?(?:\x60claude[\x60\s]|сесси|Claude Code)`, 'gi');
+const ENDS = new RegExp(String.raw`/exit\b|${ORDER}(?:end|exit|quit|close)\b[^.;:]*?\bsession\b|${ORDER_RU}(?:заверш|выйд|выход|закро|закрой)[а-яё]*[^.;:]*?сесси`, 'gi');
 const startsClaude = (cmd) => /^claude(\s|$)/.test(cmd) && !/^claude\s+[a-z]/.test(cmd) && !/(^|\s)(-p|--print|-v|--version|-h|--help)(\s|$)/.test(cmd);
 function sessionEvents(b) {
   const events = [];
@@ -1240,8 +1266,9 @@ test('a git-clean beat that asks the learner to run git status waits for them: i
 });
 
 // How a sentence starts: a capital or a digit, or a code span, a link, a
-// quote mark, bold or a parenthesis around one.
-const SENTENCE_START = /^[A-Z0-9`["*(]/;
+// quote mark, bold or a parenthesis around one. A Russian sentence starts
+// with a Cyrillic capital, or with a «guillemet».
+const SENTENCE_START = /^[A-ZА-ЯЁ0-9`["*(«]/;
 
 test('card: a beat\'s first goal, do or say line starts a sentence, never midway through the page\'s (27, pattern F)', () => {
   const off = [];
@@ -1352,7 +1379,7 @@ test('card: a beat that runs /diff carries the page\'s note that the panel may a
   // /diff then closes it.
   const off = [];
   for (const l of Object.values(parsed)) for (const s of l.steps) s.beats.forEach((b, n) => {
-    if (b.lines.some((x) => x.key === 'run' && x.text === '/diff') && !b.lines.some((x) => /typing `\/diff` closes it/.test(x.text))) off.push(placeOf(l.lesson, s, n, 'run', '/diff'));
+    if (b.lines.some((x) => x.key === 'run' && x.text === '/diff') && !b.lines.some((x) => /typing `\/diff` closes it|ввод `\/diff` (?:её )?закроет/.test(x.text))) off.push(placeOf(l.lesson, s, n, 'run', '/diff'));
   });
   assert.deepEqual(off, []);
 });

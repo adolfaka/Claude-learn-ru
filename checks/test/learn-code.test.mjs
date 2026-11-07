@@ -124,7 +124,7 @@ test('a block too tall for the window shows its first lines whole, then points t
     assert.match(text, /9\s+echo "Blocked: \$FILE_PATH is protected"\s*\n\s+(↳|\+)\s+>&2/, where);
     assert.match(text, /10\s+exit 2/, where);
     // The page pointer stands where the lines that don't fit would be.
-    const more = card.findIndex((r) => r.includes(C.codeMore));
+    const more = card.findIndex((r) => [C.codeMore, C.codeMore.replaceAll('—', '-')].some((m) => r.includes(m)));
     assert.ok(more > card.findIndex((r) => /10\s+exit 2/.test(r)), `${where}\n${text}`);
     assert.ok(!card.some((r) => /^(…|\.\.\.)\s*$/.test(r)), `${where}: a bare ellipsis\n${text}`);
     // A line shows whole or not at all: no line's first row without the rest.
@@ -163,7 +163,7 @@ const keyBar = (out) => strip(out.at(-1));
 test('k copies the block: it asks the terminal to copy the whole block, says what it did, and is on the key bar only where a block is', () => {
   const d = atCode(['- code: lines 1-5 point 3', ...fenced([...LOOP, 'ls -l .claude/hooks'])]);
   for (const [name, caps] of Object.entries(CAPS)) {
-    for (const [cols, rows] of SIZES) assert.match(keyBar(render(d.state, { cols, rows }, theme(caps))), new RegExp(`\\bk ${C.k.copy}\\b`), `${cols}x${rows} (${name})`);
+    for (const [cols, rows] of SIZES) assert.match(keyBar(render(d.state, { cols, rows }, theme(caps))), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`), `${cols}x${rows} (${name})`);
   }
   // The whole block, not only the lines this beat shows.
   assert.deepEqual(d.key('k').filter((e) => e.type === 'copy'), [{ type: 'copy', text: [...LOOP, 'ls -l .claude/hooks'].join('\n') }]);
@@ -182,7 +182,7 @@ test('k copies the block: it asks the terminal to copy the whole block, says wha
   assert.deepEqual(win.key('k').filter((e) => e.type === 'copy'), [{ type: 'copy', text: WIN_LINE }]);
   // A beat with no block: no k, and k does nothing.
   const plain = atCode(['- run: "git status --porcelain > .practice/b-2-before.txt"']);
-  assert.doesNotMatch(keyBar(render(plain.state, { cols: 80, rows: 24 }, theme(CAPS.full))), /\bk copy\b/);
+  assert.doesNotMatch(keyBar(render(plain.state, { cols: 80, rows: 24 }, theme(CAPS.full))), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`));
   assert.deepEqual(plain.key('k').filter((e) => e.type === 'copy'), []);
 });
 
@@ -204,7 +204,7 @@ test('a beat whose point is the last line of its window keeps that line and the 
       // the lines that stay.
       const shown = card.map((r) => r.match(/^. +(\d+) /)?.[1]).filter(Boolean).map(Number);
       assert.deepEqual(shown, shown.length ? Array.from({ length: shown.length }, (_, k) => 17 - shown.length + k) : [], `${where}\n${text}`);
-      if (shown[0] > 9) assert.ok(card.findIndex((r) => r.includes(C.codeMore)) < card.findIndex((r) => /^. +\d+ /.test(r)), `${where}\n${text}`);
+      if (shown[0] > 9) assert.ok(card.findIndex((r) => [C.codeMore, C.codeMore.replaceAll('—', '-')].some((m) => r.includes(m))) < card.findIndex((r) => /^. +\d+ /.test(r)), `${where}\n${text}`);
     }
   }
   // After k, the toast takes rows: the pointer still shows.
@@ -226,7 +226,7 @@ test('with less help, a GUIDED step\'s block leaves the card for the bottom rung
       fits(out, cols, rows, where);
       const text = out.map(strip).join('\n');
       assert.ok(!text.includes('esac') && text.includes(C.pressH), `${where}\n${text}`);
-      assert.doesNotMatch(keyBar(out), /\bk copy\b/, where);
+      assert.doesNotMatch(keyBar(out), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`), where);
     }
   }
   assert.deepEqual(d.key('k').filter((e) => e.type === 'copy'), []);
@@ -242,7 +242,7 @@ test('with less help, a GUIDED step\'s block leaves the card for the bottom rung
       fits(out, cols, rows, where);
       const text = out.map(strip).join('\n');
       assert.match(text, new RegExp(`\\${pointer} 12  esac`), `${where}\n${text}`);
-      assert.match(keyBar(out), /\bk copy\b/, where);
+      assert.match(keyBar(out), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`), where);
     }
   }
   assert.deepEqual(d.key('k').filter((e) => e.type === 'copy'), [{ type: 'copy', text: SKELETON.join('\n') }]);
@@ -261,16 +261,16 @@ test('k is on the bar wherever it copies: a done beat, a question not yet answer
   d.send({ type: 'check', lesson: 'b-2', items: items.map((it) => ({ ...it, pass: true, hint: '' })), path: '.practice/b-2-before.txt', stamp: 'b' });
   assert.ok(['done', 'already'].includes(d.state.beat.status), d.state.beat.status);
   for (const [name, caps] of Object.entries(CAPS)) {
-    assert.match(keyBar(render(d.state, { cols: 80, rows: 24 }, theme(caps))), /\bk copy\b/, `done (${name})`);
+    assert.match(keyBar(render(d.state, { cols: 80, rows: 24 }, theme(caps))), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`), `done (${name})`);
   }
   assert.equal(d.key('k').filter((e) => e.type === 'copy').length, 1);
   const ask = driver({ course: courseWith({ 'b-2': asking(block) }), facts: { clipboard: true }, saved: { format: 1, welcomed: true, lessons: { 'b-1': finished(course.find((l) => l.id === 'b-1')), 'b-2': { warm: ['R1', 'R2', 'R3'], done: ['R1', 'R2', 'R3'], step: 'W1', beat: 0 } } } });
   for (let i = 0; i < 3 && ask.state.view !== 'step'; i++) ask.key('enter');
-  assert.match(keyBar(render(ask.state, { cols: 80, rows: 24 }, theme(CAPS.full))), /\bk copy\b/, 'an ask beat');
+  assert.match(keyBar(render(ask.state, { cols: 80, rows: 24 }, theme(CAPS.full))), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`), 'an ask beat');
   assert.equal(ask.key('k').filter((e) => e.type === 'copy').length, 1);
   // A terminal that takes no OSC 52: no k, and k does nothing.
   const off = atCode(block, { clipboard: false });
-  assert.doesNotMatch(keyBar(render(off.state, { cols: 80, rows: 24 }, theme(CAPS.full))), /\bk copy\b/);
+  assert.doesNotMatch(keyBar(render(off.state, { cols: 80, rows: 24 }, theme(CAPS.full))), new RegExp(`\\bk ${C.k.copy}(?![а-яё])`));
   assert.deepEqual(off.key('k').filter((e) => e.type === 'copy'), []);
   assert.equal(off.state.toast, null);
 });
@@ -278,8 +278,8 @@ test('k is on the bar wherever it copies: a done beat, a question not yet answer
 test('at 60 columns the key bar keeps ? more: k gives way first', () => {
   const d = atCode(['- why: "Because it is."', '- code: point 1', ...fenced(['ls'])]);
   for (const [name, caps] of Object.entries(CAPS)) {
-    assert.match(keyBar(render(d.state, { cols: 60, rows: 20 }, theme(caps))), /\? more/, `60x20 (${name})`);
-    assert.match(keyBar(render(d.state, { cols: 80, rows: 24 }, theme(caps))), /\? more {4}k copy/, `80x24 (${name})`);
+    assert.match(keyBar(render(d.state, { cols: 60, rows: 20 }, theme(caps))), new RegExp(`\\? ${C.k.more}`), `60x20 (${name})`);
+    assert.match(keyBar(render(d.state, { cols: 80, rows: 24 }, theme(caps))), new RegExp(`\\? ${C.k.more} {4}k ${C.k.copy}`), `80x24 (${name})`);
   }
 });
 

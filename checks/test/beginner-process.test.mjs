@@ -56,7 +56,7 @@ const faults = [
   ['timeout', { status: null, error: { code: 'ETIMEDOUT' } }, 'ETIMEDOUT'],
   ['output limit', { status: null, error: { code: 'ENOBUFS' }, stdout: '# fail 1\n' }, 'ENOBUFS'],
   ['signal', { status: null, signal: 'SIGTERM' }, 'SIGTERM'],
-  ['missing exit status', { status: null }, 'exit status'],
+  ['missing exit status', { status: null }, 'нет кода завершения'],
   ['error despite numeric status', { status: 1, error: { code: 'ENOBUFS' }, stdout: '# fail 1\n' }, 'ENOBUFS'],
   ['shell lookup failure', { status: 127, stderr: 'npm: command not found' }, '127'],
   ['Windows shell lookup failure', { status: 9009, stderr: "'npm' is not recognized" }, '9009'],
@@ -69,14 +69,14 @@ for (const [name, failure, reason] of faults) {
     const { result, calls } = runItem('b-3', 2, [{ status: 0 }, failure]);
     assert.equal(calls, 2);
     assert.equal(typeof result, 'string', 'the check must fail rather than credit the mutant');
-    assert.match(result, /did not finish/);
+    assert.match(result, /не завершился/);
     assert.ok(result.includes(reason), result);
   });
   test(`capstone: ${name} without the fix is not a failing regression test`, () => {
     const { result, calls } = runItem('b-capstone', 2, [failure]);
     assert.equal(calls, 1);
     assert.equal(typeof result, 'string', 'the check must fail rather than credit the missing fix');
-    assert.match(result, /did not finish/);
+    assert.match(result, /не завершился/);
     assert.ok(result.includes(reason), result);
   });
 }
@@ -91,14 +91,14 @@ for (const lesson of ['b-3', 'b-capstone']) {
   }
   test(`${lesson}: passing tests without the fix still fail the check`, () => {
     const outcomes = lesson === 'b-3' ? [{ status: 0 }, { status: 0 }] : [{ status: 0 }];
-    assert.match(runItem(lesson, 2, outcomes).result, /still pass/);
+    assert.match(runItem(lesson, 2, outcomes).result, /по-прежнему проходят|всё равно проходит/);
   });
 }
 
 test('b-3: an execution failure before mutation reports the runner problem', () => {
   const { result, calls } = runItem('b-3', 2, [{ status: null, error: { code: 'ENOENT' } }]);
   assert.equal(calls, 1);
-  assert.match(result, /did not finish/);
+  assert.match(result, /не завершился/);
   assert.match(result, /ENOENT/);
 });
 
@@ -106,7 +106,7 @@ test('the ordinary tests-pass item refuses a runner error even with status zero'
   const { result, calls } = runItem('b-3', 4, [{ status: 0, error: { code: 'ENOBUFS' } }]);
   assert.equal(calls, 1);
   assert.equal(typeof result, 'string');
-  assert.match(result, /`npm test` fails/);
+  assert.match(result, /`npm test` завершается ошибкой/);
   assert.match(result, /ENOBUFS/);
 });
 

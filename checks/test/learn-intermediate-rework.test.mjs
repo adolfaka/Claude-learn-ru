@@ -4,6 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { liveCourse, driver, finishedBefore, lessonScreens } from './learn-drive.mjs';
+import { C } from '../../learn/lib/copy.mjs';
 import { render } from '../../learn/lib/render.mjs';
 import { strip, width } from '../../learn/lib/text.mjs';
 import { theme } from '../../learn/lib/theme.mjs';
@@ -23,14 +24,14 @@ test('i-1 names each terminal by its folder when the repository is outside the p
     return d;
   };
   const commit = at('Y3');
-  assert.ok(screen(commit).includes('in a terminal, in project'), screen(commit));
+  assert.ok(screen(commit).includes(`${C.terminalInFolder}, ${C.inFolder('project')}`), screen(commit));
   const check = at('C');
-  assert.ok(screen(check).includes('in a terminal, in your practice copy'), screen(check));
+  assert.ok(screen(check).includes(`${C.terminalInFolder}, ${C.inCopy}`), screen(check));
   check.send({ type: 'check', lesson: 'i-1', items: lesson.items.map((text, index) => ({ index, text, pass: true, hint: '' })) });
-  assert.ok(screen(check).includes('Run it in your practice copy too: you will see the same result.'), screen(check));
-  assert.ok(!screen(check).includes('your other terminal'), screen(check));
+  assert.ok(screen(check).includes(C.runItToo(C.inCopy)), screen(check));
+  assert.ok(!screen(check).includes('в другом терминале'), screen(check));
   check.send({ type: 'paste', text: 'npm run check -- i-1' });
-  assert.ok(screen(check).includes('Type it in a terminal, in your practice copy, not here.'), screen(check));
+  assert.ok(screen(check).includes(C.strayIn(C.inCopy)), screen(check));
 });
 
 for (const id of intermediate) test(`${id}: every beat fits in both terminal sizes in the practice copy and an own repository`, () => {

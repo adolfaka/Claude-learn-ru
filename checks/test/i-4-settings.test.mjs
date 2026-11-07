@@ -22,7 +22,7 @@ for (const [name, sharedEnabled, local, expected] of [
       if (expected) assert.equal(result, true);
       else {
         assert.equal(typeof result, 'string', 'the locally disabled sandbox must fail');
-        assert.match(result, /sandbox is off/);
+        assert.match(result, /Песочница выключена/);
       }
     });
   });

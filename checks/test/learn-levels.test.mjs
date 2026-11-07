@@ -26,8 +26,8 @@ const doneBefore = (course, id) => Object.fromEntries(course.slice(0, course.fin
 
 test('every PATH entry carries its level, the folder of its page, and the level names are the guide\'s', () => {
   for (const p of PATH) assert.equal(p.level, p.page.split('/')[1], p.id);
-  assert.deepEqual(C.levels, { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' });
-  assert.deepEqual(PATH.map((p) => C.levels[p.level]), [...Array(6).fill('Beginner'), ...Array(9).fill('Intermediate'), ...Array(8).fill('Advanced')]);
+  assert.deepEqual(C.levels, { beginner: 'Начальный', intermediate: 'Средний', advanced: 'Продвинутый' });
+  assert.deepEqual(PATH.map((p) => C.levels[p.level]), [...Array(6).fill('Начальный'), ...Array(9).fill('Средний'), ...Array(8).fill('Продвинутый')]);
 });
 
 const LABELS = ['B1', 'B2', 'B3', 'B4', 'B5', 'BC', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8', 'IC', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'AC'];
@@ -42,20 +42,20 @@ test('every lesson has a label unique in the course, and plain output shows each
 test('titles show no literal backticks: a-4\'s in the header, on the map and in plain output', () => {
   const course = advancedCheckOnly();
   const plain = plainProgress(course, {}, null).split('\n');
-  assert.ok(plain.includes('A4   Script Claude Code with claude -p: 0 of 0 check items pass'), plain.join('\n'));
+  assert.ok(plain.includes('A4   Скрипты с Claude Code: claude -p: проходит 0 из 0 пунктов проверки'), plain.join('\n'));
   // Every lesson before a-4 done: the map opens at a-4, and enter opens its check.
   const d = driver({ course, saved: { format: 1, welcomed: true, lessons: doneBefore(course, 'a-4') } });
   assert.equal(d.state.view, 'map');
   for (const t of [FULL, ASCII]) {
     const row = screen(d.state, [80, 24], t).find((l) => / A4 /.test(l));
-    assert.match(row ?? '', /A4 {1,3}Script Claude Code with claude -p/, screen(d.state, [80, 24], t).join('\n'));
+    assert.match(row ?? '', /A4 {1,3}Скрипты с Claude Code: claude -p/, screen(d.state, [80, 24], t).join('\n'));
     assert.ok(!row.includes('`'), row);
   }
   d.key('enter');
   assert.equal(d.state.view, 'checkonly');
   for (const t of [FULL, ASCII]) {
     const head = screen(d.state, [80, 24], t)[0];
-    assert.match(head, /A4 {1,3}Script Claude Code with claude -p/, head);
+    assert.match(head, /A4 {1,3}Скрипты с Claude Code: claude -p/, head);
     assert.ok(!head.includes('`'), head);
   }
 });
@@ -72,14 +72,14 @@ test('lesson numbers count within a level: i-2 is lesson 2, and its warm-ups fro
   assert.equal(d.state.lesson, 'i-2');
   // The level's first intro in the app asks where to practise (ticket 86): this practice copy.
   d.key('enter');
-  for (const size of [[60, 20], [80, 24]]) assert.ok(has(screen(d.state, size), 'Start lesson 2'), screen(d.state, size).join('\n'));
+  for (const size of [[60, 20], [80, 24]]) assert.ok(has(screen(d.state, size), C.startLesson(2)), screen(d.state, size).join('\n'));
   d.key('enter');
   assert.equal(stepOf(d.state).part, 'Warm-up');
-  assert.ok(has(screen(d.state), 'Warm-up from Beginner lesson 1'), screen(d.state).join('\n'));
+  assert.ok(has(screen(d.state), C.warmup(1, C.levels.beginner)), screen(d.state).join('\n'));
   playUntil(d, (s) => s.view === 'complete');
-  assert.ok(has(screen(d.state), 'Lesson 2 done! You practised:'), screen(d.state).join('\n'));
+  assert.ok(has(screen(d.state), 'Урок 2 пройден! Что вы отработали:'), screen(d.state).join('\n'));
   d.key('enter');
-  assert.ok(has(screen(d.state), 'start I3'), screen(d.state).join('\n'));
+  assert.ok(has(screen(d.state), C.k.startN('I3')), screen(d.state).join('\n'));
 });
 
 test('a warm-up from its own level names no level: b-2\'s from b-1 says "Warm-up from lesson 1"', () => {
@@ -87,7 +87,7 @@ test('a warm-up from its own level names no level: b-2\'s from b-1 says "Warm-up
   const d = driver({ course, saved: { format: 1, welcomed: true, missed: ['start'], lessons: doneBefore(course, 'b-2') } });
   d.key('enter');
   assert.equal(stepOf(d.state).part, 'Warm-up');
-  assert.ok(has(screen(d.state), 'Warm-up from lesson 1'), screen(d.state).join('\n'));
+  assert.ok(has(screen(d.state), C.warmup(1)), screen(d.state).join('\n'));
 });
 
 // The map's lesson rows, by their label pills, and the one the cursor is on.
@@ -103,7 +103,7 @@ const mapAt = (id, course = threeLevels()) => {
 
 test('the map shows one level, with its name and its n of m done', () => {
   const lines = screen(mapAt('i-1').state);
-  assert.match(lines[0], /MAP +Intermediate path +0 of 9 done$/, lines.join('\n'));
+  assert.match(lines[0], new RegExp(`${C.map} +${C.levelPath(C.levels.intermediate)} +${C.ofDone(0, 9)}$`), lines.join('\n'));
   assert.deepEqual(pills(lines), LABELS.slice(6, 15), lines.join('\n'));
   assert.equal(cursorOn(lines), 'I1');
 });
@@ -112,45 +112,45 @@ test('left and right switch level, round from the last to the first, to its next
   const d = mapAt('i-3');
   const at = () => {
     const lines = screen(d.state);
-    return [lines[0].match(/(\w+) path/)[1], lines[0].match(/(\d+ of \d+) done$/)[1], cursorOn(lines), pills(lines).length];
+    return [lines[0].match(/Путь (\S+) уровня/)[1], lines[0].match(/готово (\d+ из \d+)$/)[1], cursorOn(lines), pills(lines).length];
   };
-  assert.deepEqual(at(), ['Intermediate', '2 of 9', 'I3', 9]);
+  assert.deepEqual(at(), ['среднего', '2 из 9', 'I3', 9]);
   d.key('left');
-  assert.deepEqual(at(), ['Beginner', '6 of 6', 'B1', 6], 'a level all done: its first lesson');
+  assert.deepEqual(at(), ['начального', '6 из 6', 'B1', 6], 'a level all done: its first lesson');
   d.key('left');
-  assert.deepEqual(at(), ['Advanced', '0 of 8', 'A1', 8], 'left from Beginner goes round to Advanced');
+  assert.deepEqual(at(), ['продвинутого', '0 из 8', 'A1', 8], 'left from Beginner goes round to Advanced');
   d.key('right');
-  assert.deepEqual(at(), ['Beginner', '6 of 6', 'B1', 6]);
+  assert.deepEqual(at(), ['начального', '6 из 6', 'B1', 6]);
   d.key('up');
-  assert.deepEqual(at(), ['Beginner', '6 of 6', 'BC', 6], 'up from the first row wraps to the level\'s last');
+  assert.deepEqual(at(), ['начального', '6 из 6', 'BC', 6], 'up from the first row wraps to the level\'s last');
   d.key('right');
-  assert.deepEqual(at(), ['Intermediate', '2 of 9', 'I3', 9]);
+  assert.deepEqual(at(), ['среднего', '2 из 9', 'I3', 9]);
   d.key('right');
-  assert.deepEqual(at(), ['Advanced', '0 of 8', 'A1', 8]);
+  assert.deepEqual(at(), ['продвинутого', '0 из 8', 'A1', 8]);
   d.key('right');
-  assert.deepEqual(at(), ['Beginner', '6 of 6', 'B1', 6], 'right from Advanced goes round to Beginner');
+  assert.deepEqual(at(), ['начального', '6 из 6', 'B1', 6], 'right from Advanced goes round to Beginner');
   d.key('left');
   d.key('up');
-  assert.deepEqual(at(), ['Advanced', '0 of 8', 'AC', 8]);
+  assert.deepEqual(at(), ['продвинутого', '0 из 8', 'AC', 8]);
   d.key('down');
-  assert.deepEqual(at(), ['Advanced', '0 of 8', 'A1', 8], 'down from the last row wraps to the level\'s first');
+  assert.deepEqual(at(), ['продвинутого', '0 из 8', 'A1', 8], 'down from the last row wraps to the level\'s first');
   // Enter opens the lesson the cursor is on.
   d.key('up');
   d.key('enter');
   assert.equal(d.state.lesson, 'a-capstone');
   // m from a lesson opens its own level's page.
   d.key('m');
-  assert.deepEqual(at(), ['Advanced', '0 of 8', 'AC', 8]);
+  assert.deepEqual(at(), ['продвинутого', '0 из 8', 'AC', 8]);
 });
 
 test('the map\'s key bar offers the arrows that switch level, and ? lists them, only with more than one level', () => {
   const three = mapAt('i-1');
-  for (const size of [[60, 20], [80, 24]]) assert.match(screen(three.state, size).at(-1), /←→ level/, size.join('x'));
+  for (const size of [[60, 20], [80, 24]]) assert.match(screen(three.state, size).at(-1), /←→ ур\./, size.join('x'));
   // Where the bar is short, as in ASCII at 60x20, "choose" gives way: the level key, enter and m stay.
-  assert.equal(screen(three.state, [60, 20], ASCII).at(-1), '  up/down    <- -> level    enter open    m back    q quit');
+  assert.equal(screen(three.state, [60, 20], ASCII).at(-1), '  up/down    <- -> ур.    enter урок    m назад    q выйти');
   // f, the level's work folder (ticket 86), is a low key: it shows where the bar has room.
-  assert.equal(screen(three.state, [80, 24], ASCII).at(-1), '  up/down choose    <- -> level    enter open    f folder    m back    q quit');
-  for (const t of Object.values(MODES)) for (const size of [[60, 20], [80, 24]]) assert.match(screen(three.state, size, t).at(-1), /(←→|<- ->) level/, size.join('x'));
+  assert.equal(screen(three.state, [80, 24], ASCII).at(-1), '  up/down выбрать    <- -> ур.    enter урок    f папка    m назад    q выйти');
+  for (const t of Object.values(MODES)) for (const size of [[60, 20], [80, 24]]) assert.match(screen(three.state, size, t).at(-1), /(←→|<- ->) ур\./, size.join('x'));
   three.key('?');
   for (const size of [[60, 20], [80, 24]]) assert.ok(has(screen(three.state, size), C.levelKey[1]), screen(three.state, size).join('\n'));
   // Its words start where every key's do, in ASCII too.
@@ -170,7 +170,7 @@ test('the map\'s key bar offers the arrows that switch level, and ? lists them, 
   beginner.key('enter');
   beginner.key('m');
   assert.equal(beginner.state.view, 'map');
-  assert.doesNotMatch(screen(beginner.state).at(-1), /level/);
+  assert.doesNotMatch(screen(beginner.state).at(-1), /ур\./);
   beginner.key('?');
   assert.ok(!has(screen(beginner.state), C.levelKey[1]));
 });
@@ -182,13 +182,13 @@ test('the welcome names the current level and draws only its path line, with one
   const d = welcomeAt('i-1');
   assert.equal(d.state.view, 'welcome');
   const lines = screen(d.state);
-  assert.match(lines[0], /Intermediate path · 0 of 9 done$/, lines.join('\n'));
+  assert.match(lines[0], /Путь среднего уровня · пройдено 0 из 9$/, lines.join('\n'));
   assert.equal(lines[1], '  I1 ── I2 ── I3 ── I4 ── I5 ── I6 ── I7 ── I8 ── 🏆');
   assert.equal(lines.join('\n').split('🏆').length, 2, 'one cup');
   const a = screen(welcomeAt('a-1').state);
-  assert.match(a[0], /Advanced path · 0 of 8 done$/);
+  assert.match(a[0], /Путь продвинутого уровня · пройдено 0 из 8$/);
   assert.equal(a[1], '  A1 ── A2 ── A3 ── A4 ── A5 ── A6 ── A7 ── 🏆');
-  assert.match(screen(d.state, [80, 24], ASCII)[1], /^ {2}I1 -- I2 .* I8 -- \[cup\]$/);
+  assert.match(screen(d.state, [80, 24], ASCII)[1], /^ {2}I1 -- I2 .* I8 -- \[кубок\]$/);
 });
 
 // Ticket 172: a new copy's saved folder makes a-5 or a-capstone the next
@@ -198,8 +198,8 @@ test('a saved new copy changes neither the welcome\'s nor the map\'s n of m coun
   const course = advancedCheckOnly();
   const folders = { 'a-5': '/home/sam/claude-actions-practice', 'a-capstone': '/home/sam/ci-review' };
   const cases = [
-    ['a-5 given, not done', doneBefore(course, 'a-5'), '4 of 8 done'],
-    ['a-5 and a-capstone done', { ...doneBefore(course, 'a-5'), 'a-5': { complete: true }, 'a-capstone': { complete: true } }, '6 of 8 done'],
+    ['a-5 given, not done', doneBefore(course, 'a-5'), [4, 8]],
+    ['a-5 and a-capstone done', { ...doneBefore(course, 'a-5'), 'a-5': { complete: true }, 'a-capstone': { complete: true } }, [6, 8]],
   ];
   for (const [label, lessons, count] of cases) {
     for (const given of [{}, folders]) {
@@ -208,13 +208,13 @@ test('a saved new copy changes neither the welcome\'s nor the map\'s n of m coun
       assert.equal(welcome.state.view, 'welcome', at);
       for (const size of [[60, 20], [80, 24]]) {
         const ls = screen(welcome.state, size);
-        assert.ok(ls[0].endsWith(`Advanced path · ${count}`), `${at}\n${ls.join('\n')}`);
+        assert.ok(ls[0].endsWith(`${C.levelPath(C.levels.advanced)} · пройдено ${count[0]} из ${count[1]}`), `${at}\n${ls.join('\n')}`);
       }
       const map = driver({ course, saved: { format: 1, welcomed: true, lessons, folders: given } });
       assert.equal(map.state.view, 'map', at);
       for (const size of [[60, 20], [80, 24]]) {
         const ls = screen(map.state, size);
-        assert.ok(ls[0].endsWith(count) && ls[0].includes('Advanced'), `${at}\n${ls.join('\n')}`);
+        assert.ok(ls[0].endsWith(C.ofDone(...count)) && ls[0].includes(C.levelPath(C.levels.advanced)), `${at}\n${ls.join('\n')}`);
       }
     }
   }
@@ -287,14 +287,14 @@ test('with three levels the welcome and every map page fit at 60x20 and 80x24, i
               const head = strip(render(state, { cols: w, rows }, t)[0]).trimEnd();
               assert.ok(head.endsWith(t.unicode ? done : done.replace('·', '|')), `${where}\nat ${w} columns: ${head}`);
             }
-          } else assert.ok(lines[0].includes(`${level} path`), where);
+          } else assert.ok(lines[0].includes(C.levelPath(level)), where);
           if (name === 'map') {
             if (t.unicode) assert.deepEqual(pills(lines), labels, where);
             assert.ok(has(lines, C.ofDone(0, labels.length)), where);
           } else {
             // The path line whole: every lesson's label, then the cup.
             const path = labels.slice(0, -1).join(t.unicode ? ' ── ' : ' -- ');
-            assert.ok(lines[1].startsWith(`  ${path}${t.unicode ? ' ── 🏆' : ' -- [cup]'}`), where);
+            assert.ok(lines[1].startsWith(`  ${path}${t.unicode ? ' ── 🏆' : ' -- [кубок]'}`), where);
           }
         }
       }

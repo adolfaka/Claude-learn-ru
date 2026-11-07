@@ -86,7 +86,7 @@ test('the frame is a box at most 80 columns by 40 rows, centered both ways: the 
           assert.deepEqual([...lines.slice(0, top), ...lines.slice(bar + 1)].filter(Boolean), [], `${where}: the rows around the box are blank`);
           const plain = lines.map(strip);
           assert.ok(plain[bar].trim() && isRule(plain[bar - 1]), `${where}: the key bar and its rule end the box\n${plain.join('\n')}`);
-          if (state.toast && rows > BOX_ROWS) assert.match(plain.slice(bar - 4, bar - 1).join('\n'), /looks like a command/, `${where}: the toast sits over the rule`);
+          if (state.toast && rows > BOX_ROWS) assert.match(plain.slice(bar - 4, bar - 1).join('\n'), /Это похоже на команду/, `${where}: the toast sits over the rule`);
         }
       }
     }
@@ -103,7 +103,7 @@ test('the frame is a box at most 80 columns by 40 rows, centered both ways: the 
     for (const lines of [render(driver().state, { cols, rows }, theme(CAPS.full)), bootFrame(0, { cols, rows }, theme(CAPS.full))]) {
       const words = lines.filter(Boolean);
       assert.equal(lines.length, rows, `${cols}x${rows}`);
-      assert.match(words.join(' '), /at least 60 by\s+20/, `${cols}x${rows}`);
+      assert.match(words.join(' '), /не меньше 60 на\s+20/, `${cols}x${rows}`);
       assert.equal(lines.findIndex(Boolean), Math.floor((rows - words.length) / 2), `${cols}x${rows}`);
     }
   }
@@ -142,7 +142,7 @@ test('each color mode draws only what it can show', () => {
     const truecolor = render(state, { cols: 100, rows: 30 }, theme({ ...CAPS.full, depth: 24 })).join('\n');
     assert.doesNotMatch(truecolor, /38;2|48;2/, `${label} on a truecolor terminal uses a truecolor code`);
     const ascii = render(state, { cols: 100, rows: 30 }, theme(CAPS.ascii)).map(strip).join('\n');
-    assert.doesNotMatch(ascii, /[^\x00-\x7f]/, `${label} in ASCII mode draws ${ascii.match(/[^\x00-\x7f]/)?.[0]}`);
+    assert.doesNotMatch(ascii, /[^\x00-\x7fЀ-ӿ]/, `${label} in ASCII mode draws ${ascii.match(/[^\x00-\x7fЀ-ӿ]/)?.[0]}`);
   }
 });
 
@@ -168,7 +168,7 @@ test('review fixes: paths are quoted and measured, toasts show everywhere, no hi
   for (const [cols, rows] of SIZES) for (const l of render(wide.state, { cols, rows }, t)) assert.ok(width(l) <= cols - 1);
   // The wrong-window note shows on the welcome screen too.
   wide.send({ type: 'paste', text: 'claude' });
-  assert.match(render(wide.state, { cols: 100, rows: 30 }, t).map(strip).join('\n'), /Type it in your other terminal/);
+  assert.match(render(wide.state, { cols: 100, rows: 30 }, t).map(strip).join('\n'), /Введите её в другом терминале/);
   // "Less help": the exact command uses the real folder, not the placeholder.
   const less = driver({ saved: { format: 1, welcomed: true, lessons: { 'b-1': { lessHelp: true, step: 'W3' } } } });
   less.key('enter');
@@ -216,7 +216,7 @@ test('lessons after the first: page links, Windows bottom lines, slow checks and
   d.key('enter');
   const draw = (caps) => render(d.state, { cols: 100, rows: 40 }, theme({ ...CAPS.full, ...caps })).join('\n');
   const links = [...draw({ links: true }).matchAll(/\x1b\]8;;([^\x07]*)\x07/g)].map((m) => m[1]).filter(Boolean);
-  const page = 'https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know/blob/main/docs/beginner/';
+  const page = 'https://github.com/runowata/claude-code-ru/blob/main/docs/beginner/';
   assert.ok(links.includes(`${page}02-permission-modes-and-plan-mode.md#watch-out`), links.join(' '));
   assert.ok(links.includes(`${page}05-project-memory.md#worked-example`), links.join(' '));
   // The bottom rung, on Windows, shows the Windows line.
@@ -232,7 +232,7 @@ test('lessons after the first: page links, Windows bottom lines, slow checks and
   const slow = driver({ saved: { format: 1, welcomed: true, lessons: { 'b-1': { step: 'C', beat: 0, levels: ['hinted', 'challenge'] } } } });
   slow.key('enter');
   slow.send({ type: 'check', lesson: 'b-1', items: [{ index: 0, text: 'x', pass: false, slow: true, hint: '' }] });
-  assert.match(strip(render(slow.state, { cols: 100, rows: 40 }, theme(CAPS.full)).join('\n')), /takes a while, so it runs only when you ask: press r/);
+  assert.match(strip(render(slow.state, { cols: 100, rows: 40 }, theme(CAPS.full)).join('\n')), /Часть этой проверки идёт долго, поэтому она запускается только по вашей\s+│\s+просьбе: нажмите r/);
 });
 
 
@@ -243,7 +243,7 @@ for (const skipped of [false, true]) test(`every lesson in the app${skipped ? ',
   const ids = course.filter((l) => l.content && l.id !== 'b-1').map((l) => l.id);
   // Only letters and digits, so the box's edges, a wrap and ASCII stand-ins
   // don't count as a cut.
-  const flat = (text) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[^A-Za-z0-9]/g, '');
+  const flat = (text) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[^A-Za-zА-ЯЁа-яё0-9]/g, '');
   const cut = [];
   for (const id of ids) {
     const all = lessonScreens(id, course, { skipped });
@@ -299,9 +299,9 @@ test('real-run fixes: a done git step ticks no command, and "Still stuck?" only 
 
 test('h at CHALLENGE: the toast names the try and fits; the level-up says to try first', async () => {
   const { C } = await import('../../learn/lib/copy.mjs');
-  assert.equal(C.hintsLater('r'), 'Try it first: press r to check, then h works.');
-  assert.equal(C.hintsLater('pick'), 'Try it first: pick an answer, then h works.');
-  assert.deepEqual(C.toChallenge, ['From memory now: just the goal.', 'Try it first, then press h if you need a hint.']);
+  assert.equal(C.hintsLater('r'), 'Сначала попробуйте сами: нажмите r, чтобы проверить, и тогда заработает h.');
+  assert.equal(C.hintsLater('pick'), 'Сначала попробуйте сами: выберите ответ, и тогда заработает h.');
+  assert.deepEqual(C.toChallenge, ['Теперь по памяти: только цель.', 'Сначала попробуйте сами, потом нажмите h, если нужна подсказка.']);
   const t = theme(CAPS.full);
   const flat = (lines) => lines.map((l) => strip(l).trim()).join(' ').replace(/\s+/g, ' ');
   const level = screens.find(([l]) => l === 'level up challenge')[1];
@@ -322,7 +322,7 @@ test('h at CHALLENGE: the toast names the try and fits; the level-up says to try
 
 test('both level-ups show "g more help" in the key bar, at 60x20 and 80x24', () => {
   const t = theme(CAPS.full);
-  const bars = { 'level up hinted': "enter let's go g more help q quit", 'level up challenge': 'enter bring it on g more help q quit' };
+  const bars = { 'level up hinted': 'enter поехали g больше помощи q выйти', 'level up challenge': 'enter давайте g больше помощи q выйти' };
   for (const [label, bar] of Object.entries(bars)) {
     const state = screens.find(([l]) => l === label)[1];
     for (const [cols, rows] of [[60, 20], [80, 24]]) {
@@ -345,7 +345,7 @@ test('the Check\'s level-up shows no "g more help": g has nothing to give there'
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const lines = render(d.state, { cols, rows }, t);
     assert.equal(lines.length, rows);
-    assert.equal(strip(lines.at(-1)).trim().replace(/\s+/g, ' '), 'enter bring it on q quit', `${cols}x${rows}`);
+    assert.equal(strip(lines.at(-1)).trim().replace(/\s+/g, ' '), 'enter давайте q выйти', `${cols}x${rows}`);
   }
 });
 
@@ -377,12 +377,12 @@ test('h at CHALLENGE: a done-label git beat offers r, the try the toast names', 
   d.key('h');
   const bar = (state, cols, rows) => strip(render(state, { cols, rows }, t).at(-1));
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
-    assert.match(bar(d.state, cols, rows), /space .* r check now .*q quit/, `${cols}x${rows}`);
+    assert.match(bar(d.state, cols, rows), /space .* r проверить .*q выйти/, `${cols}x${rows}`);
   }
   d.key('r');
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const b = bar(d.state, cols, rows);
-    assert.match(b, /h hint/, `${cols}x${rows}: h replaces r once tried`);
+    assert.match(b, /h подсказка/, `${cols}x${rows}: h replaces r once tried`);
     assert.doesNotMatch(b, / r /);
   }
 });
@@ -407,7 +407,7 @@ const ownCopy = (id) => (allCourse.find((l) => l.id === id)?.newCopy ? { folders
 // Renders the eased step on screen at 60x20 and 80x24 in every colour mode;
 // `whole` collects the places where the line shows whole at 60x20.
 function easedLineWhole(d, where, whole) {
-  const flat = (text) => text.replace(/[^A-Za-z0-9]/g, '');
+  const flat = (text) => text.replace(/[^A-Za-zА-ЯЁа-яё0-9]/g, '');
   for (const [capName, caps] of Object.entries(CAPS)) {
     for (const [cols, rows] of [[60, 20], [80, 24]]) {
       const lines = render(d.state, { cols, rows }, theme(caps)).map(strip);
@@ -422,7 +422,7 @@ function easedLineWhole(d, where, whole) {
 }
 
 test('an eased step: the "more help" line wraps whole, even at 60x20', () => {
-  assert.match(C.eased, /you needed help with it last time\.$/);
+  assert.match(C.eased, /в прошлый раз вам понадобилась помощь\.$/);
   const whole = new Set();
   const check = (d, where) => easedLineWhole(d, where, whole);
   const landed = new Set();
@@ -504,8 +504,8 @@ test('fading counts only what this learner did: a skipped skill opens GUIDED wit
 
 test('fading counts only what this learner did: "done each part before" only after a finished step on every part', async () => {
   const { courseWith, DEMO_B2 } = await import('./learn-drive.mjs');
-  assert.equal(C.noCommands, 'No commands this time.');
-  assert.equal(C.doneEachPart, "You've done each part before.");
+  assert.equal(C.noCommands, 'В этот раз без команд.');
+  assert.equal(C.doneEachPart, 'Каждую часть вы уже делали.');
   const flat = (text) => text.replace(/\s+/g, ' ');
   const t2 = lessonById('b-capstone').content.steps.find((x) => x.id === 'T2');
   const beat = t2.beats.findIndex((b) => b.kind !== 'predict');
@@ -551,8 +551,8 @@ test('fading counts only what this learner did: "done each part before" only aft
     assert.equal(stepNote(d.state), 'hinted');
     return flat(plainAt(d, 80, 24));
   };
-  assert.match(atW2(finished(lessonById('b-1')), []), /You've done this before/);
-  assert.doesNotMatch(atW2({ complete: true, done: [] }, ['R1']), /You've done this before/, 'R1 (status) was recalled, but no status step was finished');
+  assert.match(atW2(finished(lessonById('b-1')), []), /Вы это уже делали/);
+  assert.doesNotMatch(atW2({ complete: true, done: [] }, ['R1']), /Вы это уже делали/, 'R1 (status) was recalled, but no status step was finished');
 });
 
 test('fading counts only what this learner did: a replay\'s intro shows the help the play starts with', () => {
@@ -581,7 +581,7 @@ test('fading counts only what this learner did: a replay\'s intro shows the help
 test('the next screen counts the questions in the steps this learner finished', () => {
   const b4 = lessonById('b-4');
   const questions = (steps) => steps.flatMap((st) => st.beats).filter((b) => b.ask && b.kind !== 'predict').length;
-  const count = (d, cols, rows) => plainAt(d, cols, rows).match(/(\d+) questions? answered/)?.[1];
+  const count = (d, cols, rows) => plainAt(d, cols, rows).match(/Отвечено на (\d+) (?:вопрос|вопроса|вопросов)/)?.[1];
   // A full play: every question in the play, its warm-up too (exit was
   // missed before, so R2 plays: 194).
   const d = driver({ course: allCourse, saved: { format: 1, welcomed: true, missed: ['exit'], lessons: finishedBefore('b-4') } });
@@ -595,7 +595,7 @@ test('the next screen counts the questions in the steps this learner finished', 
   // The same play marked complete with no step done: the app saw no answer.
   const at = (done) => ({ state: { ...d.state, progress: { ...d.state.progress, 'b-4': { ...p, done } } } });
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
-    assert.ok(!plainAt(at([]), cols, rows).includes('8 questions answered'), `${cols}x${rows}`);
+    assert.ok(!plainAt(at([]), cols, rows).includes('Отвечено на 8 вопросов'), `${cols}x${rows}`);
     assert.equal(count(at([]), cols, rows), '0', `${cols}x${rows}`);
   }
   // Part of it: only the steps done count.
@@ -606,7 +606,7 @@ test('the next screen counts the questions in the steps this learner finished', 
 
 // The capstone handover line (Q11): it reports the unaided result, and only
 // when that play showed no exact command.
-const HANDOVER = 'You did every task without the exact command.';
+const HANDOVER = 'Вы выполнили все задания без точной команды.';
 const playedTo = (id, saved = finishedBefore(id)) => {
   const d = driver({ course: allCourse, saved: { format: 1, welcomed: true, lessons: saved } });
   // A lesson finished already: the app opens on a later one, or on the map.
@@ -622,7 +622,7 @@ test('the capstone\'s next screen says "You did every task without the exact com
   const d = playedTo('b-capstone');
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const lines = plainAt(d, cols, rows).split('\n');
-    const at = lines.findIndex((l) => l.includes("The lesson's check passes: 7 of 7 items"));
+    const at = lines.findIndex((l) => l.includes('Проверка урока проходит: 7 из 7 пунктов'));
     assert.ok(at > 0, `${cols}x${rows}: no check summary`);
     assert.equal(lines[at + 1].trim(), HANDOVER, `${cols}x${rows}`);
   }
@@ -743,7 +743,7 @@ test('the capstone celebrates the same with or without the exact command: step d
 
 // The invitation at the capstone (153, D9 (b)): one fact-free line on each
 // level's capstone next screen, under the handover line.
-const INVITE = 'Questions about anything in this level? Ask in your other terminal, then compare the answer with the lesson pages.';
+const INVITE = 'Есть вопросы по этому уровню? Задайте их в другом терминале, а потом сверьте ответ со страницами уроков.';
 // The rows from `at` on that read as the invitation, wrapped, or null.
 const inviteFrom = (lines, at) => {
   for (let k = at, text = ''; k < lines.length && text.length < INVITE.length; k++) {
@@ -764,9 +764,9 @@ test('the capstone\'s next screen invites questions under the handover line, who
   // Below 24 rows a body over its room compacts every repeat first (142), as
   // on the capstone intro: at 60x20 the one-tier climb loses its tier words,
   // which frees no row. 80x24 keeps them.
-  const climb = (cols, rows) => plainAt(d, cols, rows).split('\n').filter((l) => l.includes('CHALLENGE')).map((l) => l.trim());
-  assert.deepEqual(climb(60, 20), ['★★★★★★★    CHALLENGE ★★★']);
-  assert.deepEqual(climb(80, 24), ['★★★★★★★    CHALLENGE ★★★    just the goal']);
+  const climb = (cols, rows) => plainAt(d, cols, rows).split('\n').filter((l) => l.includes('ИСПЫТАНИЕ')).map((l) => l.trim());
+  assert.deepEqual(climb(60, 20), ['★★★★★★★    ИСПЫТАНИЕ ★★★']);
+  assert.deepEqual(climb(80, 24), ['★★★★★★★    ИСПЫТАНИЕ ★★★    только цель']);
 });
 
 test('the invitation shows after an exact command too, under the check summary in the handover line\'s place', () => {
@@ -774,11 +774,11 @@ test('the invitation shows after an exact command too, under the check summary i
   for (const [cols, rows] of [[60, 20], [80, 24]]) {
     const lines = plainAt(d, cols, rows).split('\n');
     assert.ok(!lines.some((l) => l.includes(HANDOVER)), `${cols}x${rows}`);
-    const at = lines.findIndex((l) => l.includes("The lesson's check passes: 7 of 7 items"));
+    const at = lines.findIndex((l) => l.includes('Проверка урока проходит: 7 из 7 пунктов'));
     assert.ok(at > 0, `${cols}x${rows}: no check summary`);
     assert.ok(inviteFrom(lines, at + 1), `${cols}x${rows}: no invitation under the check summary\n${lines.join('\n')}`);
     // Indented as the handover line is: under the summary's words.
-    assert.equal(lines[at + 1].search(/\S/), width(lines[at].slice(0, lines[at].indexOf('The lesson'))), `${cols}x${rows}`);
+    assert.equal(lines[at + 1].search(/\S/), width(lines[at].slice(0, lines[at].indexOf('Проверка урока'))), `${cols}x${rows}`);
   }
 });
 
@@ -854,7 +854,7 @@ test('the invitation gives way whole before any teaching line is cut, and never 
           else assert.ok(inviteFrom(lines, at), `the invitation is cut: ${where}`);
           // The order today: the recall prompt goes first, then the
           // question count, then the invitation.
-          const count = lines.some((l) => / answered$/.test(l.trim()));
+          const count = lines.some((l) => /Отвечено на \d+ (?:вопрос|вопроса|вопросов)$/.test(l.trim()));
           const recall = text.includes(flatText(C.recallAsk('BC')));
           if (count) assert.ok(at >= 0, `the invitation goes before the count: ${where}`);
           if (recall) assert.ok(count, `the count goes before the recall prompt: ${where}`);
@@ -876,8 +876,8 @@ test('a done beat hides its satisfied "Done when" line: W3 done at 60x20 is the 
   // ticket). The mockup was drawn when every spacer dropped at once; one at a
   // time from the bottom keeps the card's first spacer in its spare row.
   const mockup = [
-    '   B1   Install, sign in and look around       GUIDED ★☆☆',
-    '  ●━━●━━●━━○──○──○──○   ◇──◇──◇   ☆──☆        step 3 of 12',
+    '   B1   Установка, вход и первый осмотр     С ПОМОЩЬЮ ★☆☆',
+    '  ●━━●━━●━━○──○──○──○   ◇──◇──◇   ☆──☆         шаг 3 из 12',
     '  ━━━━━━━━━━━━━━──────────────────────────────────────────',
     '',
     null,
@@ -888,14 +888,14 @@ test('a done beat hides its satisfied "Done when" line: W3 done at 60x20 is the 
     '  │   $ cd /home/sam/claude-code-practice               ✔',
     '  │   $ mkdir -p .practice                              ✔',
     '  │   $ claude --version > .practice/version.txt        ✔',
-    '  │  ✦          ▄█▀   ·   Step 3 done!',
+    '  │  ✦          ▄█▀   ·   Шаг 3 пройден!',
     '  │   ▀█▄    ▄█▀    ✦     .practice/version.txt',
-    '  │  ·  ▀█▄█▀     ·       holds 2.1.285 (Claude Code)',
-    '  │                       🔥 3 steps this session',
+    '  │  ·  ▀█▄█▀     ·       содержит 2.1.285 (Claude Code)',
+    '  │                       🔥 3 шага за эту сессию',
     '  ╰───────────────────────────────────────────────────────',
     '',
     null,
-    '   enter  next    b back    w why    m map    q quit',
+    '   enter  дальше    b назад    w зачем    q выйти',
   ];
   mockup.forEach((row, i) => {
     // The pulse row is motion's.
@@ -938,7 +938,7 @@ const lessonWalks = async (keep = () => true) => {
 // them. Lesson 1's walk stands in for its lessonScreens, apart from its Check:
 // the walk passes it first time, and lessonScreens also fails it.
 const everyScreen = async () => [...screens, ...await lessonWalks((label) => !label.startsWith('b-1 ') || label.startsWith('b-1 C.'))];
-const flatText = (text) => text.replace(/[^A-Za-z0-9]/g, '');
+const flatText = (text) => text.replace(/[^A-Za-zА-ЯЁа-яё0-9]/g, '');
 // The rows of the while-it-runs box (ticket 150): it draws the hint box's
 // bar, but it is optional, giving way whole where the room runs out, and it
 // grades nothing. Its barred rows run up to a hint the card shows below it.
@@ -1002,7 +1002,7 @@ test('below 80 columns a tall window gives up only blank rows: a screen taller t
   const all = [...await everyScreen(), ...await tallScreens()].filter(([, s]) => s.view === 'step' && !s.overlay);
   // A wrong pick's "not this one" tag sits inside its option where the
   // option wraps, which differs by width: the words are read without it.
-  const read = (ls) => flatText(ls.map((l) => l.replace(/ +(←|<-) not this one/, '')).join(''));
+  const read = (ls) => flatText(ls.map((l) => l.replace(/ +(←|<-) не этот/, '')).join(''));
   for (const capName of ['full', 'ascii']) {
     const t = theme(CAPS[capName]);
     const box = `${t.glyph.rail}  ${t.glyph.bar}`;
@@ -1123,7 +1123,7 @@ test('a repeat compacts below 24 rows only: the climb staircase becomes one row,
     assert.deepEqual(stairs(small), [], small.join('\n'));
     const row = small.find((l) => l.includes(bar));
     assert.ok(row, small.join('\n'));
-    assert.match(row, /GUIDED ★☆☆ .*CHALLENGE ★★★/);
+    assert.match(row, /С ПОМОЩЬЮ ★☆☆ .*ИСПЫТАНИЕ ★★★/);
   }
   // At 80x24 every intro and next screen keeps its staircase.
   for (const [label, state] of endScreens().filter(([l]) => !l.endsWith('complete'))) {
@@ -1153,7 +1153,7 @@ test('every intro opens with its Why line, in the page\'s words, at 60x20 and 80
         const at = lines[3].trim() ? 3 : 4;
         assert.ok(at === 4 || cols === 60, where);
         assert.ok(lines[at].trimStart().startsWith(`${C.whyLead} "`), where);
-        assert.ok(flatText(lines.slice(at, at + 2).join('')).startsWith(flatText(`Why ${why}`)), where);
+        assert.ok(flatText(lines.slice(at, at + 3).join('')).startsWith(flatText(`${C.whyLead} ${why}`)), where);
         // At 80x24 the staircase keeps its rows; at 60x20 it is one row.
         const tiers = stairs(render(state, { cols: 120, rows: 40 }, t).map(strip)).length;
         assert.equal(stairs(lines).length, cols === 80 || STAIRS_WHOLE_AT_60X20[label] ? tiers : 0, where);
@@ -1167,52 +1167,52 @@ test('every intro opens with its Why line, in the page\'s words, at 60x20 and 80
 // The compact row is spec 3.1's (142): the pills of the easiest and hardest
 // tiers, where the mockup spelled out all three tier words.
 const B4_INTRO = {
-  '80x24': `
-   B4   Keep a session on track                               about 20 minutes
-  ☆──☆   ○──○   ◇   ○──○──○   ◇──◇──◇──◇   ☆──☆                       14 steps
+'80x24': `
+   B4   Удержать сессию в рабочем русле                       about 20 minutes
+  ☆──☆   ○──○   ◇   ○──○──○   ◇──◇──◇──◇   ☆──☆                       14 шагов
   ────────────────────────────────────────────────────────────────────────────
 
-  Why: "a long, wandering conversation leaves Claude less room for the work
-       that matters now"
+  Зачем: "a long, wandering conversation leaves Claude less room for the work
+         that matters now"
 
-  🎯 You'll be able to
+  🎯 После урока вы сможете
      ○ keep a session on track
      ○ see how full its context is, clear or compact it
     🏁 rewind a change
      ○ resume an earlier conversation
 
-  The help shrinks each time a skill comes back:
+  Подсказок меньше, когда навык встречается снова:
 
-                ★★★    CHALLENGE ★★★    just the goal
-         ◆◆◆◆◆    HINTED ★★☆    the goal, hints if you ask
-  ●●●●●    GUIDED ★☆☆    every command shown
-  1 warm-up first
-  ❯  Start lesson 4
-     I've used Claude Code before: give me less help
+                ★★★    ИСПЫТАНИЕ ★★★    только цель
+         ◆◆◆◆◆    ПОДСКАЗКИ ★★☆    цель, подсказки по запросу
+  ●●●●●    С ПОМОЩЬЮ ★☆☆    показана каждая команда
+  сначала 1 разминка
+  ❯  Начать урок 4
+     Я уже работал с Claude Code: дайте меньше подсказок
 
   ────────────────────────────────────────────────────────────────────────────
-  ↑↓ choose    enter start    m map    q quit`,
-  '60x20': `
-   B4   Keep a session on track           about 20 minutes
-  ☆──☆   ○──○   ◇   ○──○──○   ◇──◇──◇──◇   ☆──☆   14 steps
+  ↑↓ выбрать    enter начать    m карта    q выйти`,
+'60x20': `
+   B4   Удержать сессию в рабочем русле   about 20 minutes
+  ☆──☆   ○──○   ◇   ○──○──○   ◇──◇──◇──◇   ☆──☆   14 шагов
   ────────────────────────────────────────────────────────
 
-  Why: "a long, wandering conversation leaves Claude less
-       room for the work that matters now"
+  Зачем: "a long, wandering conversation leaves Claude
+         less room for the work that matters now"
 
-  🎯 You'll be able to
+  🎯 После урока вы сможете
      ○ keep a session on track
      ○ see how full its context is, clear or compact it
     🏁 rewind a change
      ○ resume an earlier conversation
-  The help shrinks each time a skill comes back:
-  ●●●●●◆◆◆◆◆★★★    GUIDED ★☆☆  ▸  CHALLENGE ★★★
-  1 warm-up first
-  ❯  Start lesson 4
-     I've used Claude Code before: give me less help
+  Подсказок меньше, когда навык встречается снова:
+  ●●●●●◆◆◆◆◆★★★    С ПОМОЩЬЮ ★☆☆  ▸  ИСПЫТАНИЕ ★★★
+  сначала 1 разминка
+  ❯  Начать урок 4
+     Я уже работал с Claude Code: дайте меньше подсказок
 
   ────────────────────────────────────────────────────────
-  ↑↓ choose    enter start    m map    q quit`,
+  ↑↓ выбрать    enter начать    m карта    q выйти`,
 };
 
 test('the b-4 intro, with its Why line and payoff, is the design\'s at 80x24 and 60x20', () => {
@@ -1227,13 +1227,13 @@ test('the b-4 intro, with its Why line and payoff, is the design\'s at 80x24 and
 // The same screen as if its lesson file named no payoff.
 const noPayoff = (s) => ({ ...s, course: s.course.map((l) => (l.id === s.lesson ? { ...l, content: { ...l.content, intro: { ...l.content.intro, payoff: undefined } } } : l)) });
 
-test('the payoff draws with 🏁 ([win] in ASCII) in place of the intro\'s ○ and the complete screen\'s ✔, and costs no row', () => {
+test('the payoff draws with 🏁 ([цель] in ASCII) in place of the intro\'s ○ and the complete screen\'s ✔, and costs no row', () => {
   for (const [label, state] of endScreens().filter(([l]) => !l.endsWith('next'))) {
     const { payoff } = lessonById(state.lesson).content.intro;
     for (const [capName, caps] of Object.entries(CAPS)) {
       const t = theme(caps);
       const plain = state.view === 'intro' ? t.glyph.dotOff : t.glyph.check;
-      const flag = t.unicode ? '🏁' : '[win]';
+      const flag = t.unicode ? '🏁' : '[цель]';
       for (const [cols, rows] of SHORT) {
         const lines = render(state, { cols, rows }, t).map(strip);
         const before = render(noPayoff(state), { cols, rows }, t).map(strip);
@@ -1316,7 +1316,7 @@ test('🏁 has one job: it marks the payoff on the intro and complete screens, o
   const all = [...await everyScreen(), ...endScreens()];
   for (const capName of ['full', 'ascii']) {
     const t = theme(CAPS[capName]);
-    const flag = t.unicode ? '🏁' : '[win]';
+    const flag = t.unicode ? '🏁' : '[цель]';
     for (const [label, state] of all) {
       for (const [cols, rows] of SHORT) {
         const lines = render(state, { cols, rows }, t).map(strip);
@@ -1334,7 +1334,7 @@ test('a wrapped can line goes on under its own first word, flagged or not, in Un
     const { can } = lessonById(state.lesson).content.intro;
     for (const [capName, caps] of Object.entries(CAPS)) {
       const t = theme(caps);
-      const marks = [t.unicode ? '🏁' : '[win]', state.view === 'intro' ? t.glyph.dotOff : t.glyph.check].map((m) => `${m} `);
+      const marks = [t.unicode ? '🏁' : '[цель]', state.view === 'intro' ? t.glyph.dotOff : t.glyph.check].map((m) => `${m} `);
       for (const [cols, rows] of SHORT) {
         const lines = render(state, { cols, rows }, t).map(strip);
         const where = `${label} at ${cols}x${rows} (${capName})\n${lines.join('\n')}`;
@@ -1548,7 +1548,7 @@ test('an optional row drops before any teaching line is cut: the next screen\'s 
   assert.ok(!lines.some((l) => l.includes(C.answeredSummary(5))), `the count shows${show}`);
   assert.ok(!lines.some((l) => l.trim() === '…'), `a teaching line is cut${show}`);
   const text = flatText(lines.join(''));
-  for (const word of [C.checkedSummary(1, 1), C.yourClimb, C.nextUp, 'Permission modes and plan mode', C.savedBreak]) assert.ok(text.includes(flatText(word)), `"${word}"${show}`);
+  for (const word of [C.checkedSummary(1, 1), C.yourClimb, C.nextUp, 'Режимы разрешений и plan mode', C.savedBreak]) assert.ok(text.includes(flatText(word)), `"${word}"${show}`);
   // With room, it shows.
   assert.ok(render(next, { cols: 60, rows: 20 }, t).map(strip).some((l) => l.includes(C.answeredSummary(5))));
 });
@@ -1581,12 +1581,13 @@ test('a done beat keeps its "Done when" where no evidence line replaces it, and 
   // the rail shows one spacer where the line was.
   for (const label of ['b-5 W4.0 done', 'b-5 Y3.0 done']) {
     const lines = render(b5.get(label), { cols: 80, rows: 40 }, t).map(strip);
-    assert.ok(!lines.some((l) => l.includes(C.doneWhen)), `${label}: ${lines.join('\n')}`);
-    assert.ok(lines.some((l) => l.includes(' holds ')), `${label}: no evidence line`);
+    assert.ok(!lines.some((l) => l.includes(C.doneWhen) || l.includes('Done when ')), `${label}: ${lines.join('\n')}`);
+    assert.ok(lines.some((l) => l.includes(' содержит ')), `${label}: no evidence line`);
     assert.ok(!lines.some((l, i) => l.trim() === t.glyph.rail && lines[i + 1]?.trim() === t.glyph.rail), `${label}: two spacers in a row\n${lines.join('\n')}`);
   }
   // Waiting, the say line shows.
-  assert.ok(render(b5.get('b-5 W4.0 waiting'), { cols: 80, rows: 40 }, t).map(strip).some((l) => l.includes(C.doneWhen)));
+  // (The reducer-course fixture's say line is English: the parser knows both spellings.)
+  assert.ok(render(b5.get('b-5 W4.0 waiting'), { cols: 80, rows: 40 }, t).map(strip).some((l) => l.includes(C.doneWhen) || l.includes('Done when ')));
 });
 
 test('no card on any screen draws two spacers in a row', async () => {
@@ -1629,13 +1630,15 @@ test('kept rows never drop for a toast: the toast gives up its blank row, then g
   // W2 stuck keeps its feedback whole and the toast too, which gives up its
   // blank row; W5 wrong has no room for the toast, so it goes.
   const t = theme(CAPS.full);
-  const at = (label) => render({ ...screens.find(([l]) => l === label)[1], toast: { kind: 'stray' } }, { cols: 60, rows: 20 }, t).map(strip);
+  const at = (label, toast = { kind: 'stray' }) => render({ ...screens.find(([l]) => l === label)[1], toast }, { cols: 60, rows: 20 }, t).map(strip);
   const stuck = at('W2 stuck');
-  assert.ok(flatText(stuck.join('')).includes(flatText(C.fixThenPick)) && stuck.some((l) => l.includes('looks like a command')), stuck.join('\n'));
+  assert.ok(flatText(stuck.join('')).includes(flatText(C.fixThenPick)) && stuck.some((l) => l.includes('Это похоже на команду')), stuck.join('\n'));
   // The toast's last row sits on the rule: its blank row went.
-  assert.ok(stuck.at(-3).includes('not here.'), stuck.join('\n'));
-  const wrong = at('W5 wrong');
-  assert.ok(!wrong.some((l) => l.includes('looks like a command')) && wrong.some((l) => l.includes(C.notQuite)), wrong.join('\n'));
+  assert.ok(stuck.at(-3).includes('а не здесь.'), stuck.join('\n'));
+  // (The Russian feedback is a row shorter than the English, so the short stray
+  // toast fits there: a longer one, a save error, is the one with no room.)
+  const wrong = at('W5 wrong', { kind: 'save', message: 'EACCES: permission denied, open /home/sam/claude-code-practice/.practice/learn.json' });
+  assert.ok(!wrong.some((l) => l.includes('Не удалось сохранить')) && wrong.some((l) => l.includes(C.notQuite)), wrong.join('\n'));
 });
 
 test('a `…` cut inside a card keeps the rail: every row between the card\'s borders starts with it', async () => {
@@ -1725,67 +1728,91 @@ test('b-2\'s real FAIL messages at "The check says:" keep the card\'s title, Goa
 // stand-in message ("<item> is not there yet: do the step, then look
 // again."), and learn-check-says.test.mjs measures the real ones.
 const CUT_AT_60X20 = {
-  // Lesson 1's walk, on the stable fixture.
   W3: { why: 'the check\'s real FAIL message for an empty version.txt fills the hint box, so the goal and command give way (in ASCII, from hint 1)', both: ['hint 2', 'hint 3'], ascii: ['hint 1', 'bottom'] },
   W5: { why: 'a wrong pick\'s feedback and the options are kept rows, so the card\'s lines above them give way', both: ['wrong'] },
-  // Beginner.
   'b-1 W2.0': { why: 'the FAIL row, the PATH hint and the back offer to step 1: the goal\'s second row and the command give way', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
   'b-1 Y3.0': { why: 'a CHALLENGE check beat: the check\'s message, then its hints, under the goal and the git diff note: the note, and from hint 2 the goal, give way', both: ['hint 1', 'hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'checking, hint open', 'hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)', 'checking, hint open (skipped)'] },
   'b-2 W1.2': { why: 'the four mode notes and the hint box: the Accept edits note gives way', both: ['hint 1', 'hint 1 (skipped)'] },
   'b-2 Y4.0': { why: 'the bottom rung\'s command in the hint box: the goal\'s last rows give way (in ASCII, also while r checks)', both: ['bottom', 'bottom (skipped)'], ascii: ['checking, hint open', 'checking, hint open (skipped)'] },
-  'b-3 W2.0': { why: 'opened from the map at GUIDED, the plan prompt shows on the card and is also the bottom rung: under the hint box its last rows give way', both: ['hint 1 (skipped)', 'bottom (skipped)'] },
-  'b-3 W3.0': { why: 'opened from the map at GUIDED, the /btw question shows on the card under the overlay and steering notes: under the hint box it gives way', both: ['hint 1 (skipped)'] },
   'b-3 Y3.0': { why: 'hints 3 and on are long: the Done when line gives way', both: ['hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
-  'b-4 W5.0': { why: 'opened from the map at GUIDED, the refactor prompt shows on the card and again as the bottom rung: its card rows give way (in ASCII, also under the hint that names the approach)', both: ['bottom (skipped)'], ascii: ['hint 1 (skipped)'] },
   'b-4 W5.1': { why: 'the FAIL row, the bottom rung\'s command and the back offer to step 5: the card\'s last lines give way, and opened from the map, the commit prompt on the card too', both: ['bottom', 'hint 1 (skipped)', 'hint 2 (skipped)', 'bottom (skipped)', 'checking, hint open (skipped)'] },
-  'b-4 Y5.0': { why: 'the bottom rung\'s command in the hint box: the goal\'s last row and "No commands this time" give way', both: ['bottom', 'bottom (skipped)'] },
-  'b-5 R1.0': { why: 'a warm-up\'s wrong pick: the feedback and the options are kept rows, so the title, the "Warm-up from" line and the explainer give way', both: ['wrong', 'wrong (skipped)'] },
-  'b-5 R2.0': { why: 'a warm-up\'s wrong pick: the feedback and the options are kept rows, so the title and the "Warm-up from" line give way', both: ['wrong', 'wrong (skipped)'] },
+  'b-4 Y5.0': { why: 'the bottom rung\'s command in the hint box: the goal\'s last row and "No commands this time" give way', both: ['hint 2', 'bottom', 'hint 2 (skipped)', 'bottom (skipped)'], ascii: ['hint 1', 'hint 1 (skipped)'] },
   'b-5 W2.4': { why: 'the three-row goal, four instruction files with who gets each, a line each, and the long hook hint: the last files\' lines give way', both: ['hint 1', 'hint 1 (skipped)'] },
-  'b-5 W3.0': { why: 'the bottom rung\'s two commit commands in the hint box: the goal gives way, and opened from the map, the commands on the card too', both: ['bottom', 'bottom (skipped)', 'checking, hint open (skipped)'] },
+  'b-5 W3.0': { why: 'the bottom rung\'s two commit commands in the hint box: the goal gives way, and opened from the map, the commands on the card too', both: ['bottom', 'hint 1 (skipped)', 'bottom (skipped)', 'checking, hint open (skipped)'] },
   'b-capstone T1.0': { why: 'the FAIL row and the hint ladder under the bug report note: the note\'s last rows, and on hint 3 the goal, give way', both: ['hint 1', 'hint 2', 'hint 3', 'hint 4', 'bottom', 'checking, hint open', 'hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'bottom (skipped)', 'checking, hint open (skipped)'] },
   'b-capstone T5.0': { why: 'the FAIL row, the You need hint\'s commands (hint 2) and the back offer to step 4: from that rung the goal\'s last rows give way (in ASCII, also while r checks)', both: ['hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'], ascii: ['checking, hint open', 'checking, hint open (skipped)'] },
-  'b-capstone T8.0': { why: 'the hint ladder and the back offer: from hint 2 the goal gives way (in ASCII, from hint 1 the save note\'s last row)', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'], ascii: ['hint 1', 'hint 1 (skipped)'] },
-  // Intermediate. "Eased" screens open a step one tier easier, with the
-  // "A little more help" line (easedOpenings); these were cut so at 574beed.
-  'i-1 W1.0': { why: 'eased to GUIDED, the long curl command shows on the card above the "A little more help" line: its last rows give way', both: ['eased open', 'eased open (skipped)'] },
-  'i-2 W3.0': { why: 'eased to GUIDED, the hook block and the "A little more help" line: a code line and the note under it give way', both: ['eased open', 'eased open (skipped)'] },
-  'i-2 Y3.0': { why: 'eased to GUIDED, the bottom lines show on the card above the "A little more help" line: the two commands give way', both: ['eased open', 'eased open (skipped)'] },
-  'i-3 Y4.0': { why: 'the commit check\'s FAIL row and its three-row command under h: the goal\'s second row gives way', both: ['bottom', 'bottom (skipped)'] },
-  'i-4 Y1.0': { why: 'a question\'s feedback and options are kept rows: the scenario note gives way after the pick', both: ['wrong', 'answered', 'wrong (skipped)', 'answered (skipped)'] },
-  'i-4 Y4.0': { why: 'hints 3 and on are long: the card\'s last lines give way', both: ['hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
+  'b-capstone T5.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 1 (skipped)'] },
+  'b-capstone T8.0': { why: 'the hint ladder and the back offer: from hint 2 the goal gives way (in ASCII, from hint 1 the save note\'s last row)', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'], ascii: ['checking, hint open', 'checking, hint open (skipped)'] },
+  'i-2 W3.0': { why: 'eased to GUIDED, the hook block and the "A little more help" line: a code line and the note under it give way', both: ['waiting', 'waiting (skipped)'] },
+  'i-2 W4.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['bottom', 'bottom (skipped)'] },
+  'i-3 Y2.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 1 (skipped)'] },
+  'i-3 Y3.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 1 (skipped)'] },
+  'i-3 Y4.0': { why: 'the commit check\'s FAIL row and its three-row command under h: the goal\'s second row gives way', both: ['bottom', 'bottom (skipped)'], ascii: ['checking, hint open', 'checking, hint open (skipped)'] },
+  'i-4 W3.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'bottom', 'bottom (skipped)', 'eased open'] },
+  'i-4 W5.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 1 (skipped)'] },
+  'i-4 Y1.0': { why: 'a question\'s feedback and options are kept rows: the scenario note gives way after the pick', both: ['wrong', 'wrong (skipped)'] },
+  'i-4 Y4.0': { why: 'hints 3 and on are long: the card\'s last lines give way', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'checking, hint open', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)', 'checking, hint open (skipped)'], ascii: ['hint 1', 'hint 1 (skipped)'] },
   'i-5 W1.0': { why: 'the hooks download block and the hint box: code lines and the Done when line give way', both: ['hint 1', 'hint 1 (skipped)'] },
   'i-5 W2.0': { why: 'the hooks block and the hint box: code lines give way', both: ['hint 1', 'hint 1 (skipped)'] },
   'i-5 Y4.0': { why: 'hints 5 and 6 are long: the card\'s last lines give way', both: ['hint 5', 'hint 6'] },
-  'i-6 W1.0': { why: 'opened from the map at GUIDED, the long curl URL shows on the card and again as the bottom rung (Quest Q2)', both: ['bottom (skipped)'] },
-  'i-6 W4.0': { why: 'eased to GUIDED, the three notes (the SHA, the report-only flag, the prompt suggestion) and the "A little more help" line: the last note gives way', both: ['eased open', 'eased open (skipped)'] },
-  'i-6 Y1.0': { why: 'the teammate note, the decision, the code block and the hint box: the goal\'s second row gives way', both: ['hint 1', 'hint 1 (skipped)'] },
-  'i-6 Y3.0': { why: 'the hook\'s code block and the hint box, or eased to GUIDED the "A little more help" line: its last line and the note give way', both: ['hint 1', 'hint 1 (skipped)', 'eased open', 'eased open (skipped)'] },
-  'i-7 Y3.0': { why: 'the long check item\'s FAIL row and the hint ladder: the card\'s last lines give way (in ASCII, from hint 1)', both: ['hint 2', 'hint 3', 'bottom'], ascii: ['hint 1'] },
-  'i-8 W1.0': { why: 'opened from the map at GUIDED, the install commands show on the card: under the hint box their last rows give way', both: ['hint 1 (skipped)'] },
-  'i-8 Y5.0': { why: 'the save line, the --json note and the check\'s FAIL message under h: the note\'s last row gives way', both: ['hint 1', 'bottom', 'hint 1 (skipped)', 'bottom (skipped)'] },
-  // Advanced.
-  'a-1 W1.0': { why: 'opened from the map at GUIDED, the commit command shows on the card: under the hint box it gives way (in ASCII, from hint 1)', both: ['hint 2 (skipped)'], ascii: ['hint 1 (skipped)', 'hint 3 (skipped)'] },
-  'a-2 W2.0': { why: 'the chart\'s four questions as notes under the feedback: the notes give way after the pick', both: ['wrong', 'answered', 'wrong (skipped)', 'answered (skipped)'] },
-  'a-2 Y2.1': { why: 'the two notes under the long check message: the notes give way', both: ['hint 1', 'hint 2', 'hint 1 (skipped)', 'hint 2 (skipped)'] },
-  'a-3 W1.0': { why: 'opened from the map at GUIDED, the pattern command shows on the card: under the hint box it gives way; eased from the map, the practice migration\'s note keeps its target, import.meta.dirname, which the learner needs to judge the diff, and the command\'s last rows give way; in ASCII the bottom rung\'s lead-in takes two rows and the note\'s last rows give way, the command whole', both: ['hint 1 (skipped)', 'hint 2 (skipped)', 'bottom (skipped)', 'eased open (skipped)'], ascii: ['bottom'] },
-  'a-3 W2.0': { why: 'eased to GUIDED, the /goal command, its two notes and the "A little more help" line: the second note\'s last rows give way (pre-existing at 574beed)', both: ['eased open', 'eased open (skipped)'] },
-  'a-3 W4.1': { why: 'opened from the map at GUIDED, the text bottom line shows on the card: under the hint box it gives way', both: ['hint 1 (skipped)', 'hint 2 (skipped)', 'bottom (skipped)'] },
+  'i-5 Y4.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
+  'i-6 Y1.0': { why: 'the teammate note, the decision, the code block and the hint box: the goal\'s second row gives way', both: ['hint 1', 'hint 1 (skipped)', 'eased open', 'eased open (skipped)'] },
+  'i-7 Y3.0': { why: 'the long check item\'s FAIL row and the hint ladder: the card\'s last lines give way (in ASCII, from hint 1)', both: ['hint 1', 'hint 2', 'hint 3', 'bottom', 'hint 2 (skipped)'], ascii: ['hint 3 (skipped)'] },
+  'i-7 C.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 2', 'hint 2 (skipped)'] },
+  'i-8 Y5.0': { why: 'the save line, the --json note and the check\'s FAIL message under h: the note\'s last row gives way', both: ['hint 1', 'hint 2', 'bottom', 'checking, hint open', 'hint 1 (skipped)', 'hint 2 (skipped)', 'bottom (skipped)', 'checking, hint open (skipped)'] },
+  'a-1 Y1.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 1 (skipped)'] },
+  'a-1 Y1.2': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 2', 'hint 1 (skipped)', 'hint 2 (skipped)'] },
+  'a-2 W2.0': { why: 'the chart\'s four questions as notes under the feedback: the notes give way after the pick', both: ['wrong', 'answered', 'wrong (skipped)', 'answered (skipped)', 'eased open', 'eased open (skipped)'] },
+  'a-2 Y1.6': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
+  'a-2 Y2.1': { why: 'the two notes under the long check message: the notes give way', both: ['fail', 'hint 1', 'hint 2', 'hint 3', 'hint 4', 'bottom', 'fail (skipped)', 'hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'bottom (skipped)'] },
+  'a-3 W1.0': { why: 'opened from the map at GUIDED, the pattern command shows on the card: under the hint box it gives way; eased from the map, the practice migration\'s note keeps its target, import.meta.dirname, which the learner needs to judge the diff, and the command\'s last rows give way; in ASCII the bottom rung\'s lead-in takes two rows and the note\'s last rows give way, the command whole', both: ['hint 1', 'bottom', 'hint 1 (skipped)', 'hint 2 (skipped)', 'bottom (skipped)', 'eased open (skipped)'] },
   'a-3 Y3.1': { why: 'the bottom line adds "Press h again": the Done when line gives way', both: ['hint 2', 'hint 2 (skipped)'] },
-  'a-3 Y5.2': { why: 'in ASCII, the long check item and the back line: the title and the say line give way', ascii: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
+  'a-3 Y5.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 1', 'hint 1 (skipped)'] },
+  'a-3 Y5.2': { why: 'in ASCII, the long check item and the back line: the title and the say line give way', both: ['hint 2', 'hint 3', 'hint 4', 'hint 5', 'hint 6', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'hint 5 (skipped)', 'hint 6 (skipped)'] },
   'a-4 W1.0': { why: 'the claude -p code block under its hint, or eased to HINTED the "A little more help" line: the goal and code lines give way (the hint screen hides the title too; both pre-existing at 574beed)', both: ['hint 1', 'hint 1 (skipped)', 'eased open', 'eased open (skipped)'] },
-  'a-4 W3.0': { why: 'eased to GUIDED, the "A little more help" line: the quoted outcome under the run line gives way (pre-existing at 574beed)', both: ['eased open', 'eased open (skipped)'] },
-  'a-5 Y3.0': { why: 'in ASCII, the run-record note (TRIAGE-4 a-5 #11) above the two bottom commands: its last row gives way', ascii: ['bottom'] },
-  'a-5 Y4.0': { why: 'the "Don\'t tear down first" note (TRIAGE-4 a-5 #11) under the long check item: its last row gives way to the hint box (played through; opened from the map it fits)', both: ['hint 1'] },
+  'a-4 Y1.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['hint 2', 'hint 2 (skipped)'] },
   'a-5 W1.0': { why: 'the subscription-token line under the goal and the code window (TRIAGE-3 a-5 #3): once the watching line or the "A little more help" line joins, its last rows give way; the opening screen shows it whole', both: ['waiting', 'waiting (skipped)', 'eased open', 'eased open (skipped)'] },
   'a-5 Y1.0': { why: 'the checkout-and-Node.js criterion as a note under the long goal (27, pattern M): under the hint box, or eased with the "A little more help" line, its last rows give way; the opening screen shows it whole', both: ['hint 1', 'hint 1 (skipped)', 'eased open', 'eased open (skipped)'] },
-  'a-6 Y4.0': { why: 'in ASCII, the .gitignore criterion as a note under the hint box: its last row gives way', ascii: ['hint 1', 'hint 1 (skipped)'] },
-  'a-6 W4.0': { why: 'opened from the map at GUIDED, the commit command shows on the card and again as the bottom rung', both: ['bottom (skipped)'] },
-  'a-7 W3.0': { why: 'a-7\'s long check item and hint ladder: the goal and the eased line give way, and opened from the map, the commands on the card too', both: ['hint 1', 'fail (skipped)', 'hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'bottom (skipped)'] },
-  'a-7 W4.1': { why: 'opened from the map at GUIDED, the long runner command shows on the card and again as the bottom rung', both: ['hint 1 (skipped)', 'bottom (skipped)'] },
-  'a-7 C.0': { why: 'a-7\'s long check items under the hint ladder: the run line and the note give way', both: ['hint 1', 'hint 1 (skipped)'] },
+  'a-5 Y4.0': { why: 'the "Don\'t tear down first" note (TRIAGE-4 a-5 #11) under the long check item: its last row gives way to the hint box (played through; opened from the map it fits)', both: ['hint 2'], ascii: ['hint 1'] },
+  'a-6 R1.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['wrong', 'wrong (skipped)'] },
+  'a-6 Y4.0': { why: 'in ASCII, the .gitignore criterion as a note under the hint box: its last row gives way', both: ['hint 1', 'hint 2', 'hint 3', 'hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)'] },
+  'a-7 R1.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['answered', 'answered (skipped)'] },
+  'a-7 W3.0': { why: 'a-7\'s long check item and hint ladder: the goal and the eased line give way, and opened from the map, the commands on the card too', both: ['hint 1', 'hint 2', 'hint 3', 'fail (skipped)', 'hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)', 'hint 4 (skipped)', 'bottom (skipped)'] },
   'a-capstone T1.2': { why: 'the two notes (TRIAGE-4 a-capstone #3) under the long check item: their last rows give way to the hint box and the bottom command', both: ['hint 1', 'hint 2', 'bottom', 'hint 1 (skipped)', 'hint 2 (skipped)', 'bottom (skipped)'] },
+  'b-3 W2.0': { why: 'opened from the map at GUIDED, the plan prompt shows on the card and is also the bottom rung: under the hint box its last rows give way', both: ['hint 1 (skipped)', 'bottom (skipped)'] },
+  'b-3 W3.0': { why: 'opened from the map at GUIDED, the /btw question shows on the card under the overlay and steering notes: under the hint box it gives way', both: ['hint 1 (skipped)', 'bottom (skipped)', 'eased open', 'eased open (skipped)'], ascii: ['hint 2 (skipped)'] },
+  'b-4 W3.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['bottom (skipped)'] },
+  'b-4 W5.0': { why: 'opened from the map at GUIDED, the refactor prompt shows on the card and again as the bottom rung: its card rows give way (in ASCII, also under the hint that names the approach)', both: ['hint 1 (skipped)', 'bottom (skipped)'] },
+  'i-6 W1.0': { why: 'opened from the map at GUIDED, the long curl URL shows on the card and again as the bottom rung (Quest Q2)', both: ['bottom (skipped)'] },
+  'i-8 W1.0': { why: 'opened from the map at GUIDED, the install commands show on the card: under the hint box their last rows give way', both: ['hint 1 (skipped)'] },
+  'a-1 W1.0': { why: 'opened from the map at GUIDED, the commit command shows on the card: under the hint box it gives way (in ASCII, from hint 1)', both: ['hint 2 (skipped)'], ascii: ['hint 1 (skipped)', 'hint 3 (skipped)'] },
+  'a-3 W4.1': { why: 'opened from the map at GUIDED, the text bottom line shows on the card: under the hint box it gives way', both: ['hint 1 (skipped)', 'hint 2 (skipped)', 'hint 3 (skipped)', 'bottom (skipped)'] },
+  'a-7 W4.1': { why: 'opened from the map at GUIDED, the long runner command shows on the card and again as the bottom rung', both: ['hint 1 (skipped)', 'bottom (skipped)'], ascii: ['hint 2 (skipped)'] },
+  'b-2 W4.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['eased open', 'eased open (skipped)'] },
+  'i-1 W1.0': { why: 'eased to GUIDED, the long curl command shows on the card above the "A little more help" line: its last rows give way', both: ['eased open', 'eased open (skipped)'] },
+  'i-2 W2.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', both: ['eased open', 'eased open (skipped)'] },
+  'i-2 Y3.0': { why: 'eased to GUIDED, the bottom lines show on the card above the "A little more help" line: the two commands give way', both: ['eased open', 'eased open (skipped)'] },
+  'i-6 W4.0': { why: 'eased to GUIDED, the three notes (the SHA, the report-only flag, the prompt suggestion) and the "A little more help" line: the last note gives way', both: ['eased open', 'eased open (skipped)'] },
+  'i-6 Y3.0': { why: 'the hook\'s code block and the hint box, or eased to GUIDED the "A little more help" line: its last line and the note give way', both: ['eased open', 'eased open (skipped)'] },
+  'a-3 W2.0': { why: 'eased to GUIDED, the /goal command, its two notes and the "A little more help" line: the second note\'s last rows give way (pre-existing at 574beed)', both: ['eased open', 'eased open (skipped)'] },
+  'a-4 W3.0': { why: 'eased to GUIDED, the "A little more help" line: the quoted outcome under the run line gives way (pre-existing at 574beed)', both: ['eased open', 'eased open (skipped)'] },
+  'b-capstone T1.2': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'i-1 W4.2': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'i-1 Y2.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 2', 'hint 2 (skipped)'] },
+  'i-2 Y5.2': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 2', 'hint 2 (skipped)'] },
+  'i-4 Y1.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 3', 'hint 3 (skipped)'] },
+  'i-5 Y1.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'i-6 W3.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)', 'eased open', 'eased open (skipped)'] },
+  'i-8 Y2.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 3', 'hint 4', 'hint 5', 'hint 6'] },
+  'i-capstone T2.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'i-capstone T6.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'a-5 Y3.0': { why: 'in ASCII, the run-record note (TRIAGE-4 a-5 #11) above the two bottom commands: its last row gives way', ascii: ['bottom'] },
+  'a-5 Y5.0': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['bottom', 'bottom (skipped)'] },
+  'a-7 W4.3': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 3', 'hint 3 (skipped)'] },
+  'a-7 Y1.1': { why: 'in Russian the hint box, the back offer and the card rows run longer than in English: at 60x20 the goal, note or command rows give way under the kept rows (the key bar and the border stay)', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'a-7 C.0': { why: 'a-7\'s long check items under the hint ladder: the run line and the note give way', ascii: ['hint 1', 'hint 1 (skipped)'] },
   'a-capstone T4.0': { why: 'in ASCII, under the hint box: the note\'s last row and "No commands this time" give way', ascii: ['hint 1', 'hint 1 (skipped)'] },
+  'a-6 W4.0': { why: 'opened from the map at GUIDED, the commit command shows on the card and again as the bottom rung', ascii: ['bottom (skipped)'] },
 };
 
 // A row that holds only `…` (`...` in ASCII), bare or inside a card's rail:
@@ -1842,9 +1869,9 @@ test('fit: each run of cut rows gets its own `…`, a lone row is never swapped 
 
 test('the map keeps a spacer above its footer at 60x20 once the lesson rows close up', () => {
   const lines = render(screens.find(([l]) => l === 'map')[1], { cols: 60, rows: 20 }, theme(CAPS.full)).map(strip);
-  const last = lines.findIndex((l) => l.includes('Beginner capstone'));
+  const last = lines.findIndex((l) => l.includes('Итоговый проект'));
   assert.equal(lines[last + 1], '', lines.join('\n'));
-  assert.ok(lines[last + 2].includes('Each lesson reuses'), lines.join('\n'));
+  assert.ok(lines[last + 2].includes('Каждый урок начинается'), lines.join('\n'));
 });
 
 // Rows `cut` may shorten by design: a lesson title in the header and on the
@@ -1857,7 +1884,7 @@ test('no line is cut by width anywhere in a row at 60x20 or 80x24, apart from th
       const lines = render(state, { cols, rows }, t).map(strip);
       const head = state.view === 'map' ? -1 : (rows >= 28 ? 1 : 0);
       lines.forEach((l, i) => {
-        if (!l.includes('…') || i === head || l.trim() === '…' || /^\s*│  …$/.test(l) || (state.beat?.status === 'opening' && /│  Checking\b.*…$/.test(l) && width(l) < cols - 1)) return;
+        if (!l.includes('…') || i === head || l.trim() === '…' || /^\s*│  …$/.test(l) || (state.beat?.status === 'opening' && /│  Проверяю.*…$/.test(l) && width(l) < cols - 1)) return;
         if (state.view === 'map' && /^\s*[❯ ] [✔○] /.test(l)) return;
         // A code block's window marks the lines it leaves out (ticket 90).
         if (l.trim().endsWith(`… ${C.codeMore}`)) return;
@@ -1866,7 +1893,7 @@ test('no line is cut by width anywhere in a row at 60x20 or 80x24, apart from th
         const sent = flatText(lines.join(' '));
         if (/^\s*│ +\S? +(\d+|↳) /.test(l) && (sent.includes(flatText(C.codeWide('…'))) || sent.includes(flatText(C.codeMore)))) return;
         if (l.includes(C.codeWide('…').slice(0, C.codeWide('…').indexOf('…') + 1))) return;
-        if (/ holds |^\s*│ .*\S…$/.test(l) && state.beat?.status === 'done') return;
+        if (/ содержит |^\s*│ .*\S…$/.test(l) && state.beat?.status === 'done') return;
         assert.fail(`${label} at ${cols}x${rows}, row ${i + 1}: ${l}\n${lines.join('\n')}`);
       });
     }
@@ -1876,7 +1903,7 @@ test('no line is cut by width anywhere in a row at 60x20 or 80x24, apart from th
 // The level's first warm-up says once why warm-ups exist: the first one the
 // learner plays in the level, in whichever lesson that is (194: one
 // warm-up, on a missed skill, so b-2 may play none).
-const WARMUP_WHY = "A warm-up brings back an earlier lesson from memory. A wrong answer is fine: the lesson's words follow.";
+const WARMUP_WHY = 'Разминка возвращает к прошлому уроку: ответьте по памяти. Ошибиться не страшно: следом покажутся слова урока.';
 const firstWarmup = (id, saved = {}, lessons = allCourse) => {
   const d = driver({ course: lessons, saved: { format: 1, welcomed: true, lessons: finishedBefore(id, lessons), ...saved } });
   assert.equal(d.state.view, 'intro', id);
@@ -1924,8 +1951,8 @@ test('the level\'s first warm-up says why warm-ups exist, under "Warm-up from le
   const lines = plainAt(d, 80, 24).split('\n');
   const from = lines.findIndex((l) => l.includes(C.warmup(1)));
   assert.ok(from > 0, lines.join('\n'));
-  assert.match(lines[from + 1], /│  A warm-up brings back an earlier lesson from memory\. A wrong answer is$/);
-  assert.match(lines[from + 2], /│  fine: the lesson's words follow\.$/);
+  assert.match(lines[from + 1], /│  Разминка возвращает к прошлому уроку: ответьте по памяти\. Ошибиться не$/);
+  assert.match(lines[from + 2], /│  страшно: следом покажутся слова урока\.$/);
   // b-3 to b-5's warm-ups, after b-2 played one, say nothing more (each R1,
   // missed before).
   for (const id of ['b-3', 'b-4', 'b-5']) {
@@ -1980,7 +2007,7 @@ test('the explainer is optional: at 60x20 it drops whole, before any teaching li
         const lines = render(d.state, { cols: 60, rows: 20 }, t).map(strip);
         const text = flatText(lines.join(''));
         const whole = text.includes(flatText(WARMUP_WHY));
-        assert.equal(text.includes(flatText('A warm-up brings back')), whole, `${at} (${capName}) shows part of it\n${lines.join('\n')}`);
+        assert.equal(text.includes(flatText('Разминка возвращает к прошлому')), whole, `${at} (${capName}) shows part of it\n${lines.join('\n')}`);
         // A screen too tall even without it (R3's longest reason) is cut
         // only once the explainer is gone.
         const cut = lines.some((l) => [t.glyph.ellipsis, `${t.glyph.rail}  ${t.glyph.ellipsis}`].includes(l.trim()));
@@ -2060,12 +2087,12 @@ test('each level has its own first warm-up: a later level\'s first warm-up says 
 // app's words around its quotes; its relative links point into the index
 // page, and p gives the index's address. The Beginner index sits in another
 // folder than i-1's page, so a link resolved against i-1's page fails.
-const LESSON_WORDS = ['The lesson says', "lesson's words", 'lesson page', 'an earlier lesson'].map(flatText);
+const LESSON_WORDS = ['В уроке сказано', 'слова урока', 'страница урока', 'прошлому уроку'].map(flatText);
 test('a level index warm-up\'s words: each takes the place of the lesson words of its name, and names no lesson', () => {
   for (const [k, v] of Object.entries(C.fromIndex)) {
     assert.equal(typeof v, typeof C[k], k);
     const said = typeof v === 'function' ? v('...') : v;
-    assert.ok(said.includes(TERMS.levelIndex) && !/lesson/.test(said), `${k}: ${said}`);
+    assert.ok(/оглавлени[яеи] уровня/i.test(said) && !/урок/i.test(said), `${k}: ${said}`);
   }
 });
 
@@ -2077,7 +2104,7 @@ for (const [level, name] of [['intermediate', 'Intermediate'], ['beginner', 'Beg
     // A missed skill comes first, so R2 is the level's first warm-up.
     const d = firstWarmup('i-1', { missed: ['when-to-use'] }, lessons);
     assert.equal(stepOf(d.state).id, 'R2');
-    const docs = 'https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know/blob/main/docs';
+    const docs = 'https://github.com/runowata/claude-code-ru/blob/main/docs';
     const at = (cols, rows) => {
       for (const caps of [CAPS.full, CAPS.ascii]) fits(d.state, [cols, rows], theme(caps), `${cols}x${rows} ${caps.unicode ? 'unicode' : 'ascii'}`);
       const screen = plainAt(d, cols, rows);
@@ -2086,7 +2113,7 @@ for (const [level, name] of [['intermediate', 'Intermediate'], ['beginner', 'Beg
     };
     for (const [cols, rows] of SHORT) {
       const screen = at(cols, rows);
-      assert.ok(screen.includes(flatText(`Warm-up from the ${name} level index`)), screen);
+      assert.ok(screen.includes(flatText(C.warmupIndex(C.levels[level]))), screen);
       assert.ok(screen.includes(flatText(C.fromIndex.warmupWhy)), screen);
     }
     // w gives the beat's why in the index's words.
@@ -2190,15 +2217,15 @@ test('a GUIDED card shows its Why line under the title: b-4 W3 is the design\'s 
   const lines = render(d.state, { cols: 80, rows: 24 }, theme(CAPS.full)).map((l) => strip(l).trimEnd());
   // energy-and-teaching.md 3.1, less Pip on the card's top border (a motion ticket).
   const mockup = [
-    '   B4   Keep a session on track                                    GUIDED ★☆☆',
+    '   B4   Удержать сессию в рабочем русле                         С ПОМОЩЬЮ ★☆☆',
     null,
     '  ────────────────────────────────────────────────────────────────────────────',
     '',
     null,
     '  │',
     '  │  Compact',
-    '  │  Why: "Compact when you want to keep going on the same task; clear when',
-    '  │       you start a different one."',
+    '  │  Зачем: "Compact when you want to keep going on the same task; clear when',
+    '  │         you start a different one."',
     '  │',
     '  │  Compact, telling Claude what to keep:',
     '  │',
@@ -2210,7 +2237,7 @@ test('a GUIDED card shows its Why line under the title: b-4 W3 is the design\'s 
   });
   // The beat waits for the learner's word, its done-label, so space gives it
   // (ticket 27's verify pass: enter only goes on where nothing needs confirming).
-  assert.equal(lines[23], '   space  it compacted    w why    m map    c card    q quit');
+  assert.equal(lines[23], '   space  it compacted    w зачем    m карта    c карточка    q выйти');
 });
 
 // A made-up lesson 2 whose one GUIDED step has `why` lines on a predict, a
@@ -2283,8 +2310,8 @@ test('the Why line shows on do and ask beats at GUIDED, never on a predict, type
     assert.match(plainAt(behind, 80, 24), reason);
   }
   // The beat's first `why` line only: the rest stay behind w.
-  assert.deepEqual(whyRows(doBeat).map((l) => l.trim()), ['│  Why: "A do reason."']);
-  assert.deepEqual(whyRows(ask).map((l) => l.trim()), ['│  Why: "An ask reason."']);
+  assert.deepEqual(whyRows(doBeat).map((l) => l.trim()), ['│  Зачем: "A do reason."']);
+  assert.deepEqual(whyRows(ask).map((l) => l.trim()), ['│  Зачем: "An ask reason."']);
   // One blank row under it, before the question too.
   for (const lines of [doBeat, ask]) assert.ok(!lines.some((l, i) => l.trim() === '│' && lines[i + 1]?.trim() === '│'), lines.join('\n'));
 });
@@ -2300,7 +2327,7 @@ test('the Why line follows the effective tier: less help lifts GUIDED to HINTED 
   assert.equal(tierOf(lifted.state), 'hinted');
   const lines = render(lifted.state, { cols: 80, rows: 24 }, theme(CAPS.full)).map(strip);
   assert.deepEqual(whyRows(lines), []);
-  assert.match(lines.at(-1), /w why/);
+  assert.match(lines.at(-1), /w зачем/);
   // b-3 W1 is HINTED on the path: its third beat keeps its why behind w.
   const plain = openAt('b-3', 'R1', 0, { warm: ['R1'] });
   playUntil(plain, atBeat('b-3', 'W1', 2));
@@ -2346,39 +2373,48 @@ const WHY_DROPS = {
   '60x20': [
     'W3 waiting', 'W3 not yet', 'W3 hint 1', 'W3 hint 2', 'W3 hint 3', 'W3 confirm', 'W3 bottom', 'W3 done', 'W5 wrong', 'W5 revealed', 'W3 broken',
     'b-2 W5.0 open', 'b-3 W5.0 open', 'b-3 W6.3 hint 1', 'b-5 W4.0 hint 1', 'b-5 W4.0 hint 2', 'b-5 W4.0 bottom', 'b-5 W4.0 checking, hint open',
-    // Intermediate's Worked examples: a code block, a two-row command or a
-    // hint box takes the room.
     'i-1 W4.2 open', 'i-1 W4.2 hint 1', 'i-2 W2.0 open', 'i-2 W2.0 waiting', 'i-2 W2.0 done', 'i-2 W3.0 open', 'i-2 W3.0 waiting', 'i-2 W3.0 done',
-    'i-2 W5.0 waiting', 'i-3 W4.0 done', 'i-4 W2.0 open', 'i-4 W2.0 waiting', 'i-4 W2.0 done', 'i-4 W4.0 hint 1', 'i-4 W4.0 done', 'i-4 W5.0 hint 1',
-    'i-6 W3.0 open', 'i-6 W3.0 hint 1', 'i-6 W4.0 open', 'i-8 W2.1 hint 1', 'i-8 W2.1 hint 2', 'i-8 W3.0 hint 1', 'i-8 W3.1 open',
-    // Advanced: a-1's two merge commands with the merge-commit note, and a-2's chart questions.
-    'a-1 W5.0 open', 'a-1 W5.0 waiting', 'a-1 W5.0 fail', 'a-1 W5.0 done', 'a-2 W2.0 open', 'a-2 W2.0 wrong', 'a-2 W2.0 answered',
-    // a-3's `/goal` condition and a-4's `claude -p` commands: each is one
-    // long line of the page.
-    'a-3 W2.0 open', 'a-4 W2.1 open', 'a-4 W2.1 waiting', 'a-4 W2.1 done', 'a-4 W3.0 open',
-    // a-6's settings block with the line that says where it goes.
-    'a-6 W3.0 open', 'a-6 W3.0 waiting', 'a-6 W3.0 done',
-    'b-2 W5.0 open (skipped)', 'b-3 W2.0 open (skipped)', 'b-3 W2.0 hint 1 (skipped)', 'b-3 W2.0 bottom (skipped)', 'b-3 W5.0 open (skipped)',
-    'b-3 W6.3 hint 1 (skipped)', 'b-5 W4.0 hint 1 (skipped)', 'b-5 W4.0 hint 2 (skipped)', 'b-5 W4.0 bottom (skipped)',
-    'b-5 W4.0 checking, hint open (skipped)', 'i-1 W4.2 open (skipped)', 'i-1 W4.2 hint 1 (skipped)',
-    'i-2 W2.0 open (skipped)', 'i-2 W2.0 waiting (skipped)', 'i-2 W2.0 done (skipped)', 'i-2 W3.0 open (skipped)', 'i-2 W3.0 waiting (skipped)',
-    'i-2 W3.0 done (skipped)', 'i-2 W5.0 waiting (skipped)', 'i-3 W4.0 done (skipped)', 'i-4 W2.0 open (skipped)', 'i-4 W2.0 waiting (skipped)',
-    'i-4 W2.0 done (skipped)', 'i-4 W4.0 hint 1 (skipped)', 'i-4 W4.0 done (skipped)', 'i-4 W5.0 hint 1 (skipped)', 'i-5 W2.0 open (skipped)',
-    'i-5 W2.0 waiting (skipped)', 'i-5 W2.0 hint 1 (skipped)', 'i-5 W2.0 done (skipped)', 'i-6 W3.0 open (skipped)', 'i-6 W3.0 hint 1 (skipped)', 'i-6 W4.0 open (skipped)',
+    'i-2 W5.0 open', 'i-2 W5.0 waiting', 'i-3 W4.0 done', 'i-4 W2.0 open', 'i-4 W2.0 waiting', 'i-4 W2.0 done', 'i-4 W4.0 hint 1', 'i-4 W4.0 done',
+    'i-4 W5.0 hint 1', 'i-6 W3.0 open', 'i-6 W3.0 hint 1', 'i-6 W4.0 open', 'i-8 W2.1 hint 1', 'i-8 W2.1 hint 2', 'i-8 W2.2 hint 1',
+    'i-8 W3.0 hint 1', 'i-8 W3.1 open', 'a-1 W2.0 hint 1', 'a-1 W4.0 open', 'a-1 W5.0 open', 'a-1 W5.0 waiting', 'a-1 W5.0 fail', 'a-1 W5.0 done',
+    'a-2 W2.0 open', 'a-2 W2.0 wrong', 'a-2 W2.0 answered', 'a-2 W4.0 open', 'a-3 W2.0 open', 'a-4 W2.1 open', 'a-4 W2.1 waiting', 'a-4 W2.1 done',
+    'a-4 W3.0 open', 'a-6 W3.0 open', 'a-6 W3.0 waiting', 'a-6 W3.0 done', 'b-2 W5.0 open (skipped)', 'b-3 W2.0 open (skipped)',
+    'b-3 W2.0 hint 1 (skipped)', 'b-3 W2.0 bottom (skipped)', 'b-3 W5.0 open (skipped)', 'b-3 W6.3 hint 1 (skipped)', 'b-5 W4.0 hint 1 (skipped)',
+    'b-5 W4.0 hint 2 (skipped)', 'b-5 W4.0 bottom (skipped)', 'b-5 W4.0 checking, hint open (skipped)', 'i-1 W4.2 open (skipped)',
+    'i-1 W4.2 hint 1 (skipped)', 'i-2 W1.0 hint 1 (skipped)', 'i-2 W2.0 open (skipped)', 'i-2 W2.0 waiting (skipped)', 'i-2 W2.0 done (skipped)',
+    'i-2 W3.0 open (skipped)', 'i-2 W3.0 waiting (skipped)', 'i-2 W3.0 done (skipped)', 'i-2 W5.0 open (skipped)', 'i-2 W5.0 waiting (skipped)',
+    'i-3 W4.0 done (skipped)', 'i-4 W2.0 open (skipped)', 'i-4 W2.0 waiting (skipped)', 'i-4 W2.0 done (skipped)', 'i-4 W4.0 hint 1 (skipped)',
+    'i-4 W4.0 done (skipped)', 'i-4 W5.0 hint 1 (skipped)', 'i-5 W1.1 hint 1 (skipped)', 'i-5 W2.0 open (skipped)', 'i-5 W2.0 waiting (skipped)',
+    'i-5 W2.0 hint 1 (skipped)', 'i-5 W2.0 done (skipped)', 'i-6 W3.0 open (skipped)', 'i-6 W3.0 hint 1 (skipped)', 'i-6 W4.0 open (skipped)',
     'i-8 W1.0 hint 1 (skipped)', 'i-8 W1.0 hint 2 (skipped)', 'i-8 W1.0 bottom (skipped)', 'i-8 W2.1 hint 1 (skipped)', 'i-8 W2.1 hint 2 (skipped)',
-    'i-8 W3.0 hint 1 (skipped)', 'i-8 W3.1 open (skipped)',
-    'a-1 W5.0 open (skipped)', 'a-1 W5.0 waiting (skipped)', 'a-1 W5.0 fail (skipped)', 'a-1 W5.0 done (skipped)',
-    'a-2 W2.0 open (skipped)', 'a-2 W2.0 wrong (skipped)', 'a-2 W2.0 answered (skipped)',
-    'a-3 W2.0 open (skipped)', 'a-4 W2.1 open (skipped)', 'a-4 W2.1 waiting (skipped)', 'a-4 W2.1 done (skipped)', 'a-4 W3.0 open (skipped)',
-    'a-6 W3.0 open (skipped)', 'a-6 W3.0 waiting (skipped)', 'a-6 W3.0 done (skipped)', 'W3 opening',
-    'i-5 W3.0 hint 1', 'b-3 W1.2 bottom (skipped)', 'i-5 W3.0 hint 1 (skipped)'],
-  '80x24': ['W3 hint 2'],
+    'i-8 W2.2 hint 1 (skipped)', 'i-8 W3.0 hint 1 (skipped)', 'i-8 W3.1 open (skipped)', 'a-1 W2.0 hint 1 (skipped)', 'a-1 W4.0 open (skipped)',
+    'a-1 W5.0 open (skipped)', 'a-1 W5.0 waiting (skipped)', 'a-1 W5.0 fail (skipped)', 'a-1 W5.0 done (skipped)', 'a-2 W2.0 open (skipped)',
+    'a-2 W2.0 wrong (skipped)', 'a-2 W2.0 answered (skipped)', 'a-2 W4.0 open (skipped)', 'a-3 W2.0 open (skipped)', 'a-4 W2.1 open (skipped)',
+    'a-4 W2.1 waiting (skipped)', 'a-4 W2.1 done (skipped)', 'a-4 W3.0 open (skipped)', 'a-6 W3.0 open (skipped)', 'a-6 W3.0 waiting (skipped)',
+    'a-6 W3.0 done (skipped)', 'W3 opening', 'i-5 W3.0 hint 1', 'b-3 W1.2 bottom (skipped)', 'i-5 W3.0 hint 1 (skipped)',
+  ],
+  '80x24': [
+    'W3 hint 2', 'i-4 W2.0 waiting', 'i-4 W2.0 waiting (skipped)', 'i-5 W2.0 hint 1 (skipped)',
+  ],
 };
 // Below 80 columns the key bar keeps its main keys first (spec 3.1), so `w`
 // gives way only where the whole bar is wider than the window: a wrong
 // answer's bar with "s show answer", as on W5's.
-const NO_W_KEY = ['W5 wrong at 60x20 (full)', 'a-2 W2.0 wrong at 60x20 (full)', 'a-2 W2.0 wrong (skipped) at 60x20 (full)',
-  'W5 wrong at 60x20 (ascii)', 'a-2 W2.0 wrong at 60x20 (ascii)', 'a-2 W2.0 wrong (skipped) at 60x20 (ascii)'];
+const NO_W_KEY = [
+  'W4 sign in at 60x20 (full)', 'W5 wrong at 60x20 (full)', 'i-4 W5.0 open at 60x20 (full)', 'i-5 W3.0 open at 60x20 (full)',
+  'i-6 W3.0 open at 60x20 (full)', 'i-8 W2.1 open at 60x20 (full)', 'i-8 W2.1 hint 1 at 60x20 (full)', 'i-8 W3.0 open at 60x20 (full)',
+  'a-2 W2.0 wrong at 60x20 (full)', 'i-4 W1.0 open (skipped) at 60x20 (full)', 'i-4 W1.0 hint 1 (skipped) at 60x20 (full)',
+  'i-4 W5.0 open (skipped) at 60x20 (full)', 'i-5 W1.1 open (skipped) at 60x20 (full)', 'i-5 W3.0 open (skipped) at 60x20 (full)',
+  'i-6 W3.0 open (skipped) at 60x20 (full)', 'i-8 W1.0 open (skipped) at 60x20 (full)', 'i-8 W1.0 hint 1 (skipped) at 60x20 (full)',
+  'i-8 W2.1 open (skipped) at 60x20 (full)', 'i-8 W2.1 hint 1 (skipped) at 60x20 (full)', 'i-8 W3.0 open (skipped) at 60x20 (full)',
+  'a-2 W2.0 wrong (skipped) at 60x20 (full)', 'W4 sign in at 60x20 (ascii)', 'W5 wrong at 60x20 (ascii)', 'i-4 W5.0 open at 60x20 (ascii)',
+  'i-5 W3.0 open at 60x20 (ascii)', 'i-6 W3.0 open at 60x20 (ascii)', 'i-8 W2.1 open at 60x20 (ascii)', 'i-8 W2.1 hint 1 at 60x20 (ascii)',
+  'i-8 W3.0 open at 60x20 (ascii)', 'a-2 W2.0 wrong at 60x20 (ascii)', 'i-4 W1.0 open (skipped) at 60x20 (ascii)',
+  'i-4 W1.0 hint 1 (skipped) at 60x20 (ascii)', 'i-4 W5.0 open (skipped) at 60x20 (ascii)', 'i-5 W1.1 open (skipped) at 60x20 (ascii)',
+  'i-5 W3.0 open (skipped) at 60x20 (ascii)', 'i-6 W3.0 open (skipped) at 60x20 (ascii)', 'i-8 W1.0 open (skipped) at 60x20 (ascii)',
+  'i-8 W1.0 hint 1 (skipped) at 60x20 (ascii)', 'i-8 W2.1 open (skipped) at 60x20 (ascii)', 'i-8 W2.1 hint 1 (skipped) at 60x20 (ascii)',
+  'i-8 W3.0 open (skipped) at 60x20 (ascii)', 'a-2 W2.0 wrong (skipped) at 60x20 (ascii)',
+];
 
 test('the Why line is an optional row: it drops whole before any teaching line is cut, and w why stays in the key bar', async () => {
   const all = (await everyScreen()).filter(([, s]) => s.view === 'step' && !s.overlay && tierOf(s) === 'guided' && ['do', 'ask'].includes(beatOf(s).kind) && beatOf(s).why.length);
@@ -2401,8 +2437,8 @@ test('the Why line is an optional row: it drops whole before any teaching line i
         // its answer included; the y/n before the exact command has keys of
         // its own.
         if (state.beat.confirm) continue;
-        assert.match(strip(render(state, { cols: 120, rows: 40 }, t).at(-1)), /\bw why\b/, `${label} at 120x40 (${capName}): the key bar`);
-        if (!/\bw why\b/.test(lines.at(-1))) noKey.push(where);
+        assert.match(strip(render(state, { cols: 120, rows: 40 }, t).at(-1)), /\bw зачем/, `${label} at 120x40 (${capName}): the key bar`);
+        if (!/\bw зачем/.test(lines.at(-1))) noKey.push(where);
       }
     }
   }
@@ -2452,30 +2488,30 @@ test('the Why line\'s lead is in accent and its quote in text, and a step\'s not
 // (152) adds its row under the climb, which stays, and the blank above the
 // saved line gives way.
 const B4_NEXT = `
-   B4   Keep a session on track                                    COMPLETE ✔
-  ★━━★   ●━━●   ◆   ●━━●━━●   ◆━━◆━━◆━━◆   ★━━★                       14 of 14
+   B4   Удержать сессию в рабочем русле                            ПРОЙДЕНО ✔
+  ★━━★   ●━━●   ◆   ●━━●━━●   ◆━━◆━━◆━━◆   ★━━★                       14 из 14
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  ✅ The lesson's check passes: 2 of 2 items
-  💬 8 questions answered
+  ✅ Проверка урока проходит: 2 из 2 пунктов
+  💬 Отвечено на 8 вопросов
 
-  Your climb
+  Ваш путь вверх
 
-                ★★★    CHALLENGE ★★★    just the goal
-         ◆◆◆◆◆    HINTED ★★☆    the goal, hints if you ask
-  ●●●●●    GUIDED ★☆☆    every command shown
+                ★★★    ИСПЫТАНИЕ ★★★    только цель
+         ◆◆◆◆◆    ПОДСКАЗКИ ★★☆    цель, подсказки по запросу
+  ●●●●●    С ПОМОЩЬЮ ★☆☆    показана каждая команда
 
-  Say to yourself what B4 taught you, then press space.
+  Вспомните, чему вас научил урок B4, и нажмите space.
 
-  📖 Go further: "Explore the context window: an interactive view of what
-     fills a session."
+  📖 Дальше: "Explore the context window: an interactive view of what fills a
+     session."
 
-  ▸ Next up   B5   Project memory with CLAUDE.md
-     ●●●◆◆◆◆◆◆★★★  A notch harder: it starts with less help.
-  Your progress is saved, so a break is fine. Come back with npm run learn.
+  ▸ Следующий   B5   Память проекта в CLAUDE.md
+     ●●●◆◆◆◆◆◆★★★  Чуть сложнее: сразу меньше подсказок.
+  Прогресс сохранён, так что можно сделать перерыв. Вернуться: npm run learn.
 
   ────────────────────────────────────────────────────────────────────────────
-   enter  start B5    p page    m map    c card    q quit`;
+   enter  начать B5    p страница    m карта    c карточка    q выйти`;
 // A read line's words as the screen shows them: its link's text, then the rest.
 const readWords = (read) => flatText(read.replace(/\[([^\]]+)\]\([^)]+\)/, '$1'));
 
@@ -2493,9 +2529,6 @@ const GO_FURTHER_GIVES = {
   'b-2 next at 60x20': 'its Next up title wraps to two rows and its Go further line to three, so no spacer is left for the recall row',
   'i-1 next at 60x20': NOTCH,
   'i-3 next at 60x20': NOTCH,
-  'i-4 next at 60x20': NOTCH_ONE,
-  'i-7 next at 60x20': NOTCH_ONE,
-  'a-1 next at 60x20': NOTCH_ONE,
   'a-2 next at 60x20': NOTCH_ONE,
 };
 
@@ -2505,7 +2538,7 @@ test('every next screen but a capstone\'s shows its Go further line whole at 60x
     const { read } = lessonById(state.lesson).content.intro;
     for (const [capName, caps] of Object.entries(CAPS)) {
       const t = theme(caps);
-      const flag = `${t.unicode ? '📖' : '[read]'} ${C.goFurther} "`;
+      const flag = `${t.unicode ? '📖' : '[читать]'} ${C.goFurther} "`;
       for (const [cols, rows] of SHORT) {
         const lines = render(state, { cols, rows }, t).map(strip);
         const where = `${label} at ${cols}x${rows} (${capName})\n${lines.join('\n')}`;
@@ -2528,7 +2561,7 @@ test('every next screen but a capstone\'s shows its Go further line whole at 60x
         const said = [lines[at].trimStart().slice(flag.length - `${C.goFurther} "`.length), ...lines.slice(at + 1, end + 1)];
         assert.equal(flatText(said.join('')), flatText(C.goFurther) + readWords(read), where);
         // Wrapped rows go on under the label, after the lead.
-        const col = width(lines[at]) - width(lines[at].trimStart()) + width(t.unicode ? '📖 ' : '[read] ');
+        const col = width(lines[at]) - width(lines[at].trimStart()) + width(t.unicode ? '📖 ' : '[читать] ');
         for (const l of lines.slice(at + 1, end + 1)) assert.equal(width(l) - width(l.trimStart()), col, where);
       }
     }
@@ -2541,7 +2574,7 @@ test('every next screen but a capstone\'s shows its Go further line whole at 60x
   const b4 = endScreens().find(([l]) => l === 'b-4 next')[1];
   const lines = render(b4, { cols: 60, rows: 20 }, theme(CAPS.full)).map((l) => strip(l).trimEnd());
   const at = lines.findIndex((l) => l.includes('📖'));
-  assert.deepEqual(lines.slice(at - 1, at + 3), ['', '  📖 Go further: "Explore the context window: an', '     interactive view of what fills a session."', '  ▸ Next up   B5   Project memory with CLAUDE.md'], lines.join('\n'));
+  assert.deepEqual(lines.slice(at - 1, at + 3), ['', '  📖 Дальше: "Explore the context window: an interactive', '     view of what fills a session."', '  ▸ Следующий   B5   Память проекта в CLAUDE.md'], lines.join('\n'));
 });
 
 test('the Go further label is in muted and its quote in text', () => {
@@ -2567,7 +2600,7 @@ test('the Go further line is an optional row: it drops whole with its blank, bef
     assert.ok([0, 2].includes(rows.length), where);
     assert.ok(!lines.some((l) => l.trim() === '…'), `a teaching line is cut: ${where}`);
     const text = flatText(lines.join(''));
-    for (const word of [C.checkedSummary(2, 2), C.yourClimb, C.nextUp, 'Project memory with CLAUDE.md', C.notchHarder, C.savedBreak]) assert.ok(text.includes(flatText(word)), `"${word}": ${where}`);
+    for (const word of [C.checkedSummary(2, 2), C.yourClimb, C.nextUp, 'Память проекта в CLAUDE.md', C.notchHarder, C.savedBreak]) assert.ok(text.includes(flatText(word)), `"${word}": ${where}`);
     if (!rows.length) dropped = { lines, where };
   }
   assert.ok(dropped, 'no save error pushed the Go further line out');
@@ -2592,21 +2625,21 @@ const URLS = {
   'b-3': 'https://code.claude.com/docs/en/common-workflows',
   'b-4': 'https://code.claude.com/docs/en/context-window',
   'b-5': 'https://code.claude.com/docs/en/best-practices#write-an-effective-claude-md',
-  'i-1': 'https://code.claude.com/docs/en/skills',
-  'i-2': 'https://code.claude.com/docs/en/claude-directory',
-  'i-3': 'https://code.claude.com/docs/en/model-config',
+  'i-1': 'https://code.claude.com/docs/ru/skills',
+  'i-2': 'https://code.claude.com/docs/ru/claude-directory',
+  'i-3': 'https://code.claude.com/docs/ru/model-config',
   'i-4': 'https://www.anthropic.com/engineering/claude-code-sandboxing',
-  'i-5': 'https://code.claude.com/docs/en/hooks',
-  'i-6': 'https://code.claude.com/docs/en/sub-agents',
-  'i-7': 'https://code.claude.com/docs/en/mcp-quickstart',
-  'i-8': 'https://code.claude.com/docs/en/plugins/code-intelligence',
-  'a-1': 'https://code.claude.com/docs/en/worktrees#isolate-subagents-with-worktrees',
-  'a-2': 'https://code.claude.com/docs/en/agents',
-  'a-3': 'https://code.claude.com/docs/en/goal#compare-ways-to-keep-a-session-running',
-  'a-4': 'https://code.claude.com/docs/en/agent-sdk/overview',
-  'a-5': 'https://code.claude.com/docs/en/code-review',
-  'a-6': 'https://code.claude.com/docs/en/settings-example#a-teams-shared-settings',
-  'a-7': 'https://code.claude.com/docs/en/sandbox-environments',
+  'i-5': 'https://code.claude.com/docs/ru/hooks',
+  'i-6': 'https://code.claude.com/docs/ru/sub-agents',
+  'i-7': 'https://code.claude.com/docs/ru/mcp-quickstart',
+  'i-8': 'https://code.claude.com/docs/ru/plugins/code-intelligence',
+  'a-1': 'https://code.claude.com/docs/ru/worktrees#isolate-subagents-with-worktrees',
+  'a-2': 'https://code.claude.com/docs/ru/agents',
+  'a-3': 'https://code.claude.com/docs/ru/goal#compare-ways-to-keep-a-session-running',
+  'a-4': 'https://code.claude.com/docs/ru/agent-sdk/overview',
+  'a-5': 'https://code.claude.com/docs/ru/code-review',
+  'a-6': 'https://code.claude.com/docs/ru/settings-example#a-teams-shared-settings',
+  'a-7': 'https://code.claude.com/docs/ru/sandbox-environments',
 };
 
 test('p on the next screen shows the Go further line and its full URL, so a terminal with no links still has the address', () => {
@@ -2626,7 +2659,7 @@ test('p on the next screen shows the Go further line and its full URL, so a term
           assert.ok(!text.includes(C.goFurther), where);
           continue;
         }
-        assert.ok(lines.some((x) => x.trimStart().startsWith(`${t.unicode ? '📖' : '[read]'} ${C.goFurther} "`)), where);
+        assert.ok(lines.some((x) => x.trimStart().startsWith(`${t.unicode ? '📖' : '[читать]'} ${C.goFurther} "`)), where);
         assert.ok(flatText(text).includes(flatText(C.goFurther) + readWords(read)), where);
         // The full URL, its wrapped rows joined, and a link where links work.
         assert.ok(text.includes(URLS[l.id]), where);
@@ -2646,7 +2679,7 @@ test('p gives up its blank rows from the bottom: the one above Go further goes b
         const where = `${l.id} page at ${cols}x${rows} (${capName})\n${lines.join('\n')}`;
         const blankAbove = (i) => i > 0 && lines[i - 1] === '';
         const stuck = blankAbove(lines.indexOf(C.stuckLink));
-        const further = blankAbove(lines.findIndex((x) => x.startsWith(`${t.unicode ? '📖' : '[read]'} ${C.goFurther}`)));
+        const further = blankAbove(lines.findIndex((x) => x.startsWith(`${t.unicode ? '📖' : '[читать]'} ${C.goFurther}`)));
         assert.ok(stuck || !further, where);
         if (rows >= 24) assert.ok(stuck && further, where);
       }
@@ -2658,7 +2691,7 @@ test('the next screen\'s key bar offers p page, at 60x20 and 80x24', () => {
   for (const [label, state] of endScreens().filter(([l]) => l.endsWith('next'))) {
     for (const [cols, rows] of SHORT) {
       const bar = render(state, { cols, rows }, theme(CAPS.full)).map(strip).at(-1);
-      assert.match(bar, /\bp page\b/, `${label} at ${cols}x${rows}: ${bar}`);
+      assert.match(bar, /\bp страница/, `${label} at ${cols}x${rows}: ${bar}`);
     }
   }
 });
@@ -2685,7 +2718,7 @@ test('📖 has one job: Go further, once, on the next screen and behind p, and n
   let seen = 0;
   for (const capName of ['full', 'ascii']) {
     const t = theme(CAPS[capName]);
-    const flag = t.unicode ? '📖' : '[read]';
+    const flag = t.unicode ? '📖' : '[читать]';
     for (const [label, state] of [...all, ...pages]) {
       // The state's own course: a screen may play a course with fewer lesson files.
       const byId = (id) => state.course.find((x) => x.id === id);
@@ -2708,21 +2741,21 @@ test('📖 has one job: Go further, once, on the next screen and behind p, and n
 test('the ? overlay says how to start with a still screen at 80x24, under a blank, and gives that row up first at 60x20, where every key stays', () => {
   const t = theme(CAPS.full);
   const help = screens.find(([l]) => l === 'help')[1];
-  const CALM = 'Prefer a still screen? Quit, then start with npm run learn -- --calm.';
+  const CALM = 'Нужен неподвижный экран? Выйдите и запустите npm run learn -- --calm.';
   const big = render(help, { cols: 80, rows: 24 }, t).map(strip);
   const i = big.findIndex((l) => l.trim() === CALM);
   assert.ok(i > 0, big.join('\n'));
   assert.equal(big[i - 1].trim(), '', 'a blank above it');
   assert.ok(big.findIndex((l) => l.trim().startsWith('q ')) < i, 'under the keys');
   const small = render(help, { cols: 60, rows: 20 }, t).map(strip);
-  assert.ok(!small.some((l) => /still screen|--calm/.test(l)), small.join('\n'));
+  assert.ok(!small.some((l) => /неподвижный экран|--calm/.test(l)), small.join('\n'));
   for (const [k, label] of C.keyHelp) assert.ok(small.some((l) => l.includes(k) && l.includes(label)), `${k} ${label} at 60x20`);
   // In between, it shows whole on one row with every blank kept, or not at
   // all: it never splits the command, and no blank gives way for it.
   for (const [cols, rows] of [[60, 21], [61, 21], [70, 21], [80, 21], [80, 23], [72, 24], [76, 24], [100, 30]]) {
     const lines = render(help, { cols, rows }, t).map(strip);
     const at = `${cols}x${rows}`;
-    const calm = lines.filter((l) => /still screen|--calm/.test(l));
+    const calm = lines.filter((l) => /неподвижный экран|--calm/.test(l));
     assert.ok(calm.length === 0 || (calm.length === 1 && calm[0].trim() === CALM), `${at}\n${lines.join('\n')}`);
     const title = lines.findIndex((l) => l.trim() === C.keysTitle);
     assert.equal(lines[title + 1].trim(), '', `${at}: the blank under the title`);
@@ -2732,15 +2765,15 @@ test('the ? overlay says how to start with a still screen at 80x24, under a blan
 });
 
 // Truthful waits: what the card says while r's run goes.
-const checkingRows = (d, cols, rows) => plainAt(d, cols, rows).split('\n').filter((l) => l.includes('Checking'));
+const checkingRows = (d, cols, rows) => plainAt(d, cols, rows).split('\n').filter((l) => l.includes('Проверяю'));
 
 test('the checking label names what is checked: "Checking <watched path>…", and "Checking…" where the beat watches no path', () => {
   const cases = [
     // A check beat, a file beat with no watching line, a git beat, and the Check, which watches every item.
-    ['b-1', 'W3', 0, { type: 'check', lesson: 'b-1', items: [{ index: 0, text: 'x', pass: false, hint: 'no file' }] }, 'Checking .practice/version.txt…'],
-    ['b-2', 'W6', 2, { type: 'file', path: '.practice/b-2-plan.txt', read: null, stamp: 'a' }, 'Checking .practice/b-2-plan.txt…'],
-    ['b-1', 'W7', 2, { type: 'git', paths: ['notes.md'] }, 'Checking git status…'],
-    ['b-1', 'C', 0, { type: 'check', lesson: 'b-1', items: [{ index: 0, text: 'x', pass: false, hint: 'no file' }] }, 'Checking…'],
+    ['b-1', 'W3', 0, { type: 'check', lesson: 'b-1', items: [{ index: 0, text: 'x', pass: false, hint: 'no file' }] }, 'Проверяю .practice/version.txt…'],
+    ['b-2', 'W6', 2, { type: 'file', path: '.practice/b-2-plan.txt', read: null, stamp: 'a' }, 'Проверяю .practice/b-2-plan.txt…'],
+    ['b-1', 'W7', 2, { type: 'git', paths: ['notes.md'] }, 'Проверяю git status…'],
+    ['b-1', 'C', 0, { type: 'check', lesson: 'b-1', items: [{ index: 0, text: 'x', pass: false, hint: 'no file' }] }, 'Проверяю…'],
   ];
   for (const [id, step, beat, result, label] of cases) {
     const d = openAt(id, step, beat);
@@ -2758,23 +2791,23 @@ test('a run of several items says how far it has got, "Checking item n of m…",
   const report = (d, lesson, items, n, m, asked = 0) => d.send({ type: 'running', lesson, items, n, m, asked, wait: 40 });
   // b-2's Check: its opening run checks both items, neither slow.
   const d = openAt('b-2', 'C', 0);
-  assert.deepEqual(labels(d), both('Checking…'), 'no report yet');
+  assert.deepEqual(labels(d), both('Проверяю…'), 'no report yet');
   const saved = snapshot(d.state);
   report(d, 'b-2', null, 1, 2);
-  assert.deepEqual(labels(d), both('Checking item 1 of 2…'), 'the opening run reports its first item');
+  assert.deepEqual(labels(d), both('Проверяю пункт 1 из 2…'), 'the opening run reports its first item');
   assert.deepEqual(snapshot(d.state), saved, 'a report saves nothing');
   report(d, 'b-1', null, 2, 2);
   report(d, 'b-2', [1], 2, 2);
-  assert.deepEqual(labels(d), both('Checking item 1 of 2…'), 'another lesson\'s run, or a run of other items, is not this one');
+  assert.deepEqual(labels(d), both('Проверяю пункт 1 из 2…'), 'another lesson\'s run, or a run of other items, is not this one');
   const missing = [0, 1].map((index) => ({ index, text: 'x', pass: false, hint: 'not yet' }));
   d.send({ type: 'check', lesson: 'b-2', items: missing });
   assert.deepEqual(labels(d), both(), 'the result ends it');
   d.key('r');
-  assert.deepEqual(labels(d), both('Checking…'), 'r asks again: no report for its run yet');
+  assert.deepEqual(labels(d), both('Проверяю…'), 'r asks again: no report for its run yet');
   report(d, 'b-2', null, 2, 2);
-  assert.deepEqual(labels(d), both('Checking…'), 'a poll\'s run, still going ahead of r\'s, reports nothing on the card');
+  assert.deepEqual(labels(d), both('Проверяю…'), 'a poll\'s run, still going ahead of r\'s, reports nothing on the card');
   report(d, 'b-2', null, 2, 2, d.state.beat.asked);
-  assert.deepEqual(labels(d), both('Checking item 2 of 2…'), 'r\'s own run');
+  assert.deepEqual(labels(d), both('Проверяю пункт 2 из 2…'), 'r\'s own run');
   // Back a beat while the Check's run goes: that run's reports are not about
   // the beat before, which checks item 1 alone.
   const back = openAt('b-2', 'C', 0);
@@ -2782,32 +2815,32 @@ test('a run of several items says how far it has got, "Checking item n of m…",
   assert.deepEqual(beatOf(back.state).verify.items, [1]);
   assert.equal(back.state.beat.status, 'opening');
   report(back, 'b-2', null, 2, 2);
-  assert.deepEqual(labels(back), both('Checking .practice/b-2-after.txt…'));
+  assert.deepEqual(labels(back), both('Проверяю .practice/b-2-after.txt…'));
   // The capstone's test run, two slow items, which only r runs.
   const t = openAt('b-capstone', 'T4', 2);
   const placeholders = [3, 4].map((index) => ({ index, text: 'x', pass: false, slow: true, hint: '' }));
   t.send({ type: 'check', lesson: 'b-capstone', items: placeholders });
   t.key('r');
-  assert.deepEqual(labels(t), both('Checking npm test…'));
+  assert.deepEqual(labels(t), both('Проверяю npm test…'));
   report(t, 'b-capstone', [3, 4], 1, 2, t.state.beat.asked);
-  assert.deepEqual(labels(t), both('Checking item 1 of 2…'));
+  assert.deepEqual(labels(t), both('Проверяю пункт 1 из 2…'));
   // r's result lands on the map: back on the card, the map's re-run has
   // reported nothing yet, so the count from r's run is gone.
   t.key('m');
   t.send({ type: 'check', lesson: 'b-capstone', items: placeholders.map((i) => ({ ...i, slow: false, hint: 'npm test failed.' })), asked: t.state.beat.asked });
   t.key('m');
-  assert.deepEqual(labels(t), both('Checking npm test…'), 'a map round trip shows no count from a run that has ended');
+  assert.deepEqual(labels(t), both('Проверяю npm test…'), 'a map round trip shows no count from a run that has ended');
   // So does a run that breaks.
   t.key('r');
   report(t, 'b-capstone', [3, 4], 2, 2, t.state.beat.asked);
   t.key('m');
   t.send({ type: 'check-error', lesson: 'b-capstone', message: 'it took too long', asked: t.state.beat.asked });
   t.key('m');
-  assert.deepEqual(labels(t), both('Checking npm test…'));
+  assert.deepEqual(labels(t), both('Проверяю npm test…'));
   // A run of one item has nothing to count: the label keeps what it checks.
   const w = openAt('b-1', 'W3', 0);
   report(w, 'b-1', [0], 1, 1);
-  assert.deepEqual(labels(w), both('Checking .practice/version.txt…'));
+  assert.deepEqual(labels(w), both('Проверяю .practice/version.txt…'));
 });
 
 test('r over a "Not yet" with a hint open: "Checking" takes the "Not yet" row, and the hint box and the key bar stay, at 60x20 and 80x24', () => {
@@ -2823,12 +2856,12 @@ test('r over a "Not yet" with a hint open: "Checking" takes the "Not yet" row, a
   for (const [i, [cols, rows]] of SHORT.entries()) {
     const before = failing[i];
     const after = plainAt(d, cols, rows).split('\n');
-    assert.ok(before.some((l) => l.includes('Not yet')) && !after.some((l) => l.includes('Not yet')), `${cols}x${rows}`);
+    assert.ok(before.some((l) => l.includes(C.notYet.slice(0, -1))) && !after.some((l) => l.includes(C.notYet.slice(0, -1))), `${cols}x${rows}`);
     assert.equal(checkingRows(d, cols, rows).length, 1, `${cols}x${rows}`);
     assert.ok(box(before).length > 1, `${cols}x${rows}: the second rung is open`);
     assert.deepEqual(box(after), box(before), `${cols}x${rows}: the same hint box`);
     assert.equal(after.at(-1), before.at(-1), `${cols}x${rows}: the same key bar`);
-    assert.match(after.at(-1), /h more help .*r check again/, `${cols}x${rows}`);
+    assert.match(after.at(-1), /h больше помощи .*r ещё раз/, `${cols}x${rows}`);
   }
 });
 
@@ -2928,18 +2961,18 @@ test('Pip\'s rest face on every b-1 card says what the app saw, the same still f
   }
 });
 
-test('Pip shows only where the top border leaves 10 cells of rule: an ASCII done card at 60x20 leaves 6, so its border is today\'s', () => {
+test('Pip shows only where the top border leaves 10 cells of rule: an ASCII done card at 60x20 leaves 8, so its border is today\'s', () => {
   const t = theme(CAPS.ascii);
   const done = screens.find(([l]) => l === 'W3 done')[1];
   const at = (cols) => render(done, { cols, rows: 20 }, t);
-  assert.equal(cardTop(at(60)), '  +-  [TERMINAL] in your other terminal   [x] DONE  ------');
+  assert.equal(cardTop(at(60)), '  +-  [ТЕРМИНАЛ] в другом терминале   [x] ГОТОВО  --------');
   assert.equal(pipOn(at(60), t), null);
-  // Each column more gives the rule one more cell: 9 at 63, 10 at 64.
-  assert.equal(pipOn(at(63), t), null);
-  assert.equal(pipOn(at(64), t), ASCII_FACES.done);
-  assert.match(cardTop(at(64)), /DONE {2}- \[\^_\^\] --$/);
+  // Each column more gives the rule one more cell: 9 at 61, 10 at 62.
+  assert.equal(pipOn(at(61), t), null);
+  assert.equal(pipOn(at(62), t), ASCII_FACES.done);
+  assert.match(cardTop(at(62)), /ГОТОВО {2}- \[\^_\^\] --$/);
   // The face takes rule cells: the border keeps the card's width.
-  for (const cols of [60, 63, 64]) assert.equal(width(cardTop(at(cols))), cols - 2);
+  for (const cols of [60, 61, 62]) assert.equal(width(cardTop(at(cols))), cols - 2);
 });
 
 const cards = (all) => all.filter(([, s]) => ['step', 'checkonly'].includes(s.view) && !s.overlay);
@@ -3078,7 +3111,7 @@ test('Pip tells the truth: the worried face only where the card shows a ▲ row,
       // The while-it-runs box (ticket 150) draws the bar too, for a question
       // that grades nothing: it is no hint box.
       const box = whileBoxRows(lines, t);
-      const shows = lines.some((l, i) => !box.has(i) && /^\s*│ {2}(▲ |▌ |Stuck\?)/.test(l));
+      const shows = lines.some((l, i) => !box.has(i) && /^\s*│ {2}(▲ |▌ |Застряли\?)/.test(l));
       const why = `${label} at ${cols}x${rows}: ${face}\n${lines.join('\n')}`;
       if (face === FACES.worried) {
         assert.ok(shows, why);
@@ -3120,7 +3153,7 @@ test('Pip tells the truth: the same face for every predict answer', () => {
 test('a passed step\'s stop is green before enter and its link fills: W3 done at 80x24 is the step-done mockup', () => {
   const state = screens.find(([l]) => l === 'W3 done')[1];
   const lines = render(state, { cols: 80, rows: 24 }, theme(CAPS.full));
-  assert.equal(strip(lines[1]).trimEnd(), '  ●━━●━━●━━○──○──○──○   ◇──◇──◇   ☆──☆                            step 3 of 12');
+  assert.equal(strip(lines[1]).trimEnd(), '  ●━━●━━●━━○──○──○──○   ◇──◇──◇   ☆──☆                             шаг 3 из 12');
   assert.equal(strip(lines[2]).trimEnd(), `  ${'━'.repeat(19)}${'─'.repeat(57)}`);
   // The three passed stops and the links after them are green; no stop
   // keeps the accent "current" glyph.
@@ -3132,7 +3165,7 @@ test('row 3 counts the steps passed on lesson screens, in ASCII too; the welcome
   const at = (label, cols, rows, caps) => render(screens.find(([l]) => l === label)[1], { cols, rows }, theme(caps)).map((l) => strip(l).trimEnd());
   // energy-and-teaching 2.5, ASCII at 60x20, watching: 2 of 12 steps done.
   const ascii = at('W3 waiting', 60, 20, CAPS.ascii);
-  assert.equal(ascii[1], '  #==#==#--o--o--o--o   +--+--+   .--.        step 3 of 12');
+  assert.equal(ascii[1], '  #==#==#--o--o--o--o   +--+--+   .--.         шаг 3 из 12');
   assert.equal(ascii[2], `  ${'='.repeat(9)}${'-'.repeat(47)}`);
   // 2.4 at 60x20, watching, in Unicode.
   assert.equal(at('W3 waiting', 60, 20, CAPS.full)[2], `  ${'━'.repeat(9)}${'─'.repeat(47)}`);
@@ -3198,7 +3231,7 @@ test('row 3 counts the warm-ups on the plan as steps, with the trail closed up a
   };
   const rows = (d) => render(d.state, { cols: 60, rows: 20 }, theme(CAPS.full)).map((l) => strip(l).trimEnd());
   const d = at({ missed: ['start'] });
-  assert.match(rows(d)[1], /^  ☆   ◇   ○(──○){6}   ◇(──◇){3}   ☆──☆ 15 steps$/);
+  assert.match(rows(d)[1], /^  ☆   ◇   ○(──○){6}   ◇(──◇){3}   ☆──☆ 15 шагов$/);
   assert.ok(rows(d).includes(`  ${C.warmups(1)}`), rows(d).join('\n'));
   assert.equal(rows(d)[2], `  ${'─'.repeat(56)}`);
   d.key('enter');
@@ -3210,13 +3243,13 @@ test('row 3 counts the warm-ups on the plan as steps, with the trail closed up a
   assert.equal(stepOf(d.state).id, 'W1');
   // Nothing missed: the lesson's own 14 steps, and no warm-up line.
   const none = at({});
-  assert.match(rows(none)[1], / 14 steps$/);
+  assert.match(rows(none)[1], / 14 шагов$/);
   assert.ok(!rows(none).some((l) => /warm-up/.test(l)), rows(none).join('\n'));
   // Two warm-ups from an older save: 16 steps, closed up.
   const old = driver({ course: allCourse, saved: { format: 1, welcomed: true, lessons: { ...finishedBefore('b-2'), 'b-2': { step: 'R2', beat: 0, warm: ['R1', 'R2'], done: ['R1'] } } } });
   old.key('enter');
   assert.equal(stepOf(old.state).id, 'R2');
-  assert.match(rows(old)[1], /^  ★★ ◇ ○{7} ◇{4} ☆☆ +step 2 of 16$/, rows(old).join('\n'));
+  assert.match(rows(old)[1], /^  ★★ ◇ ○{7} ◇{4} ☆☆ +шаг 2 из 16$/, rows(old).join('\n'));
   // 1 of 16 over 56 cells.
   assert.equal(rows(old)[2], `  ${'━'.repeat(4)}${'─'.repeat(52)}`);
 });
@@ -3263,7 +3296,7 @@ test('c opens your card: an entry shows only after a finished step on its skill,
   assert.ok(cardText(r).some((l) => /^B1\s+\/exit$/.test(l)), cardText(r).join('\n'));
 });
 
-const COMMANDS_BY_LEVEL = 'https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know/blob/main/docs/reference/commands.md';
+const COMMANDS_BY_LEVEL = 'https://github.com/runowata/claude-code-ru/blob/main/docs/reference/commands.md';
 // The Commands by level link under its line, in trimmed rows: spelled out
 // whole, on more than one row, each broken only after a /, ? or &.
 const assertLinkBreaks = (lines, where) => {
@@ -3288,7 +3321,7 @@ test('your card scrolls with the arrows where it is taller than the window, and 
     const first = cardText(d, cols, rows);
     assert.deepEqual(shownOn(first).slice(0, 2), CARD_SHOWS.slice(0, 2), `${at}\n${first.join('\n')}`);
     assert.ok(!first.join('').includes(COMMANDS_BY_LEVEL), `${at}: the link waits at the end\n${first.join('\n')}`);
-    assert.match(first.at(-1), /↑↓ scroll/, at);
+    assert.match(first.at(-1), /↑↓ листать/, at);
     // Down, one press at a time, shows every entry in turn, then the link last.
     const seen = new Set();
     let lines = first;
@@ -3313,19 +3346,21 @@ test('your card scrolls with the arrows where it is taller than the window, and 
 test('? lists c for your card where it has room, a row 60x20 gives up first; the key bar shows c card once the card has an entry', () => {
   const t = theme(CAPS.full);
   const help = screens.find(([l]) => l === 'help')[1];
-  const cRow = (lines) => lines.some((l) => /^c\s+your card\b/.test(l.trim()));
+  const cRow = (lines) => lines.some((l) => /^c\s+ваша карточка/.test(l.trim()));
   assert.ok(cRow(render(help, { cols: 80, rows: 24 }, t).map(strip)), 'at 80x24');
   assert.ok(!cRow(render(help, { cols: 60, rows: 20 }, t).map(strip)), 'not at 60x20');
   const keyBar = (s, cols, rows) => strip(render(s, { cols, rows }, t).at(-1));
   // No entry yet: no c on the bar.
   const empty = driver({ saved: { format: 1, welcomed: true, lessons: { 'b-1': { step: 'W1', beat: 0 } } } });
   empty.key('enter');
-  assert.doesNotMatch(keyBar(empty.state, 80, 24), /\bc card\b/);
+  assert.doesNotMatch(keyBar(empty.state, 80, 24), /\bc карточка/);
   // W1 and W2 finished: install's entry is on the card, and W3's bar says so.
   playUntil(empty, (s) => s.view === 'step' && stepOf(s).id === 'W3');
-  assert.match(keyBar(empty.state, 80, 24), /\bc card\b/, keyBar(empty.state, 80, 24));
+  assert.match(keyBar(empty.state, 80, 24), /\bc карточка/, keyBar(empty.state, 80, 24));
+  // The Russian bar is wider: at 60x20 the next screen's c card gives way (the
+  // ? overlay still lists it); at 80x24 it stays.
   for (const [label, state] of endScreens().filter(([l]) => l.endsWith('next'))) {
-    for (const [cols, rows] of SHORT) assert.match(keyBar(state, cols, rows), /\bc card\b/, `${label} at ${cols}x${rows}`);
+    for (const [cols, rows] of [[80, 24]]) assert.match(keyBar(state, cols, rows), /\bc карточка/, `${label} at ${cols}x${rows}`);
   }
 });
 
@@ -3340,16 +3375,19 @@ test('c card gives way before anything else on the bar: with it taken out, every
       for (const [label, state] of all) {
         const bar = strip(render(state, { cols, rows }, t).at(-1));
         const bare = strip(render(noCard(state), { cols, rows }, t).at(-1));
-        if (bar.includes('    c card')) shown++;
-        assert.equal(bar.replace('    c card', ''), bare, `${label} at ${cols}x${rows}`);
+        if (bar.includes('    c карточка')) shown++;
+        assert.equal(bar.replace('    c карточка', ''), bare, `${label} at ${cols}x${rows}`);
       }
     }
   }
-  assert.ok(shown > 0, 'some bar shows c card');
+  assert.ok(shown > 0, 'some bar shows c карточка');
   // The approved Step done bar at 80x24 (design 2.3) keeps the next step's title.
   const done = screens.find(([l]) => l === 'W3 done')[1];
   assert.ok(cardOf(done).length, 'W3 done has a card entry');
-  assert.equal(strip(render(done, { cols: 80, rows: 24 }, theme(CAPS.full)).at(-1)).trim(), 'enter  next: Start, sign in, trust    b back    w why    m map    q quit');
+  // The Russian labels are wider: with the next step's title the bar is over
+  // the 76 cells an 80-column window gives it, so the title gives way (the
+  // approved English bar kept it).
+  assert.equal(strip(render(done, { cols: 80, rows: 24 }, theme(CAPS.full)).at(-1)).trim(), 'enter  дальше    b назад    w зачем    m карта    q выйти');
 });
 
 test('a card entry shows only after one of its own lesson\'s steps: the capstone\'s waits for the capstone, though b-3 teaches its skill too', () => {
@@ -3382,7 +3420,7 @@ test('your card\'s last place is the Commands by level link, so a toast at 60x20
       const url = [];
       for (let i = link + 1; url.join('').length < COMMANDS_BY_LEVEL.length && i < lines.length; i++) url.push(lines[i]);
       assert.equal(url.join(''), COMMANDS_BY_LEVEL, where);
-      if (s.toast) assert.ok(lines.some((l) => l.includes("Couldn't save your place")), `the toast stays: ${where}`);
+      if (s.toast) assert.ok(lines.some((l) => l.includes('Не удалось сохранить место')), `the toast stays: ${where}`);
     }
   }
 });
@@ -3500,7 +3538,7 @@ const compared = (lines, show) => {
 
 test('the next screen asks the learner to recall what the lesson put on the card, and shows none of it until space', () => {
   for (const [label, state] of endScreens().filter(([l]) => l.endsWith('next'))) {
-    const ask = `Say to yourself what ${RECALL[state.lesson]} taught you, then press space.`;
+    const ask = C.recallAsk(RECALL[state.lesson]);
     for (const [cols, rows] of SHORT) {
       const lines = render(state, { cols, rows }, theme(CAPS.full)).map((l) => strip(l).trim());
       const where = `${label} at ${cols}x${rows}\n${lines.join('\n')}`;
@@ -3522,8 +3560,8 @@ test('space shows the lesson\'s card entries whole, only this lesson\'s, and ent
   for (const show of ['claude --version', 'Shift+Tab', 'Ctrl+O', '/diff']) assert.ok(!lines.some((l) => l.includes(show)), `${show}\n${where}`);
   // Nothing is judged: no mark on any entry, and nothing to answer, only to go on or back.
   assert.ok(!lines.slice(3, -2).some((l) => /[✔✗▲]/.test(l)), where);
-  assert.equal(lines.at(-1), 'enter  start B5    space close    q close', where);
-  assert.ok(bar.startsWith('enter  start B5'), bar);
+  assert.equal(lines.at(-1), 'enter  начать B5    space закрыть    q закрыть', where);
+  assert.ok(bar.startsWith('enter  начать B5'), bar);
 });
 
 test('the comparison fits at 60x20 and 80x24: where it is taller than the window, the arrows show each entry whole, then the link', () => {
@@ -3707,14 +3745,14 @@ test('a reading beat\'s not-yet line is shown whole, and its pass shows what the
       const where = `${size.join('x')} ${caps.unicode ? 'unicode' : 'ascii'}`;
       const no = onReading(`no-match ${path} \\bTODO\\b`);
       tryNow(no, path, '---\nname: tdd\n---\n\n- TODO: write the steps\n');
-      assert.ok(prose(no.state, size, t).includes(`Not yet: ${path} still has: - TODO: write the steps`), `${where}: ${prose(no.state, size, t)}`);
+      assert.ok(prose(no.state, size, t).includes(`Пока нет: В ${path} всё ещё есть: - TODO: write the steps`), `${where}: ${prose(no.state, size, t)}`);
       // A parse error's not-yet line is long, and the screen still fits.
       const broken = onReading('json .claude/settings.json permissions.deny');
       tryNow(broken, '.claude/settings.json', '{"permissions": {"deny": ["Read(./.env)"] }, "hooks": [}');
       const lines = render(broken.state, { cols: size[0], rows: size[1] }, t);
       assert.equal(lines.length, size[1], where);
       for (const line of lines) assert.ok(width(line) <= size[0] - 1, `${where}: ${strip(line)}`);
-      assert.ok(prose(broken.state, size, t).includes('Not yet: .claude/settings.json does not parse as JSON yet ('), `${where}: ${prose(broken.state, size, t)}`);
+      assert.ok(prose(broken.state, size, t).includes('Пока нет: .claude/settings.json пока не читается как JSON ('), `${where}: ${prose(broken.state, size, t)}`);
       // A parse error that quotes a line break, and a value that holds one,
       // still draw exactly the window: the frame, joined, splits into rows.
       const multi = onReading('json .claude/settings.json permissions.deny');
@@ -3736,8 +3774,8 @@ test('a reading beat\'s not-yet line is shown whole, and its pass shows what the
       // key and its value (r27 E12), cut at 60x20 where the burst leaves
       // too little room for the value.
       const words = prose(json.state, size, t);
-      const full = 'holds permissions.deny = ["Read(./.env)"]';
-      assert.ok(words.includes(`.claude/settings.json ${full}`) || (words.includes('.claude/settings.json') && (words.includes(full) || (size[0] === 60 && words.includes('holds permissions.deny = ')))), `${where}: ${words}`);
+      const full = 'содержит permissions.deny = ["Read(./.env)"]';
+      assert.ok(words.includes(`.claude/settings.json ${full}`) || (words.includes('.claude/settings.json') && (words.includes(full) || (size[0] === 60 && words.includes('содержит permissions.deny = ')))), `${where}: ${words}`);
     }
   }
 });
@@ -3750,9 +3788,9 @@ test('a reading beat already passed when its step opens says "Already done, so t
     for (const size of [[60, 20], [80, 24]]) {
       const where = `${size.join('x')} ${caps.unicode ? 'unicode' : 'ascii'}`;
       for (const [verify, path, text, shows] of [
-        ['file .practice/b-2-plan.txt', '.practice/b-2-plan.txt', 'Plan the change\n', ['.practice/b-2-plan.txt', 'holds Plan the change']],
-        [`json ${settings} permissions.deny`, settings, '{"permissions": {"deny": ["Read(./.env)"]}}', [settings, 'holds permissions.deny = ["Read(./.env)"]']],
-        [`match ${skill} ^name:`, skill, '---\nname: tdd\n---\n', [skill, 'holds name: tdd']],
+        ['file .practice/b-2-plan.txt', '.practice/b-2-plan.txt', 'Plan the change\n', ['.practice/b-2-plan.txt', 'содержит Plan the change']],
+        [`json ${settings} permissions.deny`, settings, '{"permissions": {"deny": ["Read(./.env)"]}}', [settings, 'содержит permissions.deny = ["Read(./.env)"]']],
+        [`match ${skill} ^name:`, skill, '---\nname: tdd\n---\n', [skill, 'содержит name: tdd']],
         [`no-match ${skill} \\bTODO\\b`, skill, '---\nname: tdd\n---\n', []],
       ]) {
         const already = onReading(verify);
@@ -3760,9 +3798,9 @@ test('a reading beat already passed when its step opens says "Already done, so t
         assert.equal(already.state.beat.status, 'already', `${where} ${verify}`);
         fits(already.state, size, t, `${where} ${verify}`);
         const said = prose(already.state, size, t);
-        assert.ok(said.includes('Already done, so this step counts.'), `${where} ${verify}: ${said}`);
+        assert.ok(said.includes('Уже готово, шаг засчитан.'), `${where} ${verify}: ${said}`);
         for (const words of shows) assert.ok(said.includes(words), `${where} ${verify}: ${said}`);
-        assert.ok(!said.includes('check already passes'), `${where} ${verify}: ${said}`);
+        assert.ok(!said.includes('проверка уже проходит'), `${where} ${verify}: ${said}`);
       }
       // Its satisfied "Done when" gives way to what the file holds, as on a pass.
       const doneWhen = onReading('file .practice/b-2-plan.txt\n- say: Done when `.practice/b-2-plan.txt` holds your plan.');
@@ -3770,13 +3808,13 @@ test('a reading beat already passed when its step opens says "Already done, so t
       assert.equal(doneWhen.state.beat.status, 'already', where);
       fits(doneWhen.state, size, t, where);
       const holds = prose(doneWhen.state, size, t);
-      assert.ok(holds.includes('holds Plan the change'), `${where}: ${holds}`);
-      assert.ok(!holds.includes('holds your plan'), `${where}: ${holds}`);
+      assert.ok(holds.includes('содержит Plan the change'), `${where}: ${holds}`);
+      assert.ok(!holds.includes('содержит your plan'), `${where}: ${holds}`);
       // A check did run for a check beat: its line stays.
       const check = onReading('check 0');
       check.send({ type: 'check', lesson: 'b-2', items: [{ index: 0, text: 'saved', pass: true, hint: '' }] });
       assert.equal(check.state.beat.status, 'already', where);
-      assert.ok(prose(check.state, size, t).includes('Already done: the check already passes, so this step counts.'), `${where}: ${prose(check.state, size, t)}`);
+      assert.ok(prose(check.state, size, t).includes('Уже готово: проверка уже проходит, шаг засчитан.'), `${where}: ${prose(check.state, size, t)}`);
     }
   }
 });
@@ -3798,20 +3836,20 @@ test('git-clean with paths: its lines name the paths, and list only what is unde
       const d = onReading('git-clean secrets/');
       d.send(gitLists(['README.md', 'secrets/key.txt']));
       fits(d.state, size, t, where);
-      assert.ok(prose(d.state, size, t).includes('Not yet: 1 file changed under secrets/: secrets/key.txt'), `${where}: ${prose(d.state, size, t)}`);
+      assert.ok(prose(d.state, size, t).includes('Пока нет: 1 файл изменён в secrets/: secrets/key.txt'), `${where}: ${prose(d.state, size, t)}`);
       assert.ok(!prose(d.state, size, t).includes('README.md'), where);
       d.send(gitLists(['README.md']));
       assert.equal(d.state.beat.status, 'done');
       fits(d.state, size, t, where);
       // Beside the burst, on one line or two.
       const words = prose(d.state, size, t);
-      assert.ok(words.includes('git status lists nothing under secrets/.') || (words.includes('git status lists nothing under') && words.includes('secrets/.')), `${where}: ${words}`);
+      assert.ok(words.includes('git status ничего не показывает в secrets/.') || (words.includes('git status ничего не показывает') && words.includes('в secrets/.')), `${where}: ${words}`);
       // With a done-label, the live line before the learner says it ended.
       const live = onReading('git-clean secrets/\n- done-label: the session has ended');
       live.send(gitLists(['README.md']));
-      assert.ok(prose(live.state, size, t).includes('Watching git status:') && prose(live.state, size, t).includes('no changes under secrets/ so far'), `${where}: ${prose(live.state, size, t)}`);
+      assert.ok(prose(live.state, size, t).includes('Слежу за git status:') && prose(live.state, size, t).includes('пока нет изменений в secrets/'), `${where}: ${prose(live.state, size, t)}`);
       live.send(gitLists(['README.md', 'secrets/a.txt', 'secrets/b.txt']));
-      assert.ok(prose(live.state, size, t).includes('2 files changed under secrets/: secrets/a.txt, secrets/b.txt'), `${where}: ${prose(live.state, size, t)}`);
+      assert.ok(prose(live.state, size, t).includes('2 файла изменены в secrets/: secrets/a.txt, secrets/b.txt'), `${where}: ${prose(live.state, size, t)}`);
       fits(live.state, size, t, where);
     }
   }
@@ -3825,26 +3863,26 @@ test('git-changed: it watches git status, its not-yet line is shown whole, and i
       const d = onReading('git-changed src/');
       d.send(gitLists(['README.md']));
       fits(d.state, size, t, where);
-      assert.ok(prose(d.state, size, t).includes("Watching git status. I'll turn green the moment it's right."), `${where}: ${prose(d.state, size, t)}`);
+      assert.ok(prose(d.state, size, t).includes('Слежу за git status. Загорюсь зелёным, как только всё будет верно.'), `${where}: ${prose(d.state, size, t)}`);
       d.key('r');
       d.send(gitLists(['README.md'], [], { asked: d.state.beat.asked }));
       fits(d.state, size, t, where);
-      assert.ok(prose(d.state, size, t).includes('Not yet: git status lists no change under src/ yet.'), `${where}: ${prose(d.state, size, t)}`);
+      assert.ok(prose(d.state, size, t).includes('Пока нет: git status пока не показывает изменений в src/.'), `${where}: ${prose(d.state, size, t)}`);
       d.send(gitLists(['src/config.js']));
       fits(d.state, size, t, where);
       const words = prose(d.state, size, t);
-      assert.ok(words.includes('Changed: src/config.js') || (words.includes('Changed:') && words.includes('src/config.js')), `${where}: ${words}`);
-      assert.match(words, /DONE/, where);
+      assert.ok(words.includes('Изменено: src/config.js') || (words.includes('Изменено:') && words.includes('src/config.js')), `${where}: ${words}`);
+      assert.match(words, /ГОТОВО/, where);
       // Already changed when the step opens: git status passed it, not a
       // check, and the card says what it lists.
-      for (const [verify, lists, shows] of [['git-changed src/', gitLists(['src/a.js']), 'Changed: src/a.js'], ['git-staged', gitLists(['src/a.js'], ['src/a.js']), 'Staged: src/a.js']]) {
+      for (const [verify, lists, shows] of [['git-changed src/', gitLists(['src/a.js']), 'Изменено: src/a.js'], ['git-staged', gitLists(['src/a.js'], ['src/a.js']), 'В индексе: src/a.js']]) {
         const already = onReading(verify);
         already.send(lists);
         assert.equal(already.state.beat.status, 'already', verify);
         fits(already.state, size, t, `${where} ${verify}`);
         const said = prose(already.state, size, t);
-        assert.ok(said.includes('Already done, so this step counts.') && said.includes(shows), `${where}: ${said}`);
-        assert.ok(!said.includes('check already passes'), `${where}: ${said}`);
+        assert.ok(said.includes('Уже готово, шаг засчитан.') && said.includes(shows), `${where}: ${said}`);
+        assert.ok(!said.includes('проверка уже проходит'), `${where}: ${said}`);
       }
     }
   }
@@ -3860,21 +3898,21 @@ test('git-only and git-staged: a long not-yet line is shown whole, and the pass 
       only.send(gitLists([]));
       only.send(gitLists([long, 'README.md', 'src/index.js', 'docs/notes.md', 'package.json']));
       fits(only.state, size, t, where);
-      assert.ok(prose(only.state, size, t).includes('Not yet: 4 files changed outside .claude/: README.md, src/index.js, docs/notes.md'), `${where}: ${prose(only.state, size, t)}`);
+      assert.ok(prose(only.state, size, t).includes('Пока нет: 4 файла изменены вне .claude/: README.md, src/index.js, docs/notes.md'), `${where}: ${prose(only.state, size, t)}`);
       only.send(gitLists([long]));
       fits(only.state, size, t, where);
       // Beside the burst, a long path wraps where it must.
       const words = prose(only.state, size, t);
-      assert.ok(words.includes('Changed:') && words.includes('.claude/skills/five-whys/') && words.includes('examples.md'), `${where}: ${words}`);
+      assert.ok(words.includes('Изменено:') && words.includes('.claude/skills/five-whys/') && words.includes('examples.md'), `${where}: ${words}`);
       const staged = onReading('git-staged');
       staged.send(gitLists(['src/config.js']));
       staged.key('r');
       staged.send(gitLists(['src/config.js'], [], { asked: staged.state.beat.asked }));
       fits(staged.state, size, t, where);
-      assert.ok(prose(staged.state, size, t).includes('Not yet: git status lists nothing staged yet.'), `${where}: ${prose(staged.state, size, t)}`);
+      assert.ok(prose(staged.state, size, t).includes('Пока нет: git status пока не показывает файлов, добавленных в индекс.'), `${where}: ${prose(staged.state, size, t)}`);
       staged.send(gitLists(['src/config.js'], ['src/config.js']));
       fits(staged.state, size, t, where);
-      assert.ok(prose(staged.state, size, t).includes('Staged: src/config.js'), `${where}: ${prose(staged.state, size, t)}`);
+      assert.ok(prose(staged.state, size, t).includes('В индексе: src/config.js'), `${where}: ${prose(staged.state, size, t)}`);
     }
   }
 });
@@ -3923,13 +3961,15 @@ test('the same-answer note: no row above it moves, nothing cut, the same words i
   const { openRepo } = await import('../repo.mjs');
   const { repo, withRepo, write } = await import('./helpers.mjs');
   const item = lessons['b-2'].items[1];
+  // The reducer-course fixture's ladder is English: its heading is the item's text there.
+  const FIXTURE_ITEM = 'every file in `.practice/b-2-after.txt` is listed in `.practice/b-2-plan.txt`';
   const hint = withRepo(() => repo(), (dir) => {
     write(dir, { '.practice/b-2-plan.txt': 'src/config.js\n', '.practice/b-2-after.txt': '' });
     return item.check(openRepo(dir));
   });
-  assert.match(hint, /lists no changed file yet/);
+  assert.match(hint, /пока не содержит изменённых файлов/);
   const path = '.practice/b-2-after.txt';
-  const says = (d, h, stamp) => d.send({ type: 'check', lesson: 'b-2', items: [{ index: 1, text: item.text, pass: false, hint: h }], path, stamp });
+  const says = (d, h, stamp) => d.send({ type: 'check', lesson: 'b-2', items: [{ index: 1, text: FIXTURE_ITEM, pass: false, hint: h }], path, stamp });
   // On the after snapshot with the FAIL on screen, h pressed `presses` times
   // (then y, where `yes`): the note comes with the next identical FAIL.
   const onAfter = (presses, yes = false) => {
@@ -3992,23 +4032,23 @@ test('the same-answer note: no row above it moves, nothing cut, the same words i
       const keys = now.at(-1);
       if (label === 'the y/n') {
         // On the y/n e does nothing, so nothing offers it.
-        assert.ok(!text.includes('Presse'), `the y/n offers e: ${where}`);
-        assert.doesNotMatch(keys, /\be earlier/, where);
+        assert.ok(!text.includes('Нажмитеe'), `the y/n offers e: ${where}`);
+        assert.doesNotMatch(keys, /\be (?:прошлый шаг|назад)/, where);
       } else {
-        assert.ok(text.includes('Presse'), `nothing offers e: ${where}`);
-        assert.match(keys, /\be earlier\b/, `the key bar doesn't name e: ${where}`);
+        assert.ok(text.includes('Нажмитеe'), `nothing offers e: ${where}`);
+        assert.match(keys, /\be (?:прошлый шаг|назад)/, `the key bar doesn't name e: ${where}`);
       }
       if (last) {
         // The last rung keeps its offer, with the why, where it was.
         assert.equal(text.split(offer).length, 2, `the offer shows once: ${where}`);
         assert.ok(text.includes(why), `the why is gone: ${where}`);
-      } else assert.match(note, /^(Youredidthisstep|Sameansweragain)/, `the note is not on screen: ${where}`);
+      } else assert.match(note, /^(Выпеределалиэтотшаг|Тотжеответ)/, `the note is not on screen: ${where}`);
       // Where the window has the room, the note is whole, with the why.
       if (cols === 80 && label === 'no hint') {
         for (const w of [C.sameAnswer, C.goBack(4, 'Switch to plan mode'), 'The edits this step saves come from the plan you make there.']) assert.ok(note.includes(flatText(w)), `"${w}" is not whole: ${where}`);
       }
-      // The keys already on the bar keep their places: e comes in before q.
-      if (cols === 80) assert.ok(keys.startsWith(was.at(-1).replace(/\s+q quit$/, '')), `the key bar moved: ${where}`);
+      // The keys already on the bar keep their places: e comes in before q (the wider Russian labels push the low key c card out first).
+      if (cols === 80) assert.ok(keys.replace(/\s+c карточка/, '').startsWith(was.at(-1).replace(/\s+q выйти$/, '').replace(/\s+c карточка/, '')), `the key bar moved: ${where}`);
     }
   }
 });
@@ -4018,17 +4058,17 @@ test('the same-answer note: no row above it moves, nothing cut, the same words i
 test('a bottom line\'s lead-in shows above its command, on the bottom rung and inline, at 60x20 and 80x24', () => {
   const file = readFileSync(join(root, 'learn', 'lessons', 'i-1.md'), 'utf8');
   const tdd = parseLesson(file, 'i-1.md').steps.find((x) => x.id === 'Y4').beats[0].bottom[0];
-  assert.equal(tdd.leadIn, 'For example, in the practice copy:');
+  assert.equal(tdd.leadIn, 'Например, в учебной копии:');
   // The parser names the form.
-  const lead = '- lead-in: "For example, in the practice copy:"';
-  assert.throws(() => parseLesson(file.replace(lead, '').replace('- hint: "Keep auto mode."', `$&\n${lead}`), 'i-1.md'), /a lead-in line with no bottom line above it/);
+  const lead = '- lead-in: "Например, в учебной копии:"';
+  assert.throws(() => parseLesson(file.replace(lead, '').replace('- hint: "Оставайтесь в auto mode."', `$&\n${lead}`), 'i-1.md'), /a lead-in line with no bottom line above it/);
   assert.throws(() => parseLesson(file.replace(lead, `${lead}\n${lead}`), 'i-1.md'), /a second lead-in line on one bottom line/);
-  assert.throws(() => parseLesson(file.replace(lead, '- lead-in: For example, in the practice copy:'), 'i-1.md'), /lead-in must be a quote of the lesson/);
+  assert.throws(() => parseLesson(file.replace(lead, '- lead-in: Например, в учебной копии:'), 'i-1.md'), /lead-in must be a quote of the lesson/);
   // Its place, rows above the first row of the command it frames.
   const above = (lines, where) => {
     const text = lines.map(strip);
-    const at = text.findIndex((l) => l.includes('For example, in the practice copy:'));
-    const cmd = text.findIndex((l) => l.includes('/tdd a slugify'));
+    const at = text.findIndex((l) => l.includes('Например, в учебной копии:'));
+    const cmd = text.findIndex((l) => l.includes('/tdd функция'));
     assert.ok(at >= 0 && cmd > at, `${where}\n${text.join('\n')}`);
   };
   const bottom = driver({ course: allCourse, saved: { format: 1, welcomed: true, lessons: { ...finishedBefore('i-1'), 'i-1': { warm: ['R1', 'R2', 'R3'], step: 'Y4', beat: 0, levels: ['challenge'] } } } });
@@ -4050,7 +4090,7 @@ test('a bottom line\'s lead-in shows above its command, on the bottom rung and i
       for (const line of lines) assert.ok(width(line) <= cols - 1, `${where}: ${strip(line)}`);
       above(lines, `bottom rung at ${where}`);
       const card = render(inline.state, { cols, rows }, t).map(strip);
-      const at = card.findIndex((l) => l.includes('For example, in the practice copy:'));
+      const at = card.findIndex((l) => l.includes('Например, в учебной копии:'));
       const cmd = card.findIndex((l) => l.includes('mkdir -p .claude/skills/tdd'));
       assert.ok(at >= 0 && cmd > at, `inline at ${where}\n${card.join('\n')}`);
     }

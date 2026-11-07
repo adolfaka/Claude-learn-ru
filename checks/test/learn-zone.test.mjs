@@ -26,7 +26,7 @@ const onStep = (s) => s.view === 'step' || s.view === 'levelup';
 // The "more help" line, read off the card as drawn at rest (render has no
 // clock) at 80x24, where the line is never dropped.
 const FULL = theme({ tty: true, depth: 8, unicode: true, links: false, win32: false });
-const flat = (text) => text.replace(/[^A-Za-z0-9]/g, '');
+const flat = (text) => text.replace(/[^A-Za-zА-ЯЁа-яё0-9]/g, '');
 const showsMoreHelp = (s) => flat(render(s, { cols: 80, rows: 24 }, FULL).map(strip).join('')).includes(flat(C.eased));
 
 // The driver, with `look(state)` after every event the learner causes.

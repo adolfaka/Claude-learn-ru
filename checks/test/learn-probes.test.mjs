@@ -29,18 +29,18 @@ test('probes: each takes its arguments, and nothing else', () => {
 
 test('probes: worktrees counts the live ones under .claude/worktrees/, and gone says when one is removed', () => withRepo(started, (dir) => {
   assert.equal(probe(dir, 'worktrees', '1').pass, false);
-  assert.match(probe(dir, 'worktrees', '1').hint, /no worktree under \.claude\/worktrees\//);
+  assert.match(probe(dir, 'worktrees', '1').hint, /не показывает ни одного worktree в \.claude\/worktrees\//);
   git(dir, 'worktree', 'add', '-q', '-b', 'docs-pass', '.claude/worktrees/docs-pass');
   git(dir, 'worktree', 'add', '-q', '-b', 'elsewhere', join(dir, '..', `${dir.split('/').pop()}-out`));
   const one = probe(dir, 'worktrees', '2');
   assert.equal(one.pass, false, 'a worktree outside .claude/worktrees/ does not count');
-  assert.match(one.hint, /1 worktree under \.claude\/worktrees\/ \(docs-pass\); this step needs 2/);
+  assert.match(one.hint, /показывает в \.claude\/worktrees\/ 1 worktree \(docs-pass\); этому шагу нужно 2/);
   git(dir, 'worktree', 'add', '-q', '-b', 'test-pass', '.claude/worktrees/test-pass');
   const two = probe(dir, 'worktrees', '2');
-  assert.deepEqual([two.pass, two.evidence], [true, 'Worktrees under .claude/worktrees/: docs-pass, test-pass']);
+  assert.deepEqual([two.pass, two.evidence], [true, 'Worktree в .claude/worktrees/: docs-pass, test-pass']);
   assert.notEqual(two.state, one.state, 'the state follows the worktrees');
   assert.equal(probe(dir, 'gone', '.claude/worktrees/docs-pass').pass, false);
-  assert.match(probe(dir, 'gone', '.claude/worktrees/docs-pass').hint, /still shows \.claude\/worktrees\/docs-pass/);
+  assert.match(probe(dir, 'gone', '.claude/worktrees/docs-pass').hint, /всё ещё показывает \.claude\/worktrees\/docs-pass/);
   git(dir, 'worktree', 'remove', '.claude/worktrees/docs-pass');
   assert.deepEqual([probe(dir, 'gone', '.claude/worktrees/docs-pass').pass, probe(dir, 'worktrees', '2').pass], [true, false]);
   // A folder deleted by hand leaves a prunable record: no live worktree.
@@ -50,7 +50,7 @@ test('probes: worktrees counts the live ones under .claude/worktrees/, and gone 
 }));
 
 test('probes: branch-ahead finds the branch and its state is its commit; merged wants each branch in HEAD', () => withRepo(started, (dir) => {
-  assert.deepEqual(probe(dir, 'branch-ahead', 'docs-pass'), { pass: false, hint: 'No branch docs-pass yet.', state: '' });
+  assert.deepEqual(probe(dir, 'branch-ahead', 'docs-pass'), { pass: false, hint: 'Ветки docs-pass пока нет.', state: '' });
   git(dir, 'branch', 'docs-pass');
   const before = probe(dir, 'branch-ahead', 'docs-pass');
   assert.equal(before.pass, true);
@@ -58,13 +58,13 @@ test('probes: branch-ahead finds the branch and its state is its commit; merged 
   const sha = commit(dir, 'Write the docs');
   git(dir, 'checkout', '-q', '-');
   const after = probe(dir, 'branch-ahead', 'docs-pass');
-  assert.deepEqual([after.state, after.evidence], [sha, `docs-pass is at ${sha.slice(0, 7)}: Write the docs`]);
+  assert.deepEqual([after.state, after.evidence], [sha, `Ветка docs-pass на коммите ${sha.slice(0, 7)}: Write the docs`]);
   assert.notEqual(after.state, before.state);
-  assert.match(probe(dir, 'merged', 'docs-pass', 'test-pass').hint, /No branch test-pass here/);
+  assert.match(probe(dir, 'merged', 'docs-pass', 'test-pass').hint, /Здесь нет ветки test-pass/);
   git(dir, 'branch', 'test-pass');
-  assert.equal(probe(dir, 'merged', 'docs-pass', 'test-pass').hint, 'Not merged into HEAD yet: docs-pass.');
+  assert.equal(probe(dir, 'merged', 'docs-pass', 'test-pass').hint, 'Ещё не влито в HEAD: docs-pass.');
   git(dir, 'merge', '-q', '--no-edit', 'docs-pass');
-  assert.deepEqual(probe(dir, 'merged', 'docs-pass', 'test-pass').evidence, 'Merged into HEAD: docs-pass, test-pass');
+  assert.deepEqual(probe(dir, 'merged', 'docs-pass', 'test-pass').evidence, 'Влито в HEAD: docs-pass, test-pass');
 }));
 
 test('probes: pushed wants an upstream and nothing to push, read from the local refs', () => withRepo(started, (dir) => {
@@ -72,14 +72,14 @@ test('probes: pushed wants an upstream and nothing to push, read from the local 
   try {
     git(remote, 'config', 'receive.denyCurrentBranch', 'ignore');
     const branch = git(dir, 'symbolic-ref', '--short', 'HEAD');
-    assert.match(probe(dir, 'pushed').hint, new RegExp(`${branch} has no upstream yet`));
+    assert.match(probe(dir, 'pushed').hint, new RegExp(`У ветки ${branch} пока нет upstream`));
     git(dir, 'remote', 'add', 'origin', remote);
     git(dir, 'push', '-q', '-u', 'origin', branch);
-    assert.deepEqual([probe(dir, 'pushed').pass, probe(dir, 'pushed').evidence], [true, `${branch} is pushed to origin/${branch}`]);
+    assert.deepEqual([probe(dir, 'pushed').pass, probe(dir, 'pushed').evidence], [true, `Ветка ${branch} отправлена в origin/${branch}`]);
     commit(dir, 'More');
-    assert.equal(probe(dir, 'pushed').hint, `1 commit on ${branch} not pushed to origin/${branch} yet.`);
+    assert.equal(probe(dir, 'pushed').hint, `Не отправлен в origin/${branch}: 1 коммит на ветке ${branch}.`);
     git(dir, 'checkout', '-q', '--detach');
-    assert.match(probe(dir, 'pushed').hint, /HEAD is on no branch/);
+    assert.match(probe(dir, 'pushed').hint, /HEAD не на ветке/);
   } finally {
     rmSync(remote, { recursive: true, force: true });
   }
@@ -99,19 +99,19 @@ test('probes: removed wants each path gone from HEAD and HEAD pushed', () => wit
     git(dir, 'push', '-q', '-u', 'origin', branch);
     const paths = ['.github/workflows/a.yml', '.github/workflows/b.yml'];
     const both = probe(dir, 'removed', ...paths);
-    assert.deepEqual([both.pass, both.hint], [false, 'Still in the last commit: .github/workflows/a.yml, .github/workflows/b.yml. Delete them with git rm, then commit and push.']);
+    assert.deepEqual([both.pass, both.hint], [false, 'Всё ещё в последнем коммите: .github/workflows/a.yml, .github/workflows/b.yml. Удалите их командой git rm, затем закоммитьте и отправьте.']);
     git(dir, 'rm', '-q', '.github/workflows/a.yml');
     commit(dir, 'Remove a');
-    assert.equal(probe(dir, 'removed', ...paths).hint, 'Still in the last commit: .github/workflows/b.yml. Delete it with git rm, then commit and push.');
+    assert.equal(probe(dir, 'removed', ...paths).hint, 'Всё ещё в последнем коммите: .github/workflows/b.yml. Удалите его командой git rm, затем закоммитьте и отправьте.');
     // Any push alone doesn't pass it.
     git(dir, 'push', '-q');
     assert.equal(probe(dir, 'removed', ...paths).pass, false);
     git(dir, 'rm', '-q', '.github/workflows/b.yml');
     commit(dir, 'Remove b');
-    assert.equal(probe(dir, 'removed', ...paths).hint, `1 commit on ${branch} not pushed to origin/${branch} yet.`);
+    assert.equal(probe(dir, 'removed', ...paths).hint, `Не отправлен в origin/${branch}: 1 коммит на ветке ${branch}.`);
     git(dir, 'push', '-q');
     const done = probe(dir, 'removed', ...paths);
-    assert.deepEqual([done.pass, done.evidence], [true, 'Removed and pushed: .github/workflows/a.yml, .github/workflows/b.yml']);
+    assert.deepEqual([done.pass, done.evidence], [true, 'Удалено и отправлено: .github/workflows/a.yml, .github/workflows/b.yml']);
     assert.equal(done.state, probe(dir, 'pushed').state, 'its state is the push\'s, so a fresh beat waits for a new push');
   } finally {
     rmSync(remote, { recursive: true, force: true });
@@ -119,12 +119,12 @@ test('probes: removed wants each path gone from HEAD and HEAD pushed', () => wit
 }));
 
 test('probes: todos counts the top-level folders whose tracked files hold TODO or FIXME', () => withRepo(started, (dir) => {
-  assert.equal(probe(dir, 'todos', '2').hint, 'git grep finds TODO or FIXME in no top-level folder here; this needs 2.');
+  assert.equal(probe(dir, 'todos', '2').hint, 'git grep не находит здесь TODO или FIXME ни в одной папке верхнего уровня; нужно 2.');
   write(dir, { 'src/a.js': '// TODO: split\n', 'NOTES.md': 'TODO at the top level\n', 'test/deep/b.js': '// FIXME later\n', 'docs/c.md': 'nothing\n', 'tmp/u.js': '// TODO untracked\n' });
   git(dir, 'add', 'src', 'NOTES.md', 'docs');
-  assert.equal(probe(dir, 'todos', '2').hint, 'git grep finds TODO or FIXME in 1 top-level folder (src/) here; this needs 2.');
+  assert.equal(probe(dir, 'todos', '2').hint, 'git grep находит здесь TODO или FIXME в 1 папке верхнего уровня (src/); нужно 2.');
   git(dir, 'add', 'test');
-  assert.deepEqual([probe(dir, 'todos', '2').pass, probe(dir, 'todos', '2').evidence], [true, 'TODO or FIXME in src/, test/']);
+  assert.deepEqual([probe(dir, 'todos', '2').pass, probe(dir, 'todos', '2').evidence], [true, 'TODO или FIXME в src/, test/']);
 }));
 
 test('probes: the app runs one in its check child, which never fetches; a bad probe is an error, not a FAIL', async () => {
@@ -134,7 +134,7 @@ test('probes: the app runs one in its check child, which never fetches; a bad pr
     const r = await probeChild(dir, 'branch-ahead', ['docs-pass']);
     assert.deepEqual([r.pass, r.state], [true, git(dir, 'rev-parse', 'docs-pass')]);
     assert.match((await probeChild(dir, 'nope', [])).error, /unknown probe nope/);
-    assert.match((await probeChild(join(dir, 'missing'), 'pushed', [])).error, /no such folder/);
+    assert.match((await probeChild(join(dir, 'missing'), 'pushed', [])).error, /нет такой папки/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -41,7 +41,7 @@ const ASCII_GLYPHS = {
 // One job each. ASCII mode drops some and spells others out.
 const EMOJI = {
   wave: ['👋', ''], terminal: ['💻', '[ТЕРМИНАЛ]'], claude: ['💬', '[CLAUDE CODE]'], watch: ['👀', '[..]'],
-  verified: ['✅', '[ok]'], guess: ['🤔', '?'], hint: ['💡', 'Подсказка:'], goal: ['🎯', 'Цель:'], safety: ['🔒', 'Осторожно:'],
+  verified: ['✅', '[ok]'], guess: ['🤔', '?'], hint: ['💡', 'Совет:'], goal: ['🎯', 'Цель:'], safety: ['🔒', 'Осторожно:'],
   self: ['🙋', '[вы]'], level: ['🚀', '>>'], fire: ['🔥', '**'], party: ['🎉', '***'], badge: ['🏅', '[значок]'],
   cup: ['🏆', '[кубок]'], map: ['🧭', ''], broken: ['🚧', '[!!]'], editor: ['📝', '[РЕДАКТОР]'], browser: ['🌐', '[БРАУЗЕР]'],
   payoff: ['🏁', '[цель]'], read: ['📖', '[читать]'],

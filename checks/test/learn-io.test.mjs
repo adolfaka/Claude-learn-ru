@@ -11,6 +11,7 @@ import { EventEmitter } from 'node:events';
 import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { capabilities } from '../../learn/lib/caps.mjs';
+import { C } from '../../learn/lib/copy.mjs';
 import { PATH, SLOW } from '../../learn/lib/content.mjs';
 import { DEFER_MS, IDLE_MS } from '../../learn/lib/flow.mjs';
 import { keyParser } from '../../learn/lib/keys.mjs';
@@ -34,6 +35,10 @@ import { TIME_LIMIT } from '../stub-claude.mjs';
 import { check, commit, exportHead, repo, withRepo, write } from './helpers.mjs';
 import { b1Item, course, driver, finished, finishedBefore, root } from './learn-drive.mjs';
 import { fakeClock, fakeOut, screenModel, turn } from './learn-term.mjs';
+
+// The welcome's greeting after the learner's name, and the watching row's lead.
+const LEARN = 'Изучим Claude Code';
+const WATCHING = C.watching('.practice/version.txt').slice(0, 2).join('');
 
 // Every lesson on the course, in its order.
 const EVERY = PATH.map((p) => p.id);
@@ -74,7 +79,7 @@ test('the check child gives the live version and note checks their own words', (
     assert.equal(none.code, 0);
     assert.equal(none.out.items.length, 2);
     assert.equal(none.out.items[0].pass, false);
-    assert.match(none.out.items[0].hint, /couldn't find `claude`/);
+    assert.match(none.out.items[0].hint, /Проверка не нашла `claude`/);
     assert.equal(none.out.items[1].hint, lessons['b-1'].items[1].check({ dir, read: () => null, exists: () => false }));
     // An obsolete saved version cannot make the live installation pass.
     write(dir, { '.practice/version.txt': '2.1.285 (Claude Code)' });
@@ -157,7 +162,7 @@ test('the check child\'s time limit runs from the start of each item, so slow it
     assert.deepEqual(r.items?.map((i) => [i.index, i.pass]), [[3, true], [4, true]], JSON.stringify(r));
     // One item that runs past it still ends the run.
     write(dir, { 'src/cli.js': nap(6_000) });
-    assert.deepEqual(await runCheck(dir, 'b-capstone', [3], { slow: true, limit: 2_000 }), { error: 'it took too long' });
+    assert.deepEqual(await runCheck(dir, 'b-capstone', [3], { slow: true, limit: 2_000 }), { error: 'она шла слишком долго' });
     // The slowest items' own limits: npm test's, and a-4's script run in
     // each of its scenarios. Each fits, whatever runs before it.
     assert.ok(ITEM_LIMIT > NPM_TEST_LIMIT && ITEM_LIMIT > STUB_RUNS * TIME_LIMIT, String(ITEM_LIMIT));
@@ -503,20 +508,20 @@ test('a full run on a fake terminal: writing version.txt turns step 3 done, and 
   let exited = null;
   main({ argv: [], stdin: term.stdin, stdout: term.stdout, env: CALM_ENV, platform: 'linux', root: dir, runCheck: reducerCheck, exit: (code) => { exited = code; } });
   try {
-    assert.ok(await until(() => term.lastFrame().includes("Let's learn Claude Code")), term.lastFrame());
+    assert.ok(await until(() => term.lastFrame().includes(LEARN)), term.lastFrame());
     term.type('\r');
-    assert.ok(await until(() => term.lastFrame().includes("You'll be able to")));
+    assert.ok(await until(() => term.lastFrame().includes(C.youllBeAble)));
     term.type('\r');
-    assert.ok(await until(() => term.lastFrame().includes('step 1 of 12')));
+    assert.ok(await until(() => term.lastFrame().includes(C.stepOf(1, 12))));
     term.type(' ');
-    assert.ok(await until(() => term.lastFrame().includes('step 2 of 12')));
+    assert.ok(await until(() => term.lastFrame().includes(C.stepOf(2, 12))));
     term.type('1');
     term.type('\r');
-    assert.ok(await until(() => term.lastFrame().includes('Watching .practice/version.txt')), term.lastFrame());
+    assert.ok(await until(() => term.lastFrame().includes(WATCHING)), term.lastFrame());
     mkdirSync(join(dir, '.practice'));
     writeFileSync(join(dir, '.practice', 'version.txt'), '2.1.285 (Claude Code)\n');
-    assert.ok(await until(() => term.lastFrame().includes('Step 3 done!')), term.lastFrame());
-    assert.match(term.lastFrame(), /DONE/);
+    assert.ok(await until(() => term.lastFrame().includes(C.stepDone(3))), term.lastFrame());
+    assert.match(term.lastFrame(), new RegExp(C.done));
     term.type('q');
     assert.ok(await until(() => exited === 0));
     assert.ok(existsSync(join(dir, '.practice', 'learn.json')));
@@ -535,13 +540,13 @@ test('main sends each key with how far the check-only card scrolls in the window
   const term = fakeTerminal();
   let exited = null;
   main({ argv: [], stdin: term.stdin, stdout: term.stdout, env: CALM_ENV, platform: 'linux', root: dir, runCheck: reducerCheck, exit: (code) => { exited = code; } });
-  const shown = () => term.lastFrame().match(/Items (\d+) to (\d+) of 17/);
+  const shown = () => term.lastFrame().match(/Пункты (\d+)–(\d+) из 17/);
   try {
-    assert.ok(await until(() => term.lastFrame().includes("Let's learn Claude Code")), term.lastFrame());
+    assert.ok(await until(() => term.lastFrame().includes(LEARN)), term.lastFrame());
     term.type('\r');
-    assert.ok(await until(() => term.lastFrame().includes("You'll be able to")));
+    assert.ok(await until(() => term.lastFrame().includes(C.youllBeAble)));
     term.type('m');
-    assert.ok(await until(() => term.lastFrame().includes('Beginner path')), term.lastFrame());
+    assert.ok(await until(() => term.lastFrame().includes(C.levelPath('Начальный'))), term.lastFrame());
     // Right to Advanced, up round to its capstone, and open it.
     term.type('\x1b[C');
     term.type('\x1b[C');
@@ -572,19 +577,19 @@ test('main sends each key with how far your card scrolls in the window, so up le
   let exited = null;
   main({ argv: [], stdin: term.stdin, stdout: term.stdout, env: CALM_ENV, platform: 'linux', root: dir, runCheck: reducerCheck, exit: (code) => { exited = code; } });
   const lines = () => term.model.lines().map((l) => l.trim());
-  const linked = () => lines().join('').includes('https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know/blob/main/docs/reference/commands.md');
+  const linked = () => lines().join('').includes('https://github.com/runowata/claude-code-ru/blob/main/docs/reference/commands.md');
   try {
     assert.ok(await until(() => term.lastFrame().trim() !== ''), term.shows());
     term.type('c');
-    assert.ok(await until(() => lines().includes('Your card')), term.shows());
+    assert.ok(await until(() => lines().includes(C.cardTitle)), term.shows());
     assert.ok(!linked(), `the card opens above its link at 60x20\n${term.shows()}`);
     for (let i = 0; i < 40; i++) term.type('\x1b[B');
     assert.ok(await until(() => linked()), term.shows());
     term.type('\x1b[A');
     assert.ok(await until(() => !linked()), `one up leaves the link\n${term.shows()}`);
-    assert.ok(lines().includes('Your card'), term.shows());
+    assert.ok(lines().includes(C.cardTitle), term.shows());
     term.type('c');
-    assert.ok(await until(() => !lines().includes('Your card')), term.shows());
+    assert.ok(await until(() => !lines().includes(C.cardTitle)), term.shows());
     term.type('q');
     assert.ok(await until(() => exited === 0));
   } finally {
@@ -660,11 +665,11 @@ function clockedRun(env, { watch, askGit, signals, runCheck, saved, depth, cols,
   };
   // From the welcome to step 3, which waits for .practice/version.txt.
   app.toWaiting = async () => {
-    await app.press('\r', "You'll be able to");
-    await app.press('\r', 'step 1 of 12');
-    await app.press(' ', 'step 2 of 12');
-    await app.press('1', 'step 2 of 12');
-    await app.press('\r', 'Watching .practice/version.txt');
+    await app.press('\r', C.youllBeAble);
+    await app.press('\r', C.stepOf(1, 12));
+    await app.press(' ', C.stepOf(2, 12));
+    await app.press('1', C.stepOf(2, 12));
+    await app.press('\r', WATCHING);
   };
   app.close = () => {
     Date.now = realNow;
@@ -686,7 +691,7 @@ const ENTERS = (writes) => writes.join('').split('\x1b[?1049h').length - 1;
 
 // The 9x4 Pip's boot: a 16-color terminal, which has no detailed Pip, or a
 // truecolor one at 90x30, where the welcome after it has none (174).
-test('boot: when git takes over 150 ms at start, the screen opens with Pip waking, "Asking git about this folder…" and the spinner, until the welcome replaces it', async () => {
+test('boot: when git takes over 150 ms at start, the screen opens with Pip waking, "Спрашиваю git об этой папке…" and the spinner, until the welcome replaces it', async () => {
   for (const depth of [4, 24]) {
     const git = slowGit();
     const app = clockedRun(MOTION_ENV, { askGit: git.ask, depth });
@@ -697,21 +702,21 @@ test('boot: when git takes over 150 ms at start, the screen opens with Pip wakin
       assert.deepEqual(term.writes, [], 'nothing is drawn, and the screen is not opened, before git has run 160 ms');
       await clock.advance(1);
       assert.equal(ENTERS(term.writes), 1);
-      assert.match(term.shows(), /│ {2}─‿─ {2}│ {3}Asking git about this folder… ⠋/, '+160 ms: Pip\'s eyes shut, the spinner starts');
+      assert.match(term.shows(), /│ {2}─‿─ {2}│ {3}Спрашиваю git об этой папке… ⠋/, '+160 ms: Pip\'s eyes shut, the spinner starts');
       await clock.advance(80);
-      assert.match(term.shows(), /│ {2}◒‿◒ {2}│ {3}Asking git about this folder… ⠙/, '+240 ms: waking');
+      assert.match(term.shows(), /│ {2}◒‿◒ {2}│ {3}Спрашиваю git об этой папке… ⠙/, '+240 ms: waking');
       await clock.advance(80);
-      assert.match(term.shows(), /│ {2}●‿● {2}│ {3}Asking git about this folder… ⠹/, '+320 ms: awake');
+      assert.match(term.shows(), /│ {2}●‿● {2}│ {3}Спрашиваю git об этой папке… ⠹/, '+320 ms: awake');
       git.answer([null, 'Sam']);
       await turn();
       await clock.advance(40);
-      assert.match(term.shows(), /Hi Sam! Let's learn Claude Code/);
-      assert.doesNotMatch(term.shows(), /Asking git/);
+      assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/);
+      assert.doesNotMatch(term.shows(), /Спрашиваю git/);
       assert.equal(ENTERS(term.writes), 1, 'the same screen goes on');
       // The boot's frame timer is gone with it: the welcome draws alone.
       const n = term.writes.length;
       await clock.advance(2_000);
-      assert.ok(term.writes.slice(n).every((w) => !w.includes('Asking git')));
+      assert.ok(term.writes.slice(n).every((w) => !w.includes('Спрашиваю git')));
     } finally {
       app.close();
     }
@@ -728,9 +733,9 @@ test('boot: when git answers within 150 ms, nothing extra is drawn: the first fr
     await turn();
     assert.equal(ENTERS(term.writes), 1);
     const frames = term.writes.filter((w) => w.startsWith('\x1b[?2026h'));
-    assert.match(strip(frames[0]), /Hi Sam! Let's learn Claude Code/, 'the first frame');
+    assert.match(strip(frames[0]), /Привет, Sam! Изучим Claude Code/, 'the first frame');
     await clock.advance(2_000);
-    assert.ok(term.writes.every((w) => !w.includes('Asking git')), 'no boot frame, then or later');
+    assert.ok(term.writes.every((w) => !w.includes('Спрашиваю git')), 'no boot frame, then or later');
   } finally {
     app.close();
   }
@@ -742,14 +747,14 @@ test('boot: with motion off, the boot frame shows its words still, with Pip awak
   const { term, clock } = app;
   try {
     await clock.advance(160);
-    assert.match(term.shows(), /│ {2}●‿● {2}│ {3}Asking git about this folder…\n/);
+    assert.match(term.shows(), /│ {2}●‿● {2}│ {3}Спрашиваю git об этой папке…\n/);
     const n = term.writes.length;
     assert.deepEqual(app.frameTimers(), []);
     await clock.advance(5_000);
     assert.equal(term.writes.length, n, 'nothing moves while git works');
     git.answer([null, 'Sam']);
     await turn();
-    assert.match(term.shows(), /Hi Sam! Let's learn Claude Code/);
+    assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/);
   } finally {
     app.close();
   }
@@ -764,7 +769,7 @@ test('boot: keys typed while git answers are not echoed and are dropped, so an E
     await clock.advance(100);
     term.type('\r');
     await clock.advance(60);
-    assert.match(term.shows(), /Asking git about this folder…/);
+    assert.match(term.shows(), /Спрашиваю git об этой папке…/);
     term.type('q\r');
     await turn();
     assert.equal(app.exited, null);
@@ -772,8 +777,8 @@ test('boot: keys typed while git answers are not echoed and are dropped, so an E
     await turn();
     await clock.advance(1_000);
     assert.equal(term.stdin.isRaw, true);
-    assert.match(term.shows(), /Hi Sam! Let's learn Claude Code/, 'the welcome stays up');
-    await app.press('\r', "You'll be able to");
+    assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/, 'the welcome stays up');
+    await app.press('\r', C.youllBeAble);
   } finally {
     app.close();
   }
@@ -785,7 +790,7 @@ test('boot: Ctrl+C during the boot frame leaves the screen once and exits 0, and
   const { term, clock } = app;
   try {
     await clock.advance(200);
-    assert.match(term.shows(), /Asking git about this folder…/);
+    assert.match(term.shows(), /Спрашиваю git об этой папке…/);
     term.type('\x03');
     await turn();
     assert.equal(app.exited, 0);
@@ -847,12 +852,12 @@ test('boot: a resize during the boot frame clears the screen and draws it again 
       const shown = term.model.lines();
       assert.ok(shown.slice(0, rows).every((l) => width(l) <= cols - 1), shown.join('\n'));
       assert.deepEqual(shown.slice(rows), Array(30 - rows).fill(''), 'nothing left below the frame');
-      assert.match(shown.join('\n'), /Asking git about this folder…/);
+      assert.match(shown.join('\n'), /Спрашиваю git об этой папке…/);
     }
     git.answer([null, 'Sam']);
     await turn();
     await clock.advance(40);
-    assert.match(term.shows(), /Hi Sam! Let's learn Claude Code/);
+    assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/);
   } finally {
     app.close();
   }
@@ -862,14 +867,14 @@ test('draws: one frame for the events of one turn, a key within one frame, and n
   const app = clockedRun(MOTION_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await app.settle(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await app.settle(() => term.shows().includes(LEARN)), term.shows());
     // Past Pip's greeting (176): no frame waits when the keys come.
     await clock.advance(TIMING.greet + 1_000);
     let n = term.writes.length;
     term.type('\r\r');
     await turn();
     assert.equal(term.writes.length - n, 1, 'two keys in one read, the intro and then step 1: one frame');
-    assert.match(term.shows(), /step 1 of 12/);
+    assert.match(term.shows(), /шаг 1 из 12/);
     n = term.writes.length;
     term.type(' ');
     await turn();
@@ -878,7 +883,7 @@ test('draws: one frame for the events of one turn, a key within one frame, and n
     assert.equal(term.writes.length - n, 0, '39 ms after it');
     await clock.advance(1);
     assert.ok(term.writes.length - n >= 1, '40 ms after it');
-    assert.match(term.shows(), /step 2 of 12/);
+    assert.match(term.shows(), /шаг 2 из 12/);
   } finally {
     app.close();
   }
@@ -891,7 +896,7 @@ test('draws: a frame that goes out on drain counts for the 40 ms floor', async (
   const app = clockedRun(CALM_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     await clock.advance(1_000);
     const from = term.writes.length;
     term.stdout.full = true;
@@ -909,7 +914,7 @@ test('draws: a frame that goes out on drain counts for the 40 ms floor', async (
     await turn();
     assert.equal(term.writes.length - from, 2, 'the drain wrote 0 ms ago');
     await clock.advance(200);
-    assert.match(term.shows(), /step 2 of 12/);
+    assert.match(term.shows(), /шаг 2 из 12/);
     const times = app.frameTimes(from);
     assert.ok(gaps(times).every((g) => g >= 40), `frames at ${times.map((t) => t - times[0])} ms`);
   } finally {
@@ -926,7 +931,7 @@ test('draws: a watcher burst and the dispatch it queues from a microtask make on
   const app = clockedRun(CALM_ENV, { watch });
   const { dir, term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     await app.toWaiting();
     await clock.advance(1_000);
     // Any check the polls started is over.
@@ -941,7 +946,7 @@ test('draws: a watcher burst and the dispatch it queues from a microtask make on
     assert.equal(term.writes.length - n, 1, 'one frame');
     assert.deepEqual(app.frameTimers(), [], 'and no second one waiting for the floor');
     assert.match(term.shows(), /mkdir -p \.practice +✔/, 'it shows the new folder');
-    assert.ok(await app.settle(() => term.shows().includes('Step 3 done!')), term.shows());
+    assert.ok(await app.settle(() => term.shows().includes(C.stepDone(3))), term.shows());
   } finally {
     app.close();
   }
@@ -956,7 +961,7 @@ test('a watcher change in the app\'s first 400 ms counts: on a clock that starts
   const app = clockedRun(CALM_ENV, { watch, askGit: async () => [null, 'Sam'], from: 0 });
   const { dir, term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     await clock.advance(100 - clock.now());
     mkdirSync(join(dir, '.practice'));
     changed();
@@ -977,7 +982,7 @@ test('r: the card says what it checks until r\'s own result lands, even when pol
   const app = clockedRun(CALM_ENV, { watch, runCheck: fake.run });
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     await app.toWaiting();
     await clock.advance(1_000);
     await new Promise((r) => setTimeout(r, 500));
@@ -988,16 +993,16 @@ test('r: the card says what it checks until r\'s own result lands, even when pol
     assert.ok(await app.settle(() => fake.runs.length === 1), 'the poll is held');
     term.type('r');
     await clock.advance(DEFER_MS + 30);
-    assert.match(term.shows(), /Checking \.practice\/version\.txt…/);
+    assert.match(term.shows(), /Проверяю \.practice\/version\.txt…/);
     changed();
     fake.runs[0].end();
     assert.ok(await app.settle(() => fake.runs.length === 2), 'r starts after the poll');
-    assert.match(term.shows(), /Checking \.practice\/version\.txt…/, 'the old poll result cannot finish r');
+    assert.match(term.shows(), /Проверяю \.practice\/version\.txt…/, 'the old poll result cannot finish r');
     assert.equal(fake.runs[1].slow, true, 'the queued request retains r\'s slow flag');
     fake.held = false;
     fake.runs[1].end();
-    assert.ok(await app.settle(() => term.shows().includes('Not yet')), `r's result never ended the wait:\n${term.shows()}`);
-    assert.doesNotMatch(term.shows(), /Checking/);
+    assert.ok(await app.settle(() => term.shows().includes(C.notYet.replace(':', ''))), `r's result never ended the wait:\n${term.shows()}`);
+    assert.doesNotMatch(term.shows(), /Проверяю/);
   } finally {
     app.close();
   }
@@ -1023,25 +1028,25 @@ for (const [mode, env, dots] of [['calm', CALM_ENV, '…'], ['plain', { ...CALM_
     const app = clockedRun(env, { runCheck: fake.run });
     const { term, clock } = app;
     try {
-      assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+      assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
       await app.toWaiting();
       fake.held = true;
-      await app.press('r', 'Checking .practice/version.txt');
+      await app.press('r', 'Проверяю .practice/version.txt');
       const [run] = fake.runs;
       assert.equal(run.slow, true, 'r\'s own run');
       for (const n of [1, 2]) {
         const from = term.writes.length;
         run.onRunning(n, 2);
-        assert.ok(await app.settle(() => term.shows().includes(`Checking item ${n} of 2${dots}`)), term.shows());
+        assert.ok(await app.settle(() => term.shows().includes(`Проверяю пункт ${n} из 2${dots}`)), term.shows());
         await clock.advance(3_000);
         await new Promise((r) => setTimeout(r, 20));
         const frames = FRAMES(term.writes.slice(from));
         assert.equal(frames.length, 1, `report ${n}: one frame, then nothing for 3 s`);
-        assert.ok(strip(frames[0]).includes(`Checking item ${n} of 2${dots}`), `report ${n}: that frame has the row`);
+        assert.ok(strip(frames[0]).includes(`Проверяю пункт ${n} из 2${dots}`), `report ${n}: that frame has the row`);
         assert.deepEqual(app.frameTimers(), [], 'no frame timer');
       }
       run.end();
-      assert.ok(await app.settle(() => !term.shows().includes('Checking')), term.shows());
+      assert.ok(await app.settle(() => !term.shows().includes('Проверяю')), term.shows());
     } finally {
       app.close();
     }
@@ -1053,22 +1058,22 @@ test('check item progress: a beat\'s opening run reports through main() as well,
   const app = clockedRun(CALM_ENV, { runCheck: fake.run });
   const { term } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
-    await app.press('\r', "You'll be able to");
-    await app.press('\r', 'step 1 of 12');
-    await app.press(' ', 'step 2 of 12');
-    await app.press('1', 'step 2 of 12');
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
+    await app.press('\r', C.youllBeAble);
+    await app.press('\r', C.stepOf(1, 12));
+    await app.press(' ', C.stepOf(2, 12));
+    await app.press('1', C.stepOf(2, 12));
     fake.held = true;
-    await app.press('\r', 'Checking .practice/version.txt');
+    await app.press('\r', 'Проверяю .practice/version.txt');
     assert.ok(await app.settle(() => fake.runs.length > 0));
     const [run] = fake.runs;
     assert.equal(run.slow, false, 'the opening run, not r\'s');
     // Step 3 checks one item; this fake child says it runs two, so the
     // count shows.
     run.onRunning(1, 2);
-    assert.ok(await app.settle(() => term.shows().includes('Checking item 1 of 2…')), term.shows());
+    assert.ok(await app.settle(() => term.shows().includes('Проверяю пункт 1 из 2…')), term.shows());
     run.end();
-    assert.ok(await app.settle(() => term.shows().includes('Watching .practice/version.txt')), term.shows());
+    assert.ok(await app.settle(() => term.shows().includes(WATCHING)), term.shows());
   } finally {
     app.close();
   }
@@ -1078,7 +1083,7 @@ test('resize: one full frame that clears the screen, at the new size', async () 
   const app = clockedRun(CALM_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     await clock.advance(1_000);
     for (const [cols, rows] of [[60, 20], [60, 20], [80, 24]]) {
       const n = term.writes.length;
@@ -1092,7 +1097,7 @@ test('resize: one full frame that clears the screen, at the new size', async () 
       const shown = term.model.lines();
       assert.ok(shown.slice(0, rows).every((l) => width(l) <= cols - 1), shown.join('\n'));
       assert.deepEqual(shown.slice(rows), Array(30 - rows).fill(''), 'nothing left below the frame');
-      assert.match(shown.join('\n'), /Let's learn Claude Code/);
+      assert.match(shown.join('\n'), /Изучим Claude Code/);
       await clock.advance(1_000);
     }
     term.type('\r');
@@ -1112,10 +1117,10 @@ test('a tall window: the box is drawn centered, a resize redraws it centered, an
     const shown = term.model.lines();
     assert.deepEqual([...shown.slice(0, 10), ...shown.slice(50)].filter(Boolean), [], `${where}: blank around the box\n${shown.join('\n')}`);
     assert.match(shown[11], header, `${where}: the header on the box's second row\n${shown.join('\n')}`);
-    assert.match(shown[49], /q quit/, `${where}: the key bar on the box's last row\n${shown.join('\n')}`);
+    assert.match(shown[49], new RegExp(`q ${C.k.quit}`), `${where}: the key bar on the box's last row\n${shown.join('\n')}`);
   };
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     boxed('the welcome');
     for (const [cols, rows] of [[80, 24], [120, 60]]) {
       await clock.advance(1_000);
@@ -1127,7 +1132,7 @@ test('a tall window: the box is drawn centered, a resize redraws it centered, an
       const wiped = term.writes.slice(n).filter((w) => w.includes('\x1b[2J'));
       assert.equal(wiped.length, 1, `${cols}x${rows}: one frame clears the screen`);
       assert.ok(wiped[0].startsWith('\x1b[?2026h\x1b[2J\x1b[H'), `${cols}x${rows}: cleared and drawn whole`);
-      if (rows === 24) assert.match(term.model.lines()[23], /q quit/, 'at 80x24 the key bar is the last row, as before');
+      if (rows === 24) assert.match(term.model.lines()[23], new RegExp(`q ${C.k.quit}`), 'at 80x24 the key bar is the last row, as before');
     }
     boxed('resized back');
     await app.toWaiting();
@@ -1161,7 +1166,7 @@ test('draws: when slow writes stop motion, the rest frame is asked for at once',
   const app = clockedRun(MOTION_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     // Past Pip's greeting (176): no frame waits when the keys come.
     await clock.advance(TIMING.greet + 1_000);
     app.writeMs = 13;
@@ -1188,18 +1193,18 @@ test('no leaking timers: a frame timer only while something will change; none in
   const app = clockedRun(MOTION_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     const first = app.frameTimers();
     assert.equal(first.length, 1, 'the welcome plays: one frame timer');
     // The welcome's frames change every 80 ms: the timer is due at the next.
     assert.ok(first[0].ms > 0 && first[0].ms <= SHOTS.welcome.every, `due at the welcome's next frame, not in ${first[0].ms} ms`);
     term.type('?');
     await clock.advance(400);
-    assert.match(term.shows(), /Keys/, 'the ? overlay');
+    assert.match(term.shows(), new RegExp(C.keysTitle), 'the ? overlay');
     assert.deepEqual(app.frameTimers(), [], 'an overlay');
     await clock.advance(1_000);
     assert.deepEqual(app.frameTimers(), [], 'an overlay, a second later');
-    await app.press('?', "Let's learn Claude Code");
+    await app.press('?', LEARN);
     await app.toWaiting();
     assert.equal(app.frameTimers().length, 1, 'the card enters: one frame timer');
     await clock.advance(200);
@@ -1231,10 +1236,10 @@ test('a still card blinks on one frame timer once the gates open, and has none a
   const app = clockedRun(MOTION_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
-    await app.press('\r', "You'll be able to");
-    await app.press('\r', 'step 1 of 12');
-    assert.doesNotMatch(term.shows(), /Watching/, 'step 1 watches nothing');
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
+    await app.press('\r', C.youllBeAble);
+    await app.press('\r', C.stepOf(1, 12));
+    assert.doesNotMatch(term.shows(), /Слежу за/, 'step 1 watches nothing');
     await clock.advance(21_000);
     const blink = app.frameTimers();
     assert.equal(blink.length, 1, 'the next blink, or its end');
@@ -1266,7 +1271,7 @@ test('a card that watches: Pip\'s blinks and looks to the side add only one-row 
     const { term, clock } = app;
     const inWindow = (from, to) => term.writes.filter((_, i) => app.times[i] >= from && app.times[i] < to);
     try {
-      assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+      assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
       await app.toWaiting();
       const opened = clock.now();
       // The clock in steps, with a moment for each file read to land.
@@ -1318,7 +1323,7 @@ test('calm: no frame timer, and nothing is written for 3 s on a waiting card', a
   const app = clockedRun(CALM_ENV);
   const { term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
     assert.deepEqual(app.frameTimers(), [], 'the welcome, still');
     await app.toWaiting();
     await clock.advance(40);
@@ -1336,7 +1341,7 @@ test('calm: no frame timer, and nothing is written for 3 s on a waiting card', a
 // in truecolor only (174).
 const RESUME = { format: 1, welcomed: true, lessons: { 'b-1': { step: 'Y3', beat: 0, done: ['W1'] } } };
 const RASTER = /[▀▄]/;
-const toResume = async (app) => assert.ok(await app.settle(() => app.term.shows().includes('Welcome back')), app.term.shows());
+const toResume = async (app) => assert.ok(await app.settle(() => app.term.shows().includes(C.welcomeBack)), app.term.shows());
 
 test('the detailed Pip on main\'s one timer: a raster screen asks for Pip\'s frames while it turns, an overlay stops them, resume gives it no ambient life (its y/n neither), and a 16- or 256-color terminal\'s 9x4 Pip adds none once its greeting is over', async () => {
   const app = clockedRun(MOTION_ENV, { saved: RESUME, depth: 24 });
@@ -1351,21 +1356,21 @@ test('the detailed Pip on main\'s one timer: a raster screen asks for Pip\'s fra
     // An overlay mid-turn: no Pip, no frames.
     term.type('?');
     await clock.advance(400);
-    assert.match(term.shows(), /Keys/, 'the ? overlay');
+    assert.match(term.shows(), new RegExp(C.keysTitle), 'the ? overlay');
     assert.doesNotMatch(term.shows(), RASTER, 'no Pip under an overlay');
     assert.deepEqual(app.frameTimers(), [], 'an overlay');
-    await app.press('?', 'Welcome back');
+    await app.press('?', C.welcomeBack);
     // Resume has no ambient loop of the app's, so Pip has no blinks or
     // glances there, its reading grace over or not.
     await clock.advance(5_000);
     assert.deepEqual(app.frameTimers(), [], 'resume, settled');
-    await app.press('x', 'Start this lesson over?');
+    await app.press('x', 'Начать этот урок заново?');
     assert.match(term.shows(), RASTER);
     await clock.advance(10_000);
     assert.deepEqual(app.frameTimers(), [], 'beside the y/n');
     term.type('n');
     await clock.advance(400);
-    assert.doesNotMatch(term.shows(), /Start this lesson over\?/);
+    assert.doesNotMatch(term.shows(), /Начать этот урок заново\?/);
     // Idle, and the app's 1 s tick has drawn the frame where it stops.
     await clock.advance(IDLE_MS + 1_000);
     assert.deepEqual(app.frameTimers(), [], 'idle');
@@ -1461,7 +1466,7 @@ test('a key ends the greeting on main\'s one timer: the detailed Pip eases to re
       await turn();
       const pressed = clock.now();
       if (keys === 'x') {
-        assert.ok(await app.settle(() => term.shows().includes('Start this lesson over?')), term.shows());
+        assert.ok(await app.settle(() => term.shows().includes('Начать этот урок заново?')), term.shows());
       } else if (depth === 24) {
         const eased = pipRows(term);
         while (clock.now() < pressed + TIMING.pipFade) {
@@ -1489,7 +1494,7 @@ test('a key ends the greeting on main\'s one timer: the detailed Pip eases to re
 // The welcome is the one big-Pip screen with ambient life (the app's own
 // blink is there): at 120x40 it has room for the raster, and its reading
 // grace ends 20 s after it appears.
-const WELCOME = /Let's learn Claude Code/;
+const WELCOME = /Изучим Claude Code/;
 const toWelcome = async (app) => assert.ok(await app.settle(() => WELCOME.test(app.term.shows())), app.term.shows());
 
 test('the detailed Pip breathes only on a local terminal: frames every 120 ms there; over SSH and in a Codespace it waits for its next blink or glance; q, Ctrl+C or SIGTERM leaves no timer', async () => {
@@ -1548,9 +1553,9 @@ test('calm: the detailed Pip is drawn at rest, in its ready pose, as render draw
   }
 });
 
-test('boot, with room: the detailed Pip works beside "Asking git about this folder…" on the spinner\'s timer, at the size the next screen has it; calm, it is still', async () => {
+test('boot, with room: the detailed Pip works beside "Спрашиваю git об этой папке…" on the spinner\'s timer, at the size the next screen has it; calm, it is still', async () => {
   // Resume has room for standard Pip at 90x30.
-  const cases = [[MOTION_ENV, true, RESUME, 'Welcome back'], [CALM_ENV, false, RESUME, 'Welcome back']];
+  const cases = [[MOTION_ENV, true, RESUME, C.welcomeBack], [CALM_ENV, false, RESUME, C.welcomeBack]];
   for (const [env, moves, saved, next] of cases) {
     const git = slowGit();
     const app = clockedRun(env, { askGit: git.ask, saved, depth: 24 });
@@ -1560,7 +1565,7 @@ test('boot, with room: the detailed Pip works beside "Asking git about this fold
     try {
       await clock.advance(400);
       const lines = term.model.lines();
-      const at = lines.findIndex((l) => l.includes('Asking git about this folder…'));
+      const at = lines.findIndex((l) => l.includes('Спрашиваю git об этой папке…'));
       assert.match(lines[at], beside, lines.join('\n'));
       assert.ok(lines.slice(at - 9, at + 7).every((l) => RASTER.test(l) || l.trim() === ''), lines.join('\n'));
       const timers = app.frameTimers();
@@ -1586,7 +1591,7 @@ test('a wall clock that steps back or forward changes no frame: the boot frame, 
     const { term, clock } = app;
     try {
       await clock.advance(400);
-      assert.match(term.shows(), /Asking git/);
+      assert.match(term.shows(), /Спрашиваю git/);
       assert.match(term.shows(), RASTER, 'the boot frame\'s Pip, working');
       if (steps) app.wall(-60_000);
       git.answer([null, 'Sam']);
@@ -1596,7 +1601,7 @@ test('a wall clock that steps back or forward changes no frame: the boot frame, 
       if (steps) app.wall(2 * 3_600_000);
       await clock.advance(8_000);
       const writes = term.writes.map((w) => w.replaceAll(app.dir, '<copy>'));
-      await app.press('\r', "You'll be able to");
+      await app.press('\r', C.youllBeAble);
       return writes;
     } finally {
       app.close();
@@ -2086,20 +2091,20 @@ test('a motion run on a fake terminal: step 3 done, a key gives the rest frame, 
   const app = clockedRun(MOTION_ENV);
   const { dir, term, clock } = app;
   try {
-    assert.ok(await until(() => term.shows().includes("Let's learn Claude Code")), term.shows());
-    await app.press('\r', "You'll be able to");
+    assert.ok(await until(() => term.shows().includes(LEARN)), term.shows());
+    await app.press('\r', C.youllBeAble);
     await clock.advance(40);
     let n = term.writes.length;
     await clock.advance(1_500);
     assert.equal(term.writes.length, n, 'the intro writes nothing for 1.5 s');
-    await app.press('\r', 'step 1 of 12');
-    await app.press(' ', 'step 2 of 12');
-    await app.press('1', 'step 2 of 12');
-    await app.press('\r', 'Watching .practice/version.txt');
+    await app.press('\r', C.stepOf(1, 12));
+    await app.press(' ', C.stepOf(2, 12));
+    await app.press('1', C.stepOf(2, 12));
+    await app.press('\r', WATCHING);
     mkdirSync(join(dir, '.practice'));
     writeFileSync(join(dir, '.practice', 'version.txt'), '2.1.285 (Claude Code)\n');
-    assert.ok(await app.settle(() => term.shows().includes('Step 3 done!')), term.shows());
-    assert.match(term.shows(), /DONE/);
+    assert.ok(await app.settle(() => term.shows().includes(C.stepDone(3))), term.shows());
+    assert.match(term.shows(), new RegExp(C.done));
     assert.ok(term.writes.some((w) => /\x1b\[\d+;1H/.test(w)), 'some frames rewrote only their changed rows');
     // A key while the step-done burst plays (158): the next frame is the rest
     // frame. The key comes a frame after the pass, as a person's would: a
@@ -2111,7 +2116,7 @@ test('a motion run on a fake terminal: step 3 done, a key gives the rest frame, 
     term.type('\x1b[A');
     await clock.advance(40);
     const next = term.shows();
-    assert.match(next, /✦ {10}▄█▀ {3}· {3}Step 3 done!/, 'the rest frame: the burst whole');
+    assert.match(next, /✦ {10}▄█▀ {3}· {3}Шаг 3 пройден!/, 'the rest frame: the burst whole');
     await clock.advance(2_000);
     assert.equal(term.shows(), next, 'the frame after the key is the one the screen rests on');
     await afterQ(app);
@@ -2133,11 +2138,11 @@ test('a save that fails shows a note and the app keeps going', async () => {
   let exited = null;
   main({ argv: [], stdin: term.stdin, stdout: term.stdout, env: CALM_ENV, platform: 'linux', root: dir, runCheck: reducerCheck, exit: (code) => { exited = code; } });
   try {
-    assert.ok(await until(() => term.lastFrame().includes("Let's learn Claude Code")));
+    assert.ok(await until(() => term.lastFrame().includes(LEARN)));
     term.type('\r');
-    assert.ok(await until(() => term.lastFrame().includes("Couldn't save your place")), term.lastFrame());
+    assert.ok(await until(() => term.lastFrame().includes('Не удалось сохранить место')), term.lastFrame());
     term.type('\r');
-    assert.ok(await until(() => term.lastFrame().includes('step 1 of 12')), 'the lesson goes on');
+    assert.ok(await until(() => term.lastFrame().includes(C.stepOf(1, 12))), 'the lesson goes on');
     assert.equal(exited, null);
     term.type('\x03');
     assert.ok(await until(() => exited === 0));

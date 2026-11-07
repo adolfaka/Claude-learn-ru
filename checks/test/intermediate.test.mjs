@@ -52,7 +52,7 @@ test('i-1 fails when there is no tdd skill at all', () => {
   withRepo(() => repo(), (dir) => {
     const { code, out } = check(['i-1', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /There is no \.claude\/skills\/tdd\/SKILL\.md/);
+    assert.match(out, /Нет файла \.claude\/skills\/tdd\/SKILL\.md/);
   });
 });
 
@@ -61,7 +61,7 @@ test('i-1 fails on the unfinished skill: TODOs, no description and run-by-name o
   withRepo(skillRepo({ skill: partial }), (dir) => {
     const { code, out } = check(['i-1', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /TODO on lines 3, 8, 9/);
+    assert.match(out, /TODO в строках 3, 8, 9/);
     assert.match(out, /disable-model-invocation: true/);
   });
 });
@@ -71,7 +71,7 @@ test('i-1 asks for a description that says what the skill does and when to use i
   withRepo(skillRepo({ skill: short }), (dir) => {
     const { code, out } = check(['i-1', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /when Claude should use it/);
+    assert.match(out, /когда Claude должен его использовать/);
   });
 });
 
@@ -96,7 +96,7 @@ test('i-1 fails when the saved commit changes only tests, or only code', () => {
     withRepo(skillRepo({ change }), (dir) => {
       const { code, out } = check(['i-1', '--dir', dir]);
       assert.equal(code, 1, out);
-      assert.match(out, /test and the code it tests/);
+      assert.match(out, /тест и проверяемый им код/);
     });
   }
 });
@@ -142,7 +142,7 @@ test('i-2 fails without an @path import in the committed CLAUDE.md, and ignores 
   withRepo(memoryRepo({ claudeMd: '# linkcheck\n\n- The scripts are in `@package.json`.\n' }), (dir) => {
     const { code, out } = check(['i-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /no @path import/);
+    assert.match(out, /нет импорта @path/);
   });
 });
 
@@ -150,8 +150,8 @@ test('i-2 says a period after the imported path becomes part of it', () => {
   withRepo(memoryRepo({ claudeMd: '# linkcheck\n\nThe npm scripts are in @package.json.\n' }), (dir) => {
     const { code, out } = check(['i-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /package\.json\. doesn't exist/);
-    assert.match(out, /first space/);
+    assert.match(out, /package\.json\. не существует/);
+    assert.match(out, /до первого пробела/);
   });
 });
 
@@ -195,7 +195,7 @@ test('i-2 expands brace patterns before matching tracked files', () => {
   withRepo(memoryRepo({ rules: { 'code.md': '---\npaths:\n  - "src/**/*.{ts,tsx}"\n---\n' }, log }), (dir) => {
     const { code, out } = check(['i-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /code\.md is scoped to src\/\*\*\/\*\.\{ts,tsx\}, which matches no file/);
+    assert.match(out, /code\.md действует для src\/\*\*\/\*\.\{ts,tsx\}, но такой шаблон не подходит ни к одному файлу/);
   });
 });
 
@@ -211,8 +211,8 @@ test('i-2 fails when the log shows no scoped rule loading, and says to read a fi
   withRepo(memoryRepo({ log: [['session_start', 'CLAUDE.md'], ['include', 'package.json']] }), (dir) => {
     const { code, out } = check(['i-2', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /read a file the rule covers/);
-    assert.match(out, /from the project root/);
+    assert.match(out, /прочитать файл, к которому относится правило/);
+    assert.match(out, /отсчитанный от корня проекта/);
   });
 });
 
@@ -263,7 +263,7 @@ test('i-3 fails while model and effort are still TODO', () => {
 });
 
 test('i-3 says a routine task does not need a larger model or a higher effort', () => {
-  for (const [model, effort, hint] of [['opus', 'low', /larger model/], ['sonnet', 'high', /higher effort/]]) {
+  for (const [model, effort, hint] of [['opus', 'low', /модель крупнее/], ['sonnet', 'high', /больше усилий/]]) {
     withRepo(effortRepo({ model, effort }), (dir) => {
       const { code, out } = check(['i-3', '--dir', dir]);
       assert.equal(code, 1, out);
@@ -280,7 +280,7 @@ test('i-3 accepts the Keep a Changelog heading `## [Unreleased]`, and needs an e
   withRepo(effortRepo({ changelog: '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-10-01\n\n- First release.\n' }), (dir) => {
     const { code, out } = check(['i-3', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /`## Unreleased` in CHANGELOG\.md has no entry/);
+    assert.match(out, /Под `## Unreleased` в CHANGELOG\.md нет записи/);
   });
 });
 
@@ -352,8 +352,8 @@ test('i-4 refuses an allow rule that lets every command or every edit through', 
 
 test('i-4 needs an ask rule for a command the team approves each time, not a deny rule or a TODO', () => {
   for (const [ask, deny, hint] of [
-    [undefined, [...TEAM.permissions.deny, 'Bash(git push *)'], /Add an ask rule to `permissions\.ask`/],
-    [['TODO: a command the team approves each time'], TEAM.permissions.deny, /Replace the TODO in `permissions\.ask`/],
+    [undefined, [...TEAM.permissions.deny, 'Bash(git push *)'], /Добавьте правило ask в `permissions\.ask`/],
+    [['TODO: a command the team approves each time'], TEAM.permissions.deny, /Замените TODO в `permissions\.ask`/],
   ]) {
     withRepo(scopesRepo({ team: { permissions: { allow: ['Bash(npm test)'], ...(ask ? { ask } : {}), deny } } }), (dir) => {
       const { code, out } = check(['i-4', '--dir', dir]);
@@ -367,7 +367,7 @@ test('i-4 fails when the shared settings are not valid JSON', () => {
   withRepo(scopesRepo({ team: '{ "permissions": { "allow": ["Bash(npm test)"], } }' }), (dir) => {
     const { code, out } = check(['i-4', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /not valid JSON/);
+    assert.match(out, /некорректный JSON/);
   });
 });
 
@@ -448,7 +448,7 @@ test('i-5 fails when the gate is not registered as a Stop hook', () => {
   withRepo(hookRepo({ settings: { hooks: { PreToolUse: REGISTERED.hooks.PreToolUse } } }), (dir) => {
     const { code, out } = check(['i-5', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /`Stop` hook/);
+    assert.match(out, /hook `Stop`/);
   });
 });
 
@@ -465,20 +465,20 @@ test('i-5 fails for the skeleton, which runs no test command', () => {
   withRepo(hookRepo({ gate: skeleton }), (dir) => {
     const { code, out } = check(['i-5', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /ran no test command/);
+    assert.match(out, /не запустил ни одной команды тестов/);
   });
 });
 
 test('i-5 names the case a gate gets wrong: exit 1, no reason, blocking a passing run, no loop guard, or test output on stderr', () => {
   for (const [gate, hint] of [
-    [GATE.replace('  exit 2', '  exit 1'), /While the tests fail, the gate exits 1/],
-    [GATE.replace('npm test 2>&1', 'npm test').replace('  echo "Blocked: the tests fail. Fix them before you finish." >&2\n', ''), /without a reason on stderr/],
-    [GATE.replace('if ! npm test 2>&1; then', 'npm test 2>&1\nif true; then'), /With the tests passing, the gate exits 2/],
-    [GATE.replace(/^if \[ "\$\(echo.*\n {2}exit 0\nfi\n/m, ''), /`stop_hook_active` true, the gate still blocks/],
+    [GATE.replace('  exit 2', '  exit 1'), /Пока тесты падают, заслон завершается с кодом 1/],
+    [GATE.replace('npm test 2>&1', 'npm test').replace('  echo "Blocked: the tests fail. Fix them before you finish." >&2\n', ''), /без причины в stderr/],
+    [GATE.replace('if ! npm test 2>&1; then', 'npm test 2>&1\nif true; then'), /Когда тесты проходят, заслон завершается с кодом 2/],
+    [GATE.replace(/^if \[ "\$\(echo.*\n {2}exit 0\nfi\n/m, ''), /`stop_hook_active`, равном true, заслон всё равно блокирует/],
     // On Stop, exit 2 with nothing on stdout and a missing-file error on
     // stderr is a non-blocking error (hooks reference, "Exit code output").
-    [GATE.replace('npm test 2>&1', 'npm test >&2'), /missing-file error.*npm test 2>&1/s],
-    [GATE.replace('if ! npm test 2>&1; then', 'OUT=$(npm test 2>/dev/null)\nif [ $? -ne 0 ] && [ -n "$OUT" ]; then'), /While the tests fail, the gate exits 0/],
+    [GATE.replace('npm test 2>&1', 'npm test >&2'), /об отсутствующем файле.*npm test 2>&1/s],
+    [GATE.replace('if ! npm test 2>&1; then', 'OUT=$(npm test 2>/dev/null)\nif [ $? -ne 0 ] && [ -n "$OUT" ]; then'), /Пока тесты падают, заслон завершается с кодом 0/],
   ]) {
     withRepo(hookRepo({ gate }), (dir) => {
       const { code, out } = check(['i-5', '--dir', dir]);
@@ -494,7 +494,7 @@ test('i-5 runs the committed gate, not an uncommitted fix', () => {
     write(dir, { '.claude/hooks/test-gate.sh': GATE });
     const { code, out } = check(['i-5', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /ran no test command/);
+    assert.match(out, /не запустил ни одной команды тестов/);
   });
 });
 
@@ -552,7 +552,7 @@ test('i-6 fails while the partial file still has its TODOs', () => {
   withRepo(agentRepo({ fields: 'description: TODO\ntools: TODO' }), (dir) => {
     const { code, out } = check(['i-6', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /description/);
+    assert.match(out, /описание/);
     assert.match(out, /tools/);
   });
 });
@@ -562,7 +562,7 @@ test('i-6 fails for a subagent that can edit files or run commands, or inherits 
     withRepo(agentRepo({ fields: GAPS_FIELDS.replace('tools: Read, Grep, Glob', tools) }), (dir) => {
       const { code, out } = check(['i-6', '--dir', dir]);
       assert.equal(code, 1, `${tools}: ${out}`);
-      assert.match(out, /read-only|every tool/);
+      assert.match(out, /не только для чтения|все инструменты/);
     });
   }
 });
@@ -572,7 +572,7 @@ test('i-6 fails for a subagent with a web tool, which reading code never needs',
     withRepo(agentRepo({ fields: GAPS_FIELDS.replace('tools: Read, Grep, Glob', tools) }), (dir) => {
       const { code, out } = check(['i-6', '--dir', dir]);
       assert.equal(code, 1, `${tools}: ${out}`);
-      assert.match(out, /reaches the web/);
+      assert.match(out, /выходит в сеть/);
     });
   }
 });
@@ -586,7 +586,7 @@ test('i-6 says how to log delegations when there is no log, and fails when test-
   withRepo(agentRepo({ log: 'Explore\n' }), (dir) => {
     const { code, out } = check(['i-6', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /Use the test-gaps agent/);
+    assert.match(out, /Используй агента test-gaps/);
   });
 });
 
@@ -622,10 +622,10 @@ test('i-7 accepts the flags written as --flag=false', () => {
 
 test('i-7 fails for @latest, and for each data flow left on', () => {
   for (const [args, env, hint] of [
-    [['-y', 'chrome-devtools-mcp@latest', '--no-usage-statistics', '--no-performance-crux'], undefined, /exact version/],
-    [['-y', 'chrome-devtools-mcp@1.10.1', '--no-performance-crux'], undefined, /usage statistics/],
+    [['-y', 'chrome-devtools-mcp@latest', '--no-usage-statistics', '--no-performance-crux'], undefined, /точную версию/],
+    [['-y', 'chrome-devtools-mcp@1.10.1', '--no-performance-crux'], undefined, /Статистика использования/],
     [['-y', 'chrome-devtools-mcp@1.10.1', '--no-usage-statistics'], undefined, /CrUX/],
-    [PINNED, {}, /update checks/],
+    [PINNED, {}, /Проверка обновлений/],
   ]) {
     withRepo(mcpRepo({ mcp: MCP(args, env) }), (dir) => {
       const { code, out } = check(['i-7', '--dir', dir]);
@@ -654,7 +654,7 @@ test('i-7 fails when the screenshot was taken before the demo\'s last change', (
     utimesSync(join(dir, '.practice/i-7-page.png'), old, old);
     const { code, out } = check(['i-7', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /Capture the page again after the repair/);
+    assert.match(out, /Снимите страницу снова/);
   });
 });
 
@@ -726,9 +726,9 @@ test('i-8 fails when the saved list shows the install for another project on thi
 test('i-8 fails when the code intelligence trial is missing, at another scope, or turned on for the team', () => {
   const project = (dir) => ({ id: PLUGIN, version: '1.0.0', scope: 'project', enabled: true, installPath: '/tmp/x', projectPath: dir, projectEnabled: true });
   for (const [list, enabled, hint] of [
-    [(dir) => [project(dir)], undefined, /no code intelligence plugin at local scope/],
-    [(dir) => [project(dir), { ...TRIAL(dir), scope: 'user', projectPath: undefined }], undefined, /no code intelligence plugin at local scope/],
-    [(dir) => [project(dir), TRIAL(dir)], { [PLUGIN]: true, [LSP]: true }, /every teammate gets your trial/],
+    [(dir) => [project(dir)], undefined, /ни одного плагина code intelligence на локальном уровне/],
+    [(dir) => [project(dir), { ...TRIAL(dir), scope: 'user', projectPath: undefined }], undefined, /ни одного плагина code intelligence на локальном уровне/],
+    [(dir) => [project(dir), TRIAL(dir)], { [PLUGIN]: true, [LSP]: true }, /каждый коллега/],
   ]) {
     withRepo(pluginRepo({ list, ...(enabled ? { enabled } : {}) }), (dir) => {
       const { code, out } = check(['i-8', '--dir', dir]);
@@ -791,7 +791,7 @@ test('the Intermediate capstone rejects the original malformed-percent crash', (
   withRepo(capstoneRepo({ files: buggyApp }), dir => {
     const { code, out } = check(['i-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /malformed percent/);
+    assert.match(out, /неверными percent/);
   });
 });
 
@@ -800,7 +800,7 @@ test('the Intermediate capstone does not accept an uncommitted malformed-percent
     write(dir, fixedApp);
     const { code, out } = check(['i-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /mishandles malformed percent/);
+    assert.match(out, /неправильно обрабатывает ссылки с неверными percent/);
   });
 });
 
@@ -810,7 +810,7 @@ test('the Intermediate capstone rejects skipping malformed targets or breaking e
   for (const source of [skip, raw]) withRepo(capstoneRepo({ files: { 'src/check-links.js': source } }), dir => {
     const { code, out } = check(['i-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /mishandles malformed percent/);
+    assert.match(out, /неправильно обрабатывает ссылки с неверными percent/);
   });
 });
 
@@ -822,7 +822,7 @@ test('the Intermediate capstone passes when everything in the brief is committed
 });
 
 test('the Intermediate capstone fails without a skill, a reviewer or a hook, naming each', () => {
-  for (const [path, hint] of [['.claude/skills/check-links/SKILL.md', /skill/], ['.claude/agents/reviewer.md', /subagent/], ['.claude/hooks/protect-samples.sh', /samples\//]]) {
+  for (const [path, hint] of [['.claude/skills/check-links/SKILL.md', /skill/], ['.claude/agents/reviewer.md', /субагента/], ['.claude/hooks/protect-samples.sh', /samples\//]]) {
     withRepo(capstoneRepo({ omit: [path] }), (dir) => {
       const { code, out } = check(['i-capstone', '--dir', dir]);
       assert.equal(code, 1, out);
@@ -837,19 +837,19 @@ test('the Intermediate capstone fails without a skill, a reviewer or a hook, nam
 test('the Intermediate capstone names the capstone, not a lesson, for a missing .mcp.json, settings file or CLAUDE.md, or a server file without the server', () => {
   const noServer = JSON.stringify({ mcpServers: { other: { type: 'stdio', command: 'npx', args: ['-y', 'other-mcp@1.0.0'] } } }, null, 2);
   for (const [setup, says, own] of [
-    [{ omit: ['.mcp.json'] }, ['There is no .mcp.json at the repository root. Write the one the capstone asks for there, as in lesson 7.'], [['i-7', 'Save the partial file from the lesson\'s Your turn there.']]],
-    [{ files: { '.mcp.json': noServer } }, ['No server in .mcp.json runs chrome-devtools-mcp. Add it under `mcpServers`, as in lesson 7.'], [['i-7', 'Add it under `mcpServers`, as in the lesson.']]],
+    [{ omit: ['.mcp.json'] }, ['В корне репозитория нет .mcp.json. Напишите туда тот, о котором просит итоговый проект, как в уроке 7.'], [['i-7', 'Сохраните туда заготовку из раздела «Ваша очередь» урока.']]],
+    [{ files: { '.mcp.json': noServer } }, ['Ни один сервер в .mcp.json не запускает chrome-devtools-mcp. Добавьте его в `mcpServers`, как в уроке 7.'], [['i-7', 'Добавьте его в `mcpServers`, как в уроке.']]],
     [{ omit: ['.claude/settings.json'] }, [
-      'There is no committed .claude/settings.json that parses as JSON. Add the `enabledPlugins` entry the capstone asks for and commit it, as in lesson 8.',
-      'There is no .claude/settings.json. Write the team settings the capstone asks for there, as in lesson 4.',
-    ], [['i-8', 'Add the `enabledPlugins` entry from the lesson and commit it.'], ['i-4', 'Save the partial file from the lesson\'s Your turn there.']]],
-    [{ omit: ['CLAUDE.md'] }, ['There is no committed CLAUDE.md. Commit the one the capstone asks for, as in lesson 2.'], [['i-2', 'Commit the one you organize in this lesson.']]],
+      'Нет закоммиченного .claude/settings.json, который читается как JSON. Добавьте запись `enabledPlugins`, о которой просит итоговый проект, и закоммитьте, как в уроке 8.',
+      'Нет файла .claude/settings.json. Напишите туда настройки команды, о которых просит итоговый проект, как в уроке 4.',
+    ], [['i-8', 'Добавьте запись `enabledPlugins` из урока и закоммитьте.'], ['i-4', 'Сохраните туда заготовку файла из раздела «Ваша очередь».']]],
+    [{ omit: ['CLAUDE.md'] }, ['Закоммиченного CLAUDE.md нет. Закоммитьте тот, о котором просит итоговый проект, как в уроке 2.'], [['i-2', 'Закоммитьте тот, который вы приводите в порядок в этом уроке.']]],
   ]) {
     withRepo(capstoneRepo(setup), (dir) => {
       const { code, out } = check(['i-capstone', '--dir', dir]);
       assert.equal(code, 1, out);
       for (const line of says) assert.ok(out.includes(line), out);
-      assert.doesNotMatch(out, /Your turn|this lesson|the lesson/, out);
+      assert.doesNotMatch(out, /очередь|в этом уроке|в уроке\.|из урока/, out);
       for (const [lesson, said] of own) {
         const mine = check([lesson, '--dir', dir]);
         assert.ok(mine.out.includes(said), mine.out);
@@ -878,7 +878,7 @@ test('the Intermediate capstone does not count lesson leftovers as the brief\'s 
     const { code, out } = check(['i-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
     assert.match(out, /npm run linkcheck/);
-    assert.match(out, /reviews changes/);
+    assert.match(out, /проверяет изменения/);
   });
 });
 
@@ -925,7 +925,7 @@ test('the Intermediate capstone wants a samples/ hook to fail closed', () => {
 });
 
 test('the Intermediate capstone wants the review of the fix logged, by a committed reviewer', () => {
-  for (const [log, hint] of [[null, /--settings \.practice\/i-capstone-hook\.json/], ['Explore\ntest-gaps\n', /names no committed reviewer/]]) {
+  for (const [log, hint] of [[null, /--settings \.practice\/i-capstone-hook\.json/], ['Explore\ntest-gaps\n', /нет ни одного закоммиченного ревьюера/]]) {
     withRepo(capstoneRepo({ log }), (dir) => {
       const { code, out } = check(['i-capstone', '--dir', dir]);
       assert.equal(code, 1, out);
@@ -939,6 +939,6 @@ test('the Intermediate capstone wants a person to approve a push', () => {
   withRepo(capstoneRepo({ settings }), (dir) => {
     const { code, out } = check(['i-capstone', '--dir', dir]);
     assert.equal(code, 1, out);
-    assert.match(out, /Add an ask rule to `permissions\.ask`/);
+    assert.match(out, /Добавьте правило ask в `permissions\.ask`/);
   });
 });
