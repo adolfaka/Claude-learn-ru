@@ -3291,7 +3291,7 @@ test('the Advanced capstone holds the review script to lesson 4\'s rules', () =>
     assert.match(String(capstoneHint(dir, /закоммичен и исполняем/)), /Файла `scripts\/review-staged\.sh` нет/);
   });
   withRepo(capstoneRepo({ script: withFlags(FLAGS.replace('dontAsk', 'acceptEdits')) }), (dir) => {
-    assert.match(String(capstoneHint(dir, /^его вызов `claude -p`/)), /Он работает в режиме `acceptEdits`: используйте `--permission-mode dontAsk`/);
+    assert.match(String(capstoneHint(dir, /^его `claude -p`/)), /Он работает в режиме `acceptEdits`: используйте `--permission-mode dontAsk`/);
   });
   withRepo(capstoneRepo({ run: { ...REAL_RUN, subtype: 'error_max_turns', is_error: true } }), (dir) => {
     assert.match(String(capstoneHint(dir, /a-capstone-run\.json/)), /Запуск в `\.practice\/a-capstone-run\.json` остановился раньше времени \(`error_max_turns`\).* Поднимите предел, но не выше 10, сузьте промпт или проверьте флаги\./);

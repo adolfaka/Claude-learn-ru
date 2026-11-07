@@ -37,7 +37,7 @@ import { b1Item, course, driver, finished, finishedBefore, root } from './learn-
 import { fakeClock, fakeOut, screenModel, turn } from './learn-term.mjs';
 
 // The welcome's greeting after the learner's name, and the watching row's lead.
-const LEARN = 'Изучим Claude Code';
+const LEARN = 'Учимся Claude Code';
 const WATCHING = C.watching('.practice/version.txt').slice(0, 2).join('');
 
 // Every lesson on the course, in its order.
@@ -710,7 +710,7 @@ test('boot: when git takes over 150 ms at start, the screen opens with Pip wakin
       git.answer([null, 'Sam']);
       await turn();
       await clock.advance(40);
-      assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/);
+      assert.match(term.shows(), /Привет, Sam! Учимся Claude Code/);
       assert.doesNotMatch(term.shows(), /Спрашиваю git/);
       assert.equal(ENTERS(term.writes), 1, 'the same screen goes on');
       // The boot's frame timer is gone with it: the welcome draws alone.
@@ -733,7 +733,7 @@ test('boot: when git answers within 150 ms, nothing extra is drawn: the first fr
     await turn();
     assert.equal(ENTERS(term.writes), 1);
     const frames = term.writes.filter((w) => w.startsWith('\x1b[?2026h'));
-    assert.match(strip(frames[0]), /Привет, Sam! Изучим Claude Code/, 'the first frame');
+    assert.match(strip(frames[0]), /Привет, Sam! Учимся Claude Code/, 'the first frame');
     await clock.advance(2_000);
     assert.ok(term.writes.every((w) => !w.includes('Спрашиваю git')), 'no boot frame, then or later');
   } finally {
@@ -754,7 +754,7 @@ test('boot: with motion off, the boot frame shows its words still, with Pip awak
     assert.equal(term.writes.length, n, 'nothing moves while git works');
     git.answer([null, 'Sam']);
     await turn();
-    assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/);
+    assert.match(term.shows(), /Привет, Sam! Учимся Claude Code/);
   } finally {
     app.close();
   }
@@ -777,7 +777,7 @@ test('boot: keys typed while git answers are not echoed and are dropped, so an E
     await turn();
     await clock.advance(1_000);
     assert.equal(term.stdin.isRaw, true);
-    assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/, 'the welcome stays up');
+    assert.match(term.shows(), /Привет, Sam! Учимся Claude Code/, 'the welcome stays up');
     await app.press('\r', C.youllBeAble);
   } finally {
     app.close();
@@ -857,7 +857,7 @@ test('boot: a resize during the boot frame clears the screen and draws it again 
     git.answer([null, 'Sam']);
     await turn();
     await clock.advance(40);
-    assert.match(term.shows(), /Привет, Sam! Изучим Claude Code/);
+    assert.match(term.shows(), /Привет, Sam! Учимся Claude Code/);
   } finally {
     app.close();
   }
@@ -1097,7 +1097,7 @@ test('resize: one full frame that clears the screen, at the new size', async () 
       const shown = term.model.lines();
       assert.ok(shown.slice(0, rows).every((l) => width(l) <= cols - 1), shown.join('\n'));
       assert.deepEqual(shown.slice(rows), Array(30 - rows).fill(''), 'nothing left below the frame');
-      assert.match(shown.join('\n'), /Изучим Claude Code/);
+      assert.match(shown.join('\n'), /Учимся Claude Code/);
       await clock.advance(1_000);
     }
     term.type('\r');
@@ -1494,7 +1494,7 @@ test('a key ends the greeting on main\'s one timer: the detailed Pip eases to re
 // The welcome is the one big-Pip screen with ambient life (the app's own
 // blink is there): at 120x40 it has room for the raster, and its reading
 // grace ends 20 s after it appears.
-const WELCOME = /Изучим Claude Code/;
+const WELCOME = /Учимся Claude Code/;
 const toWelcome = async (app) => assert.ok(await app.settle(() => WELCOME.test(app.term.shows())), app.term.shows());
 
 test('the detailed Pip breathes only on a local terminal: frames every 120 ms there; over SSH and in a Codespace it waits for its next blink or glance; q, Ctrl+C or SIGTERM leaves no timer', async () => {

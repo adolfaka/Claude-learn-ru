@@ -1544,7 +1544,7 @@ test('worked: copy where the work folder is the practice copy itself, or not cho
       dirs.push(askedIn(d), watching(d.state).dir);
       for (const size of SIZES) {
         const head = headOf(screen(d.state, size));
-        assert.ok(!has(head, C.inCopy) && !has(head, C.inFolder('')), `${JSON.stringify(folders)} ${stepOf(d.state).id}\n${head.join('\n')}`);
+        assert.ok(!has(head, C.inCopy) && !has(head, C.inFolder(basename(COPY))), `${JSON.stringify(folders)} ${stepOf(d.state).id}\n${head.join('\n')}`);
       }
       passHere(d, COPY);
     }
@@ -1636,8 +1636,8 @@ test('every screen of a lesson whose Worked example runs in the copy fits at 60x
           // The header's two rows above its rule, in either mode.
           const head = lines.slice(0, 2);
           const w = stepOf(state)?.part === 'Worked example';
-          if (folders.intermediate !== COPY && state.view === 'step') assert.ok(w ? has(head, C.inCopy) : has(head, C.inFolder('')) && !has(head, C.inCopy), where);
-          if (folders.intermediate === COPY) assert.ok(!has(head, C.inCopy) && !has(head, C.inFolder('')), where);
+          if (folders.intermediate !== COPY && state.view === 'step') assert.ok(w ? has(head, C.inCopy) : has(head, C.inFolder(basename(folders.intermediate))) && !has(head, C.inCopy), where);
+          if (folders.intermediate === COPY) assert.ok(!has(head, C.inCopy) && !has(head, C.inFolder(basename(COPY))), where);
           // At 60 columns too: a card's top row drops its DONE pill, then
           // its terminal's words, before its place is cut.
           assert.ok(!lines.some((l) => l.endsWith(t.unicode ? '…' : '.') && width(l) >= size[0] - 2 && (t.unicode || /\S\.$/.test(l))), `a cut line: ${where}`);
