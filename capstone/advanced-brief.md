@@ -1,19 +1,19 @@
-# Brief: one review for every pull request, within limits
+# Задание: одно ревью для каждого pull request, в заданных пределах
 
-**From:** the team lead
+**От:** руководителя команды
 
-We want one review for every pull request, the same on laptops and in CI, with nothing it runs left unbounded. Build it in this repository and commit all of it: the team gets only what's in git.
+Мы хотим одно ревью для каждого pull request — одинаковое на ноутбуках и в CI, и чтобы ничто из того, что оно запускает, не работало без ограничений. Постройте это в данном репозитории и закоммитьте всё: команда получит только то, что есть в git.
 
-## What we need
+## Что нам нужно
 
-1. **Two jobs at once.** Parts 2 and 3 don't depend on each other: build them at the same time, in two Claude Code sessions that can't touch each other's files, and get both changes onto `main`, however our team lands branches. Keep those working copies out of git. After both sessions commit, and while both working copies exist, save `git worktree list --porcelain` to `.practice/a-capstone-worktrees.txt`.
-2. **One review, everywhere.** Our review instructions live in the repository once, as a skill in `.claude/skills/`, and every review runs them. `scripts/review-staged.sh` sends the staged changes to `claude -p` with that review and saves the JSON result: read-only tools, anything else refused without a permission prompt, a turn limit of 10 or fewer, and a spend cap with `--max-budget-usd`, above what one review costs. Run it once on a staged one-line change and save its result to `.practice/a-capstone-run.json`; that run must cost less than the cap.
-3. **Our plugin, for everyone.** A marketplace inside the repository, `team-marketplace/`, with one plugin of ours. The committed `.claude/settings.json` registers it by a relative path and turns the plugin on, so nobody installs anything by hand.
-4. **A sweep before a release.** A dynamic workflow that reviews each file under `src/` and has a second agent check each finding, saved to `.claude/workflows/` and committed.
-5. **CI review with limits.** `.github/workflows/claude-review.yml` runs the same review on each pull request with `anthropics/claude-code-action`: pinned to a release tag or a full commit SHA, its credential from a repository secret, Claude acting with the job's own read-only token, a turn limit of 10 or fewer, allowed tools without unrestricted Bash, and a job timeout of 30 minutes or fewer. Five quick pushes must not run five reviews to the end: a `concurrency` group cancels the review a new push replaces. Its only GitHub setup is that secret, with no GitHub App. Claude reviews; a person merges.
+1. **Две задачи одновременно.** Части 2 и 3 не зависят друг от друга: стройте их одновременно, в двух сессиях Claude Code, которые не могут трогать файлы друг друга, и доставьте оба изменения в `main` так, как в нашей команде принято вливать ветки. Эти рабочие копии не должны попадать в git. После того как обе сессии закоммитят, пока обе рабочие копии существуют, сохраните вывод `git worktree list --porcelain` в `.practice/a-capstone-worktrees.txt`.
+2. **Одно ревью, везде.** Наши инструкции для ревью лежат в репозитории в одном месте — как skill в `.claude/skills/`, и каждое ревью их запускает. `scripts/review-staged.sh` отправляет проиндексированные изменения в `claude -p` с этим ревью и сохраняет результат в JSON: инструменты только для чтения, всё остальное отклоняется без запроса разрешения, лимит ходов не больше 10 и лимит расходов через `--max-budget-usd` — выше, чем стоит одно ревью. Запустите его один раз на проиндексированном изменении в одну строку и сохраните результат в `.practice/a-capstone-run.json`; этот запуск должен стоить меньше лимита.
+3. **Наш плагин, для всех.** Marketplace внутри репозитория, `team-marketplace/`, с одним нашим плагином. Закоммиченный `.claude/settings.json` регистрирует его относительным путём и включает плагин, так что никто ничего не устанавливает вручную.
+4. **Обход перед релизом.** Динамический workflow, который проверяет каждый файл в `src/`, а второй агент перепроверяет каждую находку; он сохранён в `.claude/workflows/` и закоммичен.
+5. **Ревью в CI с ограничениями.** `.github/workflows/claude-review.yml` запускает то же ревью на каждый pull request через `anthropics/claude-code-action`: закреплён на теге релиза или полном SHA коммита, учётные данные берутся из секрета репозитория, Claude действует с собственным токеном задания только для чтения, лимит ходов не больше 10, разрешённые инструменты без неограниченного Bash, тайм-аут задания не больше 30 минут. Пять быстрых push подряд не должны доводить до конца пять ревью: группа `concurrency` отменяет ревью, которое сменил новый push. Единственная настройка GitHub — этот секрет, без GitHub App. Claude делает ревью, сливает человек.
 
-## Done when
+## Готово, когда
 
-- `npm test` passes and nothing is left uncommitted.
-- `npm run check -- a-capstone` passes.
-- Then tear down, as the guide's capstone page says: delete the review workflow, the secret and, for an API key, the key itself, so no live credential is left behind.
+- `npm test` проходит и ничего не осталось незакоммиченным.
+- `npm run check -- a-capstone` проходит.
+- Затем всё уберите, как сказано на странице итогового проекта в руководстве: удалите рабочий процесс ревью, секрет и, для ключа API, сам ключ, чтобы не осталось действующих учётных данных.

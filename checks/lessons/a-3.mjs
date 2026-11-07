@@ -12,14 +12,14 @@
 import { posix } from 'node:path';
 import { findWorkflows, readWorkflow, STAGES, tokenize } from '../workflow-script.mjs';
 
-export const title = 'Run and save a dynamic workflow';
+export const title = 'Запуск и сохранение динамического workflow';
 
 const PATTERN = '.practice/a-3-pattern.txt';
 
-const and = (list) => (list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list.at(-1)}` : list[0]);
+const and = (list) => (list.length > 1 ? `${list.slice(0, -1).join(', ')} и ${list.at(-1)}` : list[0]);
 const code = (text) => `\`${text}\``;
 const shell = (path) => (/\s/.test(path) ? `"${path}"` : path);
-const SAVE = 'When a workflow run finishes, run `/workflows`, select the run, press `s`, keep the project location, `.claude/workflows/`, and press `Enter`. Then commit the `.js` file it saves.';
+const SAVE = 'Когда запуск workflow завершится, выполните `/workflows`, выберите запуск, нажмите `s`, оставьте расположение проекта, `.claude/workflows/`, и нажмите `Enter`. Затем закоммитьте сохранённый файл `.js`.';
 
 // Where a misplaced script should go: a .js file directly in the
 // .claude/workflows/ folder it sits under.
@@ -31,28 +31,28 @@ function placed(path) {
 function scriptHint({ path, result, changed }) {
   const p = code(path);
   const hint = {
-    first: () => `${p} doesn't start with \`export const meta\`${result.found ? `: its code starts with ${code(result.found)}` : ''}. Claude Code needs \`export const meta = { ... }\` as the script's first statement. Move it to the top (comments may stay above it) and commit.`,
-    literal: () => `Line ${result.line} of ${p}: \`meta\` holds ${result.what}. When \`meta\` holds anything but literal values, Claude Code drops \`/<name>\` from \`/\` autocomplete. Write each value out as a string, number, list or object, and commit.`,
-    fields: () => `\`meta\` in ${p} needs ${result.missing.map((f) => `a non-empty \`${f}\` string`).join(' and ')}. Add ${result.missing.length > 1 ? 'them' : 'it'} and commit.`,
-    compile: () => `${p} doesn't compile${result.line ? ` (line ${result.line})` : ''}: ${result.message}. Fix it, or ask Claude to, and commit.`,
+    first: () => `${p} не начинается с \`export const meta\`${result.found ? `: его код начинается с ${code(result.found)}` : ''}. Claude Code нужен \`export const meta = { ... }\` первой инструкцией скрипта. Перенесите его наверх (комментарии могут остаться над ним) и закоммитьте.`,
+    literal: () => `Строка ${result.line} в ${p}: \`meta\` содержит ${result.what}. Если в \`meta\` есть что-то кроме литеральных значений, Claude Code убирает \`/<name>\` из автодополнения \`/\`. Запишите каждое значение явно — строкой, числом, списком или объектом — и закоммитьте.`,
+    fields: () => `В \`meta\` в ${p} ${result.missing.length > 1 ? 'нужны' : 'нужна'} ${result.missing.map((f) => `непустая строка \`${f}\``).join(' и ')}. Добавьте ${result.missing.length > 1 ? 'их' : 'её'} и закоммитьте.`,
+    compile: () => `${p} не компилируется${result.line ? ` (строка ${result.line})` : ''}: ${result.message}. Исправьте его сами или попросите Claude и закоммитьте.`,
     args: () => {
       const why = result.declared
-        ? `Line ${result.declared} of ${p} declares its own \`args\`, which hides the input Claude passes to the workflow.`
+        ? `Строка ${result.declared} в ${p} объявляет собственную переменную \`args\`, и она скрывает входные данные, которые Claude передаёт workflow.`
         : result.mentioned
-          ? `${p} mentions \`args\` only in a comment, a string or a property name, so it never reads its input.`
-          : `${p} never reads \`args\`, so it can't take a folder as input.`;
-      return `${why} Run \`/workflow-authoring\`, ask Claude to change the script so it reads the folder from \`args\`, run \`/reload-skills\`, and commit.`;
+          ? `${p} упоминает \`args\` только в комментарии, строке или имени свойства, поэтому так и не читает входные данные.`
+          : `${p} нигде не читает \`args\`, поэтому не может получить папку на вход.`;
+      return `${why} Выполните \`/workflow-authoring\`, попросите Claude изменить скрипт так, чтобы он брал папку из \`args\`, выполните \`/reload-skills\` и закоммитьте.`;
     },
-    agent: () => `${p} never calls \`agent()\`, so it starts no subagent. Have Claude write the workflow for the task again, save the run from \`/workflows\`, and commit.`,
-    check: () => `${p} calls \`agent()\` only once, so no second agent checks what the first one finds. Run \`/workflow-authoring\`, ask Claude to have a second agent check each finding before it's reported, and commit.`,
+    agent: () => `${p} нигде не вызывает \`agent()\`, поэтому не запускает ни одного субагента. Попросите Claude снова написать workflow для этой задачи, сохраните запуск из \`/workflows\` и закоммитьте.`,
+    check: () => `${p} вызывает \`agent()\` только один раз, поэтому никакой второй агент не проверяет то, что находит первый. Выполните \`/workflow-authoring\`, попросите Claude поручить второму агенту проверять каждую находку, прежде чем о ней сообщать, и закоммитьте.`,
   }[result.problem]();
-  const pending = changed ? ` Your copy of ${p} has changes that aren't committed: if they fix this, commit them.` : '';
+  const pending = changed ? ` В вашей копии ${p} есть незакоммиченные изменения: если они это исправляют, закоммитьте их.` : '';
   return `${hint}${pending}`;
 }
 
 function uncommittedHint({ path, rule }) {
-  if (!rule) return `${code(path)} isn't committed. Run \`git add ${shell(path)}\` and commit it.`;
-  return `${code(path)} isn't committed, and line ${rule.line} of ${code(rule.source)}, ${code(rule.pattern)}, ignores it. Run \`git add -f ${shell(path)}\` and commit it.`;
+  if (!rule) return `${code(path)} не закоммичен. Выполните \`git add ${shell(path)}\` и закоммитьте.`;
+  return `${code(path)} не закоммичен, а строка ${rule.line} в ${code(rule.source)}, ${code(rule.pattern)}, его игнорирует. Выполните \`git add -f ${shell(path)}\` и закоммитьте.`;
 }
 
 // The places a script calls `agent(...)`: the name read as a value and
@@ -79,24 +79,24 @@ function readScript(text, options) {
 // `needCheck`, it calls `agent()` at least twice, so a second agent can check
 // what the first finds.
 export function savedWorkflow(options = {}) {
-  const needs = [options.needArgs && 'reads its input from `args`', options.needCheck ? 'calls `agent()` at least twice' : options.needAgentCall && 'starts subagents with `agent()`'].filter(Boolean);
+  const needs = [options.needArgs && 'читает входные данные из `args`', options.needCheck ? 'вызывает `agent()` как минимум дважды' : options.needAgentCall && 'запускает субагентов через `agent()`'].filter(Boolean);
   return {
-    text: `a committed script in \`.claude/workflows/\` has a literal \`export const meta\`, with a \`name\` and a \`description\`, as its first statement${needs.length ? `, and ${and(needs)}` : ''}`,
+    text: `закоммиченный скрипт в \`.claude/workflows/\` первой инструкцией содержит литеральный \`export const meta\` с \`name\` и \`description\`${needs.length ? `; скрипт ${and(needs)}` : ''}`,
     check(repo) {
       const { scripts, misplaced, uncommitted } = findWorkflows(repo);
       const results = scripts.map((s) => ({ ...s, result: readScript(s.text, options) }));
       if (results.some((r) => r.result.ok)) return true;
       if (results.length) {
         const rank = (r) => RANKS.indexOf(r.result.problem);
-        const other = uncommitted.length ? ` Also, ${uncommittedHint(uncommitted[0])}` : '';
+        const other = uncommitted.length ? ` Кроме того, ${uncommittedHint(uncommitted[0])}` : '';
         return `${scriptHint(results.reduce((best, r) => (rank(r) > rank(best) ? r : best)))}${other}`;
       }
       if (misplaced.length) {
         const [path] = misplaced;
-        return `${code(path)} is under \`.claude/workflows/\`, but the check reads only \`.js\` files directly in that folder, where \`/workflows\` saves them. Move it to ${code(placed(path))} and commit.`;
+        return `${code(path)} лежит в \`.claude/workflows/\`, но проверка читает только \`.js\`-файлы прямо в этой папке, куда их сохраняет \`/workflows\`. Перенесите его в ${code(placed(path))} и закоммитьте.`;
       }
       if (uncommitted.length) return uncommittedHint(uncommitted[0]);
-      return `There is no workflow script in \`.claude/workflows/\`. ${SAVE}`;
+      return `Нет ни одного скрипта workflow в \`.claude/workflows/\`. ${SAVE}`;
     },
   };
 }
@@ -157,24 +157,24 @@ function matchedFolders(repo, pattern, revs) {
 }
 
 export const migratedFolder = {
-  text: `the \`git grep -E\` pattern in \`${PATTERN}\` matched in a folder at an earlier commit and matches nothing in that folder at \`HEAD\``,
+  text: `шаблон \`git grep -E\` из \`${PATTERN}\` находил совпадения в папке в более раннем коммите и ничего не находит в этой папке в \`HEAD\``,
   local: true,
   check(repo) {
     const { missing, pattern } = readPattern(repo);
-    if (missing) return `There is no ${code(PATTERN)}. Save the \`git grep -E\` pattern that finds the old form there, on one line, such as \`import\\.meta\\.url\`.`;
-    if (!pattern) return `${code(PATTERN)} is empty. Save the \`git grep -E\` pattern that finds the old form there, on one line.`;
+    if (missing) return `Файла ${code(PATTERN)} нет. Сохраните в нём одной строкой шаблон \`git grep -E\`, который находит старую форму, например \`import\\.meta\\.url\`.`;
+    if (!pattern) return `${code(PATTERN)} пуст. Сохраните в нём одной строкой шаблон \`git grep -E\`, который находит старую форму.`;
     const shown = code(pattern);
     const now = grep(repo, pattern, '.', ['HEAD']);
-    if (now?.error) return `git can't use the pattern in ${code(PATTERN)}, ${shown}: ${now.error}. Write it as \`git grep -E\` reads it, and test it with \`git grep -n -E '<pattern>' -- <folder>\`.`;
+    if (now?.error) return `git не может использовать шаблон из ${code(PATTERN)}, ${shown}: ${now.error}. Запишите его так, как его читает \`git grep -E\`, и проверьте командой \`git grep -n -E '<pattern>' -- <folder>\`.`;
     const folders = matchedFolders(repo, pattern, recentCommits(repo));
-    if (!folders.length) return `${shown} matches nothing in this repository's recent commits, so the check can't see a migration. Write the pattern for the old form, and test it on a commit from before the migration: \`git grep -n -E '<pattern>' <commit> -- <folder>\` should list the old form.`;
+    if (!folders.length) return `${shown} не находит ничего в недавних коммитах этого репозитория, поэтому проверка не видит миграции. Запишите шаблон для старой формы и проверьте его на коммите до миграции: \`git grep -n -E '<pattern>' <commit> -- <folder>\` должна показать старую форму.`;
     if (folders.some((folder) => grep(repo, pattern, folder, ['HEAD']) === false)) return true;
-    const where = (folder) => (folder === '.' ? 'your repository' : code(`${folder}/`));
+    const where = (folder) => (folder === '.' ? 'вашем репозитории' : `папке ${code(`${folder}/`)}`);
     const clean = folders.find((folder) => grep(repo, pattern, folder) === false);
-    if (clean) return `${where(clean)} is migrated in your working tree, but ${shown} still matches there at \`HEAD\`. Review the changes and commit them.`;
+    if (clean) return `В рабочем дереве в ${where(clean)} миграция уже сделана, но в \`HEAD\` ${shown} там всё ещё находит совпадения. Просмотрите изменения и закоммитьте их.`;
     const named = folders.slice(0, 3).map(where);
-    const more = folders.length > 3 ? ` and ${folders.length - 3} more` : '';
-    return `${shown} still matches inside ${and(named)}${more} at \`HEAD\`, in every folder where it ever matched: \`git grep -n -E '${pattern}'\` lists the lines. Set the goal again for the folder you're migrating, review the changes and commit them.`;
+    const more = folders.length > 3 ? ` и ещё ${folders.length - 3}` : '';
+    return `В \`HEAD\` ${shown} всё ещё находит совпадения в ${and(named)}${more} — в каждой папке, где они когда-либо были: \`git grep -n -E '${pattern}'\` покажет эти строки. Снова задайте цель для папки, которую переводите, просмотрите изменения и закоммитьте их.`;
   },
 };
 

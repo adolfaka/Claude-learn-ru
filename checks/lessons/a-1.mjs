@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { committedIgnore, ignoreHint } from '../ignore.mjs';
 import { claudeWorktrees, CLAUDE_WORKTREES, liveWorktrees, parseWorktrees } from '../worktrees.mjs';
 
-export const title = 'Parallel sessions with worktrees';
+export const title = 'Параллельные сессии с worktrees';
 
 const SNAPSHOT = '.practice/a-1-worktrees.txt';
 
@@ -105,21 +105,21 @@ function copied(repo, sha) {
 // which is null when both changes of that pair are in HEAD.
 function review(repo, snapshot, anywhere = false) {
   const text = repo.read(snapshot);
-  if (text === null || !text.trim()) return { worktrees: [], hint: `While both worktree sessions exist, and after each has committed, run ${save(snapshot)} from your main checkout.` };
+  if (text === null || !text.trim()) return { worktrees: [], hint: `Пока обе сессии worktree существуют и каждая уже закоммитила, выполните ${save(snapshot)} из основного checkout.` };
   const records = parseWorktrees(text);
-  if (!records.length) return { worktrees: [], hint: `\`${snapshot}\` isn't a listing from \`git worktree list --porcelain\`. While both worktrees exist, save it again: ${save(snapshot)}.` };
+  if (!records.length) return { worktrees: [], hint: `\`${snapshot}\` — не список из \`git worktree list --porcelain\`. Пока оба worktrees существуют, сохраните его заново: ${save(snapshot)}.` };
   const worktrees = anywhere ? records.slice(1).filter((r) => !r.bare) : claudeWorktrees(records);
   if (worktrees.length < 2) {
-    if (anywhere) return { worktrees, hint: `\`${snapshot}\` lists ${worktrees.length ? 'one worktree' : 'no worktree'} besides the main checkout. Give each session a worktree of its own, and save ${save(snapshot)} while both worktrees exist.` };
+    if (anywhere) return { worktrees, hint: `\`${snapshot}\` ${worktrees.length ? 'перечисляет только один worktree' : 'не перечисляет ни одного worktree'} помимо основного checkout. Дайте каждой сессии собственный worktree и выполните ${save(snapshot)}, пока оба worktrees существуют.` };
     const others = records.slice(1).filter((r) => !r.bare && !worktrees.includes(r));
-    const elsewhere = others.length ? ` It also lists ${others.map((r) => `\`${r.path}\``).join(', ')}, but the check counts only the worktrees \`claude --worktree <name>\` makes, under \`.claude/worktrees/\`.` : '';
-    return { worktrees, hint: `\`${snapshot}\` lists ${worktrees.length ? 'one worktree' : 'no worktree'} under \`.claude/worktrees/\`.${elsewhere} Start each session with \`claude --worktree <name>\`, and save ${save(snapshot)} while both worktrees exist.` };
+    const elsewhere = others.length ? ` В нём есть и ${others.map((r) => `\`${r.path}\``).join(', ')}, но проверка учитывает только worktrees, которые создаёт \`claude --worktree <name>\`, — в \`.claude/worktrees/\`.` : '';
+    return { worktrees, hint: `\`${snapshot}\` ${worktrees.length ? 'перечисляет только один worktree' : 'не перечисляет ни одного worktree'} в \`.claude/worktrees/\`.${elsewhere} Запускайте каждую сессию командой \`claude --worktree <name>\` и выполните ${save(snapshot)}, пока оба worktrees существуют.` };
   }
   const known = worktrees.filter((r) => r.head && isCommit(repo, r.head));
   if (known.length < 2) {
     const missing = worktrees.find((r) => !known.includes(r));
-    const what = missing.head ? `commit ${short(missing.head)}, which isn't in this repository` : `\`${missing.path}\` without a commit`;
-    return { worktrees, hint: `\`${snapshot}\` names ${what}. Save the listing from this repository's main checkout, while its worktrees exist: ${save(snapshot)}.` };
+    const what = missing.head ? `коммит ${short(missing.head)}, которого нет в этом репозитории` : `\`${missing.path}\` без коммита`;
+    return { worktrees, hint: `\`${snapshot}\` называет ${what}. Сохраните список из основного checkout этого репозитория, пока его worktrees существуют: ${save(snapshot)}.` };
   }
   const isAncestor = ancestry(repo);
   const inHead = integration(repo, isAncestor);
@@ -129,23 +129,23 @@ function review(repo, snapshot, anywhere = false) {
       if (a.head !== b.head && !isAncestor(a.head, b.head) && !isAncestor(b.head, a.head)) pairs.push([a, b]);
     }
   }
-  if (!pairs.length) return { worktrees, hint: `\`${snapshot}\` was saved before both sessions committed: its worktrees point at one commit, or one at an earlier commit of the other's. Save it again before you remove them: ${save(snapshot)}.` };
+  if (!pairs.length) return { worktrees, hint: `\`${snapshot}\` сохранён до того, как обе сессии закоммитили: его worktrees указывают на один коммит или один из них — на более ранний коммит другого. Сохраните его заново, прежде чем удалять их: ${save(snapshot)}.` };
   const [{ pair, unmerged }] = pairs
     .map((p) => ({ pair: p, unmerged: p.filter((r) => !inHead(r.head)) }))
     .sort((x, y) => x.unmerged.length - y.unmerged.length);
   if (!unmerged.length) return { worktrees, pair, hint: null };
   const names = unmerged.map(label);
-  return { worktrees, pair, hint: `${names.length > 1 ? 'The changes on' : 'The change on'} ${names.map((n) => `\`${n}\``).join(' and ')} ${names.length > 1 ? "aren't" : "isn't"} in your current branch. From your main checkout, bring ${names.length > 1 ? 'each one' : 'it'} in the way your team does: ${names.map((n) => `\`git merge ${n}\``).join(', then ')}, or a rebase or a squash merge.` };
+  return { worktrees, pair, hint: `${names.length > 1 ? 'Изменений на' : 'Изменения на'} ${names.map((n) => `\`${n}\``).join(' и ')} пока нет в вашей текущей ветке. Из основного checkout внесите ${names.length > 1 ? 'каждое' : 'его'} так, как принято в вашей команде: ${names.map((n) => `\`git merge ${n}\``).join(', затем ')} или через rebase либо squash merge.` };
 }
 
 export const ignoresWorktrees = {
-  text: 'a committed `.gitignore` ignores `.claude/worktrees/` and not the rest of `.claude/`',
+  text: 'закоммиченный `.gitignore` игнорирует `.claude/worktrees/`, но не остальное в `.claude/`',
   check(repo) {
     const worktrees = committedIgnore(repo, '.claude/worktrees/a-1-probe/file');
     if (worktrees.problem) return ignoreHint(worktrees, '.claude/worktrees/');
     const settings = committedIgnore(repo, '.claude/settings.json');
     if (settings.problem || settings.source !== worktrees.source) return true;
-    return `Line ${settings.line} of \`${settings.source}\`, \`${settings.pattern}\`, also ignores \`.claude/settings.json\`, so it would hide the settings you share with your team. Ignore only \`.claude/worktrees/\`, and commit.`;
+    return `Строка ${settings.line} в \`${settings.source}\`, \`${settings.pattern}\`, игнорирует и \`.claude/settings.json\`, поэтому скрыла бы настройки, которые вы коммитите для команды. Игнорируйте только \`.claude/worktrees/\` и закоммитьте.`;
   },
 };
 
@@ -153,7 +153,7 @@ export const ignoresWorktrees = {
 // anywhere, not only where `claude --worktree` makes it.
 export function mergedWorktrees(snapshot, { anywhere = false } = {}) {
   return {
-    text: `\`${snapshot}\` lists two worktrees ${anywhere ? 'of this repository' : 'under `.claude/worktrees/`'} whose commits split from each other, and both changes are in your branch`,
+    text: `\`${snapshot}\` перечисляет два worktrees ${anywhere ? 'этого репозитория' : 'в `.claude/worktrees/`'}, чьи коммиты разошлись друг с другом, и оба изменения есть в вашей ветке`,
     local: true,
     check: (repo) => review(repo, snapshot, anywhere).hint ?? true,
   };
@@ -161,13 +161,13 @@ export function mergedWorktrees(snapshot, { anywhere = false } = {}) {
 
 export function removedWorktrees(snapshot) {
   return {
-    text: 'neither of those worktrees still exists',
+    text: 'ни одного из этих worktrees больше нет',
     local: true,
     check(repo) {
       const text = repo.read(snapshot);
-      if (text === null || !text.trim()) return `There is no \`${snapshot}\`, so the check can't tell which worktrees should be gone. Save it as the item above says.`;
+      if (text === null || !text.trim()) return `Файл \`${snapshot}\` не найден, поэтому проверка не может понять, каких worktrees уже не должно быть. Сохраните его, как сказано в пункте выше.`;
       const { worktrees, pair } = review(repo, snapshot);
-      if (!worktrees.length) return `\`${snapshot}\` lists no worktree under \`.claude/worktrees/\`, so the check can't tell which worktrees should be gone. Save it as the item above says.`;
+      if (!worktrees.length) return `\`${snapshot}\` не перечисляет ни одного worktree в \`.claude/worktrees/\`, поэтому проверка не может понять, каких worktrees уже не должно быть. Сохраните его, как сказано в пункте выше.`;
       // Paths as git printed them: one that isn't on this machine was saved elsewhere.
       const records = liveWorktrees(repo);
       const live = new Map(records.map((r) => [r.path, r]));
@@ -180,10 +180,10 @@ export function removedWorktrees(snapshot) {
       return left.map((r) => {
         const at = named(r.path);
         const path = shell(at);
-        if (r.locked && sessionRunning(r.locked)) return `\`${at}\` still exists, and the Claude Code session in it is still running: once its branch is merged, run \`/exit\` in that session and choose to remove the worktree, or keep it and then run \`git worktree remove ${path}\` from your main checkout.`;
-        if (r.locked) return `\`${at}\` still exists and is locked: exit any Claude Code session open in it. Once its branch is merged, run \`git worktree remove ${path}\` from your main checkout, after \`git worktree unlock\` if git says it is still locked.`;
-        if (r.prunable) return `git still lists \`${r.path}\`, whose folder is gone: run \`git worktree prune\`.`;
-        return `\`${at}\` still exists: once its branch is merged, run \`git worktree remove ${path}\` from your main checkout.`;
+        if (r.locked && sessionRunning(r.locked)) return `\`${at}\` всё ещё существует, и сессия Claude Code в нём ещё работает: когда его ветка будет слита, выполните \`/exit\` в этой сессии и выберите удаление worktree или оставьте его, а затем выполните \`git worktree remove ${path}\` из основного checkout.`;
+        if (r.locked) return `\`${at}\` всё ещё существует и заблокирован: выйдите из всех сессий Claude Code, открытых в нём. Когда его ветка будет слита, выполните \`git worktree remove ${path}\` из основного checkout, а если git пишет, что он всё ещё заблокирован, — сначала \`git worktree unlock\`.`;
+        if (r.prunable) return `git всё ещё перечисляет \`${r.path}\`, хотя его папки уже нет: выполните \`git worktree prune\`.`;
+        return `\`${at}\` всё ещё существует: когда его ветка будет слита, выполните \`git worktree remove ${path}\` из основного checkout.`;
       }).join(' ');
     },
   };
