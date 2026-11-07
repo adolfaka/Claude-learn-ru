@@ -1,21 +1,21 @@
-# Bug: a missing folder in linkcheck.json is silently skipped
+# Ошибка: отсутствующая папка в linkcheck.json молча пропускается
 
-**Reported by:** a teammate
+**Сообщил:** коллега
 
-## What happens
+## Что происходит
 
-With this `linkcheck.json`:
+С таким `linkcheck.json`:
 
 ```json
 { "files": ["docs"] }
 ```
 
-saved in an empty folder outside this repository, `npm run linkcheck -- <that folder>` prints `All relative links resolve.` and exits with code 0, although there is no `docs/` folder.
+сохранённым в пустой папке за пределами этого репозитория, `npm run linkcheck -- <that folder>` выводит `All relative links resolve.` и завершается с кодом 0, хотя папки `docs/` нет.
 
-## What should happen
+## Что должно происходить
 
-The tool should stop with an error that names the missing folder, `docs`, and exit with code 2, the same code it uses for a broken `linkcheck.json`.
+Инструмент должен остановиться с ошибкой, которая называет отсутствующую папку `docs`, и завершиться с кодом 2 — тем же кодом, что и для некорректного `linkcheck.json`.
 
-## Notes
+## Заметки
 
-- Add a test that fails before the fix and passes after it.
+- Добавьте тест, который падает до исправления и проходит после него.

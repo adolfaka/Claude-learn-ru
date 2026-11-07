@@ -38,7 +38,7 @@ export const scenarios = [
     item: 1,
     name: 'the saved commit is the earlier CLAUDE.md commit',
     setup(dir, { write, commit }) {
-      write(dir, { 'CLAUDE.md': '# linkcheck\n\nRun the tests with npm test.\n' });
+      write(dir, { 'CLAUDE.md': '# linkcheck\n\nЗапускайте тесты командой npm test.\n' });
       const sha = commit(dir, 'Add CLAUDE.md', ['CLAUDE.md']);
       write(dir, { '.practice/capstone-plan.txt': 'src/check-links.js\nsrc/cli.js\ntest/check-links.test.js\n', '.practice/capstone-commit.txt': `${sha}\n` });
     },
@@ -60,7 +60,7 @@ export const scenarios = [
     item: 5,
     name: 'a committed CLAUDE.md without the test command',
     setup(dir, { write, commit }) {
-      write(dir, { 'CLAUDE.md': '# linkcheck\n\nRun the app with npm run linkcheck.\n' });
+      write(dir, { 'CLAUDE.md': '# linkcheck\n\nЗапускайте приложение командой npm run linkcheck.\n' });
       commit(dir, 'Add CLAUDE.md');
     },
   },
@@ -70,7 +70,7 @@ export const scenarios = [
     setup(dir, { write, commit }) {
       write(dir, { 'README.md': 'linkcheck\n' });
       commit(dir, 'Initial commit');
-      write(dir, { 'CLAUDE.md': '# linkcheck\n\nRun the tests with npm test.\n' });
+      write(dir, { 'CLAUDE.md': '# linkcheck\n\nЗапускайте тесты командой npm test.\n' });
     },
   },
 

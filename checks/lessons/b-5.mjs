@@ -8,13 +8,14 @@
 import { committedIgnore, ignoreHint } from '../ignore.mjs';
 import { isTestFile } from '../paths.mjs';
 
-export const title = 'Project memory with CLAUDE.md';
+export const title = 'Память проекта в CLAUDE.md';
 
 const MEMORY_PATHS = ['CLAUDE.md', '.claude/CLAUDE.md'];
 const LOCAL = 'CLAUDE.local.md';
-const RULE = /starts with the line `([^`]+)`/i;
+// The Russian lesson's rule: «… начинается со строки `…`».
+const RULE = /(?:starts with the line|начина[а-яё]*\s+со?\s+строк[а-яё]*)\s+`([^`]+)`/i;
 // What the notes' two personal lines say, lowercased.
-const PERSONAL = ['linkcheck-docs', 'summary at the end'];
+const PERSONAL = ['linkcheck-docs', 'summary at the end', 'резюме в конце'];
 // The files the rule covers: JavaScript in src/, not tests. Hooks, settings
 // and other files later lessons commit are left out, so they can't undo a pass.
 const isSource = (f) => /^src\/.+\.[cm]?js$/i.test(f) && !isTestFile(f);
@@ -85,21 +86,21 @@ const succeeds = (fn) => {
 
 export const items = [
   {
-    text: 'a committed CLAUDE.md has a rule that every new JavaScript file in `src/` starts with a given line',
+    text: 'в закоммиченном CLAUDE.md есть правило, что каждый новый файл JavaScript в `src/` начинается с заданной строки',
     check(repo) {
       const { memory, line, scoped } = rule(repo);
-      if (!memory) return 'There is no committed CLAUDE.md. Run `/init`, edit what it wrote, then `git add CLAUDE.md` and commit it.';
-      if (!line) return 'The committed CLAUDE.md has no line like ``- Every new JavaScript file in `src/` starts with the line `// SPDX-License-Identifier: MIT`.``. Add it under `## Conventions` and commit CLAUDE.md again.';
-      return scoped ? true : `The rule for \`${line}\` doesn't say which files it covers. Scope it to "Every new JavaScript file in \`src/\`" and commit CLAUDE.md: a header can break shell scripts or JSON.`;
+      if (!memory) return 'Закоммиченного CLAUDE.md нет. Выполните `/init`, отредактируйте то, что он написал, затем выполните `git add CLAUDE.md` и закоммитьте.';
+      if (!line) return 'В закоммиченном CLAUDE.md нет строки вроде ``- Каждый новый файл JavaScript в `src/` начинается со строки `// SPDX-License-Identifier: MIT`.``. Добавьте её под `## Conventions` и снова закоммитьте CLAUDE.md.';
+      return scoped ? true : `Правило для \`${line}\` не говорит, к каким файлам оно относится. Ограничьте его словами «Каждый новый файл JavaScript в \`src/\`» и закоммитьте CLAUDE.md: такая первая строка может сломать скрипт оболочки или JSON.`;
     },
   },
   {
-    text: 'a commit made after that rule adds JavaScript files to `src/`, and each of them starts with the rule\'s line',
+    text: 'коммит, сделанный после этого правила, добавляет файлы JavaScript в `src/`, и каждый из них начинается со строки из правила',
     check(repo) {
       const { memory, line } = rule(repo);
-      if (!line) return 'Commit a CLAUDE.md with the header rule first.';
+      if (!line) return 'Сначала закоммитьте CLAUDE.md с правилом о первой строке.';
       const since = ruleCommit(repo, memory, line);
-      if (!since) return `git has no commit that adds \`${line}\` to ${memory.path}. Commit CLAUDE.md with the rule, then ask a new session for a new file.`;
+      if (!since) return `В git нет коммита, который добавляет \`${line}\` в ${memory.path}. Закоммитьте CLAUDE.md с правилом, затем попросите новую сессию создать новый файл.`;
       const commits = addingSources(repo, since);
       // Any such commit passes, so later work can't turn a finished lesson back.
       const wrongIn = (c) => c.sources.filter((f) => firstLine(repo, c.sha, f) !== line);
@@ -108,39 +109,39 @@ export const items = [
         const waiting = repo.git('status', '--porcelain', '--untracked-files=all').split('\n')
           .filter((l) => /^(\?\?|A.) /.test(l)).map((l) => l.slice(3))
           .filter(isSource);
-        if (waiting.length) return `No commit after the rule adds a JavaScript file to \`src/\`, and these new files are not committed yet: ${waiting.join(', ')}. Ask Claude to commit them.`;
-        return 'No commit after the rule adds a JavaScript file to `src/`. In a new session, ask for a change that creates one, such as `src/stats.js` with a test, and to commit it.';
+        if (waiting.length) return `Ни один коммит после правила не добавляет файл JavaScript в \`src/\`, а эти новые файлы ещё не закоммичены: ${waiting.join(', ')}. Попросите Claude закоммитить их.`;
+        return 'Ни один коммит после правила не добавляет файл JavaScript в `src/`. В новой сессии попросите изменение, которое создаёт такой файл, например `src/stats.js` с тестом, и закоммитьте его.';
       }
       const [latest] = commits;
-      return `In commit ${latest.sha.slice(0, 7)}, these new files don't start with \`${line}\`: ${wrongIn(latest).join(', ')}. In a new session, verify CLAUDE.md with \`/context all\`, then ask for a different new file and commit.`;
+      return `В коммите ${latest.sha.slice(0, 7)} эти новые файлы не начинаются с \`${line}\`: ${wrongIn(latest).join(', ')}. В новой сессии проверьте CLAUDE.md через \`/context all\`, затем попросите другой новый файл и закоммитьте.`;
     },
   },
   {
-    text: 'the committed CLAUDE.md holds the notes\' rule for CLI errors, and every `npm run` script it names is in `package.json`',
+    text: 'закоммиченный CLAUDE.md содержит правило из заметок об ошибках CLI, а каждый скрипт `npm run`, который он называет, есть в `package.json`',
     check(repo) {
       const memory = committedMemory(repo);
-      if (!memory) return 'There is no committed CLAUDE.md.';
-      if (!memory.text.includes('linkcheck:')) return 'The committed CLAUDE.md doesn\'t have the rule from the lesson\'s notes that CLI errors start with `linkcheck:`. Add it and commit CLAUDE.md.';
+      if (!memory) return 'Закоммиченного CLAUDE.md нет.';
+      if (!memory.text.includes('linkcheck:')) return 'В закоммиченном CLAUDE.md нет правила из заметок урока о том, что ошибки CLI начинаются с `linkcheck:`. Добавьте его и закоммитьте CLAUDE.md.';
       const known = scripts(repo);
-      if (!known) return 'package.json doesn\'t parse, so the check can\'t read its scripts.';
+      if (!known) return 'package.json не разбирается как JSON, поэтому проверка не может прочитать его скрипты.';
       const missing = memory.text.split(/\r?\n/).flatMap((text) => [...text.matchAll(NPM_RUN)]
         .filter((m) => !known.has(m[1])).map((m) => ({ script: m[1], text: text.trim() })));
       if (!missing.length) return true;
       const { script } = missing[0];
-      return `The committed CLAUDE.md names \`npm run ${script}\`, but package.json has no such script. Fix or delete that line, then commit CLAUDE.md.`;
+      return `Закоммиченный CLAUDE.md называет \`npm run ${script}\`, но в package.json такого скрипта нет. Исправьте или удалите эту строку, затем закоммитьте CLAUDE.md.`;
     },
   },
   {
-    text: 'a committed `.gitignore` keeps `CLAUDE.local.md` out, git tracks no `CLAUDE.local.md`, and the committed CLAUDE.md holds neither personal note',
+    text: 'закоммиченный `.gitignore` исключает `CLAUDE.local.md`, git не отслеживает `CLAUDE.local.md`, а в закоммиченном CLAUDE.md нет ни одной из личных заметок',
     check(repo) {
       const memory = committedMemory(repo);
-      if (!memory) return 'There is no committed CLAUDE.md.';
-      if (succeeds(() => repo.git('ls-files', '--error-unmatch', '--', LOCAL))) return `git tracks \`${LOCAL}\`, which is yours alone. Run \`git rm --cached ${LOCAL}\`, add the line \`${LOCAL}\` to \`.gitignore\`, and commit.`;
-      if (succeeds(() => { if (!repo.git('ls-tree', '--name-only', 'HEAD', '--', LOCAL)) throw new Error(); })) return `\`${LOCAL}\` is still in your last commit. Commit its removal.`;
+      if (!memory) return 'Закоммиченного CLAUDE.md нет.';
+      if (succeeds(() => repo.git('ls-files', '--error-unmatch', '--', LOCAL))) return `git отслеживает \`${LOCAL}\`, а этот файл только ваш. Выполните \`git rm --cached ${LOCAL}\`, добавьте строку \`${LOCAL}\` в \`.gitignore\` и закоммитьте.`;
+      if (succeeds(() => { if (!repo.git('ls-tree', '--name-only', 'HEAD', '--', LOCAL)) throw new Error(); })) return `\`${LOCAL}\` всё ещё есть в вашем последнем коммите. Закоммитьте его удаление.`;
       const ignore = committedIgnore(repo, LOCAL);
       if (ignore.problem) return ignoreHint(ignore, LOCAL);
       const personal = PERSONAL.filter((note) => memory.text.toLowerCase().includes(note));
-      return personal.length ? `The committed ${memory.path} still holds a note that is only yours (${personal.map((n) => `"${n}"`).join(', ')}). Move it to \`${LOCAL}\` or your user file, take it out of ${memory.path} and commit.` : true;
+      return personal.length ? `Закоммиченный ${memory.path} всё ещё содержит заметку, которая касается только вас (${personal.map((n) => `«${n}»`).join(', ')}). Перенесите её в \`${LOCAL}\` или в свой пользовательский файл, уберите из ${memory.path} и закоммитьте.` : true;
     },
   },
 ];

@@ -11,9 +11,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inPlan, planPaths, statusPaths } from '../paths.mjs';
 
-export const title = 'Permission modes and plan mode';
+export const title = 'Режимы разрешений и plan mode';
 
-const SAVE_BEFORE = 'While the plan is on screen, run `git status --porcelain > .practice/b-2-before.txt` in another terminal.';
+const SAVE_BEFORE = 'Пока план на экране, выполните `git status --porcelain > .practice/b-2-before.txt` в другом терминале.';
 
 // Only the practice template's own tool is run: `--dir` pointed at another
 // repository must not execute that repository's src/cli.js.
@@ -23,7 +23,7 @@ function notTemplate(repo) {
   } catch {
     // Not JSON: not the template either.
   }
-  return 'This runs the practice template\'s linkcheck tool, so run the check in your copy of the template: `npm run check -- b-2`.';
+  return 'Здесь запускается инструмент linkcheck из шаблона для практики, поэтому запустите проверку в своей копии шаблона: `npm run check -- b-2`.';
 }
 
 // Runs the working tree's CLI on a scratch folder holding `files`.
@@ -41,58 +41,58 @@ function runTool(repo, files) {
 
 export const items = [
   {
-    text: '`.practice/b-2-before.txt`, saved while the plan was on screen, lists no changed files',
+    text: '`.practice/b-2-before.txt`, сохранённый, пока план был на экране, не содержит изменённых файлов',
     local: true,
     check(repo) {
       const before = repo.read('.practice/b-2-before.txt');
       if (before === null) return SAVE_BEFORE;
       const changed = statusPaths(before);
-      if (changed.length) return `Files had changed before you approved the plan: ${changed.join(', ')}. Start from a clean tree (commit them, or set them aside with \`git stash push --include-untracked\`) and stay in plan mode until you approve.`;
+      if (changed.length) return `Файлы изменились ещё до того, как вы одобрили план: ${changed.join(', ')}. Начните с чистого рабочего дерева (закоммитьте их или отложите командой \`git stash push --include-untracked\`) и оставайтесь в plan mode, пока не одобрите план.`;
       return true;
     },
   },
   {
-    text: 'every file in `.practice/b-2-after.txt` is listed in `.practice/b-2-plan.txt`',
+    text: 'каждый файл из `.practice/b-2-after.txt` указан в `.practice/b-2-plan.txt`',
     local: true,
     check(repo) {
       const plan = repo.read('.practice/b-2-plan.txt');
       const after = repo.read('.practice/b-2-after.txt');
-      if (plan === null || !plan.trim()) return 'Write the files the plan will change into `.practice/b-2-plan.txt`, one path per line, before you approve.';
-      if (after === null) return 'After Claude finishes the edits, run `git status --porcelain > .practice/b-2-after.txt`.';
+      if (plan === null || !plan.trim()) return 'Перед одобрением впишите в `.practice/b-2-plan.txt` файлы, которые изменит план, по одному пути в строке.';
+      if (after === null) return 'Когда Claude закончит правки, выполните `git status --porcelain > .practice/b-2-after.txt`.';
       // An empty snapshot is git seeing no edit yet, not a missing save: the
       // learner ran the command, so repeating it reads as stuck (190). It
       // keeps step 7's "or No" so it never says to approve every request,
       // and stays five lines in a 60x20 hint box so the card keeps its Goal
       // and border.
-      if (!statusPaths(after).length) return '`.practice/b-2-after.txt` lists no changed file yet. Approve the plan you reviewed; if Claude Code asks, read each request: plain Yes, or No if it does more than the plan needs. Once `git status` lists changes, save it again.';
+      if (!statusPaths(after).length) return '`.practice/b-2-after.txt` пока не содержит изменённых файлов. Одобрите проверенный план; если Claude Code спрашивает, читайте каждый запрос: простое Yes или No, если он делает больше, чем нужно плану. Когда `git status` покажет изменения, сохраните снова.';
       const planned = planPaths(plan, repo.dir);
       const extra = statusPaths(after).filter((path) => !inPlan(planned, path));
-      if (extra.length) return `Changed but not in the plan: ${extra.join(', ')}. Compare the plan you approved with what Claude changed.`;
+      if (extra.length) return `Изменены, но не указаны в плане: ${extra.join(', ')}. Сравните одобренный план с тем, что изменил Claude.`;
       return true;
     },
   },
   {
-    text: 'An unknown key in `linkcheck.json`, such as `ignores`, makes the tool exit with code 2 and name the key',
+    text: 'Незнакомый ключ в `linkcheck.json`, например `ignores`, заставляет инструмент завершиться с кодом 2 и назвать ключ',
     // The committed change reaches GitHub's progress run, so these two items
     // report there; the snapshots above stay on the Learner's machine.
     check(repo) {
       const refused = notTemplate(repo);
       if (refused) return refused;
       const run = runTool(repo, { 'linkcheck.json': '{ "files": ["."], "ignores": ["vendor/"] }\n' });
-      if (run.status !== 2) return `With \`"ignores"\` in \`linkcheck.json\`, the tool exited with code ${run.status}, not 2. Read the ticket's first request again: \`practice/b-2/ticket.md\`.`;
-      if (!`${run.stderr}${run.stdout}`.includes('ignores')) return 'The tool exits with code 2 but its error doesn\'t name the key, `ignores`. The ticket asks for an error that names it.';
+      if (run.status !== 2) return `С \`"ignores"\` в \`linkcheck.json\` инструмент завершился с кодом ${run.status}, а не 2. Перечитайте первую просьбу тикета: \`practice/b-2/ticket.md\`.`;
+      if (!`${run.stderr}${run.stdout}`.includes('ignores')) return 'Инструмент завершается с кодом 2, но в его ошибке не назван ключ `ignores`. Тикет просит ошибку, которая его называет.';
       return true;
     },
   },
   {
-    text: 'A broken link still makes the tool exit with code 1 and report the link',
+    text: 'Битая ссылка по-прежнему заставляет инструмент завершиться с кодом 1 и сообщить о ссылке',
     check(repo) {
       const refused = notTemplate(repo);
       if (refused) return refused;
       const run = runTool(repo, { 'notes.md': 'See [the setup](missing.md).\n' });
-      if (run.status !== 1) return `With a broken link, the tool exited with code ${run.status}, not 1, so CI would pass with broken links. Compare the plan you approved with the ticket, and tell Claude what to undo.`;
+      if (run.status !== 1) return `С битой ссылкой инструмент завершился с кодом ${run.status}, а не 1, поэтому CI прошёл бы с битыми ссылками. Сравните одобренный план с тикетом и скажите Claude, что отменить.`;
       // Node also exits with 1 when the CLI crashes, so the report must be there.
-      if (!run.stdout.includes('broken link to missing.md')) return `With a broken link, the tool exited with code 1 but didn't report \`broken link to missing.md\`, so it failed for another reason: ${run.stderr.split('\n').find((line) => /Error/.test(line))?.trim() ?? 'it printed no error'}`;
+      if (!run.stdout.includes('broken link to missing.md')) return `С битой ссылкой инструмент завершился с кодом 1, но не сообщил \`broken link to missing.md\`, значит, он упал по другой причине: ${run.stderr.split('\n').find((line) => /Error/.test(line))?.trim() ?? 'он не вывел ошибки'}`;
       return true;
     },
   },

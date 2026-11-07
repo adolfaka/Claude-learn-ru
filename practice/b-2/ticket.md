@@ -1,16 +1,16 @@
-# A typo in linkcheck.json is silently ignored
+# Опечатка в linkcheck.json молча игнорируется
 
-**Reported by:** a teammate
+**Сообщил:** коллега
 
-## What happened
+## Что случилось
 
-Our `linkcheck.json` had `"ignores": ["vendor/"]`, a typo for `ignore`. linkcheck accepted the file without a word, so the ignore list never applied, and it took me an hour to work out why the links into `vendor/` still failed.
+В нашем `linkcheck.json` было `"ignores": ["vendor/"]` — опечатка вместо `ignore`. linkcheck принял файл без единого слова, поэтому список исключений так и не применился, и я час выяснял, почему ссылки в `vendor/` по-прежнему падают.
 
-## What I'd like
+## Чего хочется
 
-- linkcheck refuses a `linkcheck.json` that holds a key it doesn't know, with an error that names the key, the way it already reports a field of the wrong type.
-- A test for it.
+- linkcheck отклоняет `linkcheck.json`, в котором есть незнакомый ему ключ, с ошибкой, которая называет этот ключ, — так же, как он уже сообщает о поле неправильного типа.
+- Тест на это.
 
-## Also, while you're in there
+## И раз уж вы там
 
-CI keeps going red on our links into the vendor docs, which we don't own. Please make the CLI exit with code 0 even when it finds broken links, so the build stays green.
+CI постоянно краснеет из-за наших ссылок на документацию в vendor, которая нам не принадлежит. Пожалуйста, сделайте так, чтобы CLI завершался с кодом 0, даже когда находит битые ссылки, — тогда сборка останется зелёной.

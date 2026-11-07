@@ -1,120 +1,120 @@
 ---
 lesson: b-capstone
-title: "Beginner capstone: fix a reported bug, from plan to commit"
+title: "Итоговый проект начального уровня: исправляем найденную ошибку, от плана до коммита"
 source: docs/beginner/capstone.md
 source-commit: 676831f
-stamp: "Verified against Claude Code v2.1.308 (stable) on 2026-10-25"
-page: https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know/blob/main/docs/beginner/capstone.md
-stuck: https://github.com/wesammustafa/Claude-Code-Everything-You-Need-to-Know/issues/new?template=lesson-feedback.yml&lesson=b-capstone
+stamp: "Проверено на Claude Code v2.1.308 (stable) 2026-10-25"
+page: https://github.com/runowata/claude-code-ru/blob/main/docs/beginner/capstone.md
+stuck: https://github.com/runowata/claude-code-ru/issues/new?template=lesson-feedback.yml&lesson=b-capstone
 next: i-1
 badge: Beginner
 ---
 
 ## intro
-- minutes: "30 to 60 minutes"
-- why: "A missing folder in `linkcheck.json` passes silently: make linkcheck fail on it, test first."
-- can: "fix a reported bug, from plan to commit"
-- payoff: "fix a reported bug, from plan to commit"
+- minutes: "от 30 до 60 минут"
+- why: "Отсутствующая папка в `linkcheck.json` молча проходит проверку: заставьте linkcheck падать на ней, начиная с теста."
+- can: "исправить найденную ошибку, от плана до коммита"
+- payoff: "исправить найденную ошибку, от плана до коммита"
 
 ## steps
 
-### T1 | The task step 1 of 8 | Prepare and reproduce
+### T1 | The task step 1 of 8 | Подготовьтесь и воспроизведите
 - tier: challenge
 - skill: commit
 - where: terminal
 - beat: do
 - verify: check 5
-- watching: the committed CLAUDE.md
-- goal: "A committed `CLAUDE.md` in your copy that names the test command, `npm test`"
-- note: "A teammate filed the bug report in `capstone/beginner-bug.md` in your practice copy: the tool says every link resolves and exits with code 0. Read it first: its "What should happen" section is what done means."
-- hint: "If you skipped lesson 5: start `claude` in your copy and run `/init`."
-- hint: "In the new `CLAUDE.md`, delete what it says about the course's own files (`checks/`, `learn/`, `capstone/` and `.github/`) and about `npm run check`, `npm run learn` and `npm run test:checks`, including any rule to keep your work off `main`: that rule is for the template repository, not your copy."
-- hint: "Make sure the file names `npm test`, then end that session with `/exit`, so the task starts in a new one."
-- bottom: "Commit any change to `CLAUDE.md` on its own before you start (`git add CLAUDE.md`, then `git commit -m "Add CLAUDE.md"`)"
+- watching: закоммиченным CLAUDE.md
+- goal: "Закоммиченный `CLAUDE.md` в вашей копии, который называет команду тестов, `npm test`"
+- note: "Коллега описал ошибку в `capstone/beginner-bug.md` в вашей учебной копии: инструмент сообщает, что все ссылки в порядке, и завершается с кодом 0. Сначала прочитайте отчёт: его раздел «Что должно происходить» и есть определение готовности."
+- hint: "Если вы пропустили урок 5: запустите `claude` в своей копии и выполните `/init`."
+- hint: "В новом `CLAUDE.md` удалите то, что он пишет о файлах самого курса (`checks/`, `learn/`, `capstone/` и `.github/`) и о `npm run check`, `npm run learn` и `npm run test:checks`, включая любое правило не работать в `main`: оно относится к репозиторию шаблона, а не к вашей копии."
+- hint: "Убедитесь, что файл называет `npm test`, затем завершите эту сессию командой `/exit`, чтобы задание началось в новой."
+- bottom: "Перед началом закоммитьте любое изменение `CLAUDE.md` отдельно (`git add CLAUDE.md`, затем `git commit -m "Add CLAUDE.md"`)"
 - beat: do
 - verify: git-clean
-- goal: "Your copy of the practice template, with no uncommitted changes"
-- hint: "If `git status --porcelain` ([git status](https://git-scm.com/docs/git-status)) lists files, commit them."
+- goal: "Ваша копия шаблона для практики без незакоммиченных изменений"
+- hint: "Если `git status --porcelain` ([git status](https://git-scm.com/docs/git-status)) перечисляет файлы, закоммитьте их."
 - beat: do
 - verify: self
-- goal: "Reproduce the bug before you fix it."
-- do: "make a new folder outside your practice copy and save `{ "files": ["docs"] }` in it as `linkcheck.json`."
-- hint: "Then run `npm run linkcheck -- <that folder>` in your copy: until the bug is fixed, it prints `All relative links resolve.`"
-- win-note: "**Windows:** save the file with `'{ "files": ["docs"] }' | Set-Content <that folder>\linkcheck.json`, not `>`."
+- goal: "Воспроизведите ошибку, прежде чем исправлять её."
+- do: "создайте новую папку за пределами учебной копии и сохраните в ней `{ "files": ["docs"] }` как `linkcheck.json`."
+- hint: "Затем выполните в своей копии `npm run linkcheck -- <that folder>`: пока ошибка не исправлена, команда выводит `All relative links resolve.`"
+- win-note: "**Windows:** сохраните файл командой `'{ "files": ["docs"] }' | Set-Content <that folder>\linkcheck.json`, а не через `>`."
 
-### T2 | The task step 2 of 8 | Start in plan mode
+### T2 | The task step 2 of 8 | Начните в plan mode
 - tier: challenge
 - skill: plan-mode
 - where: terminal
 - beat: do
 - verify: self
-- goal: "Start a new session in your copy."
-- hint: "start `claude` in your copy"
+- goal: "Начните новую сессию в своей копии."
+- hint: "запустите `claude` в своей копии"
 - beat: do
 - where: claude
 - verify: self
-- goal: "Here you want to approve the plan before any file changes, so switch to plan mode before your first prompt"
-- hint: "press `Shift+Tab` until the status bar shows `⏸ plan mode on`, or start the prompt with `/plan`"
+- goal: "Здесь вы хотите одобрить план до того, как изменится хоть один файл, поэтому переключитесь в plan mode до первого запроса"
+- hint: "нажимайте `Shift+Tab`, пока в строке состояния не появится `⏸ plan mode on`, или начните запрос с `/plan`"
 
-### T3 | The task step 3 of 8 | Plan test-first
+### T3 | The task step 3 of 8 | План, начиная с теста
 - tier: challenge
 - skill: plan-ask
 - where: claude
 - beat: do
 - verify: self
-- goal: "Have Claude read the bug report and plan the fix."
-- do: "Ask for a plan that adds the test first and runs it before changing the code, so you see it fail"
-- hint: "Don't name the files to change: let Claude find them."
+- goal: "Пусть Claude прочитает отчёт об ошибке и спланирует исправление."
+- do: "Попросите план, в котором сначала добавляется тест и запускается до изменения кода, чтобы вы увидели, как он падает"
+- hint: "Не называйте файлы, которые нужно менять: пусть Claude найдёт их сам."
 
-### T4 | The task step 4 of 8 | Review the plan against the code
+### T4 | The task step 4 of 8 | Сверьте план с кодом
 - tier: challenge
 - skill: review-diff
 - where: claude
 - beat: do
 - verify: self
-- goal: "Review the plan before you approve it."
-- hint: "Open the files it names and check that the code it describes is there,"
-- hint: "If it falls short, use the plan menu to tell Claude what to change,"
+- goal: "Проверьте план, прежде чем одобрять его."
+- hint: "Откройте названные в нём файлы и убедитесь, что описанный код там есть,"
+- hint: "Если чего-то не хватает, через меню плана скажите Claude, что изменить,"
 
-### T5 | The task step 5 of 8 | Record the plan moment
+### T5 | The task step 5 of 8 | Зафиксируйте момент плана
 - tier: challenge
 - skill: snapshot
 - where: shell
 - beat: do
 - verify: check 0 fresh since T3
 - evidence: .practice/capstone-before.txt
-- goal: "While the final plan is on screen, in your own terminal, save `git status --porcelain` to `.practice/capstone-before.txt`."
-- hint: "If you skipped the lessons: create the `.practice/` folder in your copy"
+- goal: "Пока итоговый план на экране, в своём терминале сохраните `git status --porcelain` в `.practice/capstone-before.txt`."
+- hint: "Если вы пропустили уроки: создайте в своей копии папку `.practice/`"
 - hint: "`mkdir -p .practice`; **Windows:** `New-Item -ItemType Directory -Force .practice`"
 - watching: .practice/capstone-before.txt
 - beat: do
 - verify: file .practice/capstone-plan.txt fresh since T3
-- goal: "Save the files the plan will change, every test file included, to `.practice/capstone-plan.txt`"
-- note: "one path per line, relative to the repository root, with forward slashes, such as `src/cli.js`."
-- hint: "The commit in `.practice/capstone-commit.txt` changes only files listed in `.practice/capstone-plan.txt`, including a test file."
+- goal: "Сохраните файлы, которые изменит план, включая каждый тестовый файл, в `.practice/capstone-plan.txt`"
+- note: "по одному пути в строке, относительно корня репозитория, с прямыми косыми чертами, например `src/cli.js`."
+- hint: "Коммит из `.practice/capstone-commit.txt` меняет только файлы, перечисленные в `.practice/capstone-plan.txt`, включая тестовый файл."
 
-### T6 | The task step 6 of 8 | Watch red become green
+### T6 | The task step 6 of 8 | Красный становится зелёным
 - tier: challenge
 - skill: run-tests
 - where: claude
 - beat: do
 - verify: self
-- goal: "Approve with **Yes, and use auto mode**, as in [lesson 2](02-permission-modes-and-plan-mode.md#worked-example)"
-- hint: "Watch the new test fail, then pass after the fix."
-- hint: "press `Ctrl+O`, as in [lesson 3](03-first-change.md#worked-example), and `Ctrl+O` again to go back"
+- goal: "Одобрите через **Yes, and use auto mode**, как в [уроке 2](02-permission-modes-and-plan-mode.md#worked-example)"
+- hint: "Посмотрите, как новый тест падает, а после исправления проходит."
+- hint: "нажмите `Ctrl+O`, как в [уроке 3](03-first-change.md#worked-example), и снова `Ctrl+O`, чтобы вернуться"
 
-### T7 | The task step 7 of 8 | Review the whole result
+### T7 | The task step 7 of 8 | Проверьте весь результат
 - tier: challenge
 - skill: review-diff
 - where: claude
 - beat: do
 - verify: self
-- goal: "Review the whole diff, the tests included, against the bug report"
-- hint: "If the diff panel is open beside the conversation, its list skips test files and generated files and counts them on one line: click that count line to see the test ([Diff panel](https://code.claude.com/docs/en/interactive-mode#diff-panel))."
-- hint: "Does the error name the missing folder? Does the tool exit with code 2? Does the test check the case the report describes?"
-- hint: "Ask Claude to correct anything that falls short, inside the files the plan names, and make sure `npm test` passes."
+- goal: "Проверьте весь дифф, включая тесты, по отчёту об ошибке"
+- hint: "Если рядом с разговором открыта панель диффа, её список пропускает тестовые и сгенерированные файлы и считает их в одной строке: нажмите эту строку, чтобы увидеть тест ([Diff panel](https://code.claude.com/docs/ru/interactive-mode#diff-panel))."
+- hint: "Называет ли ошибка отсутствующую папку? Завершается ли инструмент с кодом 2? Проверяет ли тест случай, описанный в отчёте?"
+- hint: "Попросите Claude поправить всё, чего не хватает, в пределах названных в плане файлов, и убедитесь, что `npm test` проходит."
 
-### T8 | The task step 8 of 8 | Save the reviewed commit
+### T8 | The task step 8 of 8 | Сохраните проверенный коммит
 - tier: challenge
 - skill: commit
 - where: shell
@@ -122,79 +122,79 @@ badge: Beginner
 - verify: check 1 2 fresh since T3
 - evidence: .practice/capstone-commit.txt
 - watching: .practice/capstone-commit.txt
-- goal: "Commit the fix and its test together"
-- note: "then save the commit with `git rev-parse HEAD > .practice/capstone-commit.txt`"
-- hint: "The check reads only that commit, so if you change it later, save it again."
+- goal: "Закоммитьте исправление и его тест вместе"
+- note: "затем сохраните коммит командой `git rev-parse HEAD > .practice/capstone-commit.txt`"
+- hint: "Проверка читает только этот коммит, поэтому, если вы его потом измените, сохраните снова."
 
-### C | Check | Check
+### C | Check | Проверка
 - tier: challenge
 - skill: check
 - where: shell
 - beat: do
 - verify: check all
-- goal: "Run `npm run check -- b-capstone`"
+- goal: "Запустите `npm run check -- b-capstone`"
 
 - beat: self
-- self: "I can tell which model and account a session uses, with `/status` ([Commands](https://code.claude.com/docs/en/commands)), and I check what Claude tells me against the code."
+- self: "Я умею определить, какую модель и аккаунт использует сессия, через `/status` ([Commands](https://code.claude.com/docs/ru/commands)), и сверяю слова Claude с кодом."
 - beat: self
-- self: "I can say which permission mode a task needs: auto mode for work whose direction I trust, plan mode when I want to approve a plan before any change, and Manual mode when I want Claude Code to ask before most edits and commands. I skip the plan when I could describe the diff in one sentence."
+- self: "Я могу сказать, какой режим разрешений нужен задаче: auto mode — для работы, в направлении которой я уверен, plan mode — когда хочу одобрить план до любых изменений, и Manual — когда хочу, чтобы Claude Code спрашивал перед большинством правок и команд. План я пропускаю, когда дифф можно описать одним предложением."
 - beat: self
-- self: "I read the whole diff, the tests included, against the bug report before committing, and asked Claude to correct anything that fell short, or found nothing to correct."
+- self: "Перед коммитом я прочитал весь дифф, включая тесты, по отчёту об ошибке и попросил Claude поправить всё, чего не хватало, или не нашёл, что поправлять."
 - beat: self
-- self: "I know how to get back on track: `Esc` to stop Claude mid-action, `/rewind` to put the code and the conversation back, and `git status` for anything a shell command changed. I know when I'd use the session commands: `/compact` to keep going on the same task in a long conversation, `/clear` to start a new task with empty context, and `/resume` to go back to an earlier conversation."
+- self: "Я знаю, как вернуться в русло: `Esc`, чтобы остановить Claude посреди действия, `/rewind`, чтобы вернуть код и разговор, и `git status` для всего, что изменила команда оболочки. Я знаю, когда использовать команды сессии: `/compact` — чтобы продолжить ту же задачу в длинном разговоре, `/clear` — чтобы начать новую задачу с пустым контекстом, и `/resume` — чтобы вернуться к прежнему разговору."
 - beat: self
-- self: "I've seen a new session follow a rule from CLAUDE.md that I didn't repeat in the prompt. If you skipped lesson 5, its [Worked example](05-project-memory.md#worked-example) shows you how."
+- self: "Я видел, как новая сессия следует правилу из CLAUDE.md, которое я не повторял в запросе. Если вы пропустили урок 5, его [разбор на примере](05-project-memory.md#worked-example) покажет, как это сделать."
 
 ## ladder
 
-### `.practice/capstone-before.txt`, saved while the plan was on screen, lists no changed files
-- narrow "While the plan is on screen": Was the before snapshot saved while approval was still pending?
-- narrow "Files had changed before": Was the tree clean before this plan was approved?
-- back: T4 Revisit the decision and evidence from this step before trying the same action again.
+### `.practice/capstone-before.txt`, сохранённый, пока план был на экране, не содержит изменённых файлов
+- narrow "Пока план на экране": Сохранён ли снимок «до», пока одобрение ещё не было дано?
+- narrow "Файлы изменились ещё до того": Было ли рабочее дерево чистым до одобрения этого плана?
+- back: T4 Вернитесь к выбору и результатам этого шага, прежде чем снова пробовать то же действие.
 
-### the commit in `.practice/capstone-commit.txt` changes only files listed in `.practice/capstone-plan.txt`, including a test
-- narrow "Save the files the plan": Did you record every path in the final approved plan?
-- narrow "After you commit the fix": Did you save the SHA of the reviewed fix commit?
-- narrow "which is not a commit": Does the saved SHA exist in this practice copy?
-- narrow "files the plan didn't name": Does each changed path belong to the approved plan?
-- narrow "changes no test file": Does the saved fix commit include its regression test?
-- narrow "changes only tests": Is the code fix included in the same commit as its test?
-- back: T4 Revisit the decision and evidence from this step before trying the same action again.
+### коммит из `.practice/capstone-commit.txt` меняет только файлы, перечисленные в `.practice/capstone-plan.txt`, включая тест
+- narrow "Перед одобрением сохраните": Записали ли вы каждый путь итогового одобренного плана?
+- narrow "Закоммитив исправление": Сохранили ли вы SHA проверенного коммита с исправлением?
+- narrow "но это не коммит": Существует ли сохранённый SHA в этой учебной копии?
+- narrow "которых не было в плане": Относится ли каждый изменённый путь к одобренному плану?
+- narrow "не меняет ни одного тестового файла": Есть ли в сохранённом коммите с исправлением его регрессионный тест?
+- narrow "Коммит меняет только тесты": Входит ли исправление кода в тот же коммит, что и его тест?
+- back: T4 Вернитесь к выбору и результатам этого шага, прежде чем снова пробовать то же действие.
 
-### the commit's test fails without its fix: with the other files it changes as they were before it, `npm test` fails
-- narrow "After you commit the fix": Did you save the SHA of the reviewed fix commit?
-- narrow "which is not a commit": Does the saved SHA exist in this practice copy?
-- narrow "changes no test file": Does the saved fix commit include its regression test?
-- narrow "changes only tests": Is the code fix included in the same commit as its test?
-- narrow "could not copy": Can the repository be copied locally for the regression check?
-- narrow "could not check out": Can git read the saved commit in the temporary copy?
-- narrow "first commit in this repository": Is there a version of the code from before the fix to test?
-- narrow "did not finish": Did npm report failing tests, rather than a runner error?
-- narrow "still passes, so": Would the new test fail if the source fix were removed?
-- back: T3 Revisit the decision and evidence from this step before trying the same action again.
+### тест из коммита падает без исправления: если остальные изменённые коммитом файлы вернуть к прежнему виду, `npm test` падает
+- narrow "Закоммитив исправление": Сохранили ли вы SHA проверенного коммита с исправлением?
+- narrow "но это не коммит": Существует ли сохранённый SHA в этой учебной копии?
+- narrow "не меняет ни одного тестового файла": Есть ли в сохранённом коммите с исправлением его регрессионный тест?
+- narrow "Коммит меняет только тесты": Входит ли исправление кода в тот же коммит, что и его тест?
+- narrow "не смогла скопировать": Можно ли скопировать репозиторий локально для проверки регрессии?
+- narrow "не смогла переключиться": Может ли git прочитать сохранённый коммит во временной копии?
+- narrow "первый коммит в этом репозитории": Есть ли версия кода до исправления, на которой можно запустить тест?
+- narrow "не завершился": Сообщил ли npm об упавших тестах, а не об ошибке запуска?
+- narrow "всё равно проходит": Упал бы новый тест, если убрать исправление в коде?
+- back: T3 Вернитесь к выбору и результатам этого шага, прежде чем снова пробовать то же действие.
 
-### the reported bug is fixed: a missing folder in `linkcheck.json` makes the tool exit with code 2 and name the folder
-- narrow "not 2.": Does the missing-folder case fail with the required exit code?
-- narrow "doesn't name the missing folder": Does the error identify the folder the user needs to fix?
-- back: T3 Revisit the decision and evidence from this step before trying the same action again.
+### ошибка из отчёта исправлена: отсутствующая папка в `linkcheck.json` заставляет инструмент завершиться с кодом 2 и назвать папку
+- narrow "а не 2.": Завершается ли случай с отсутствующей папкой нужным кодом?
+- narrow "не называет отсутствующую папку": Называет ли ошибка папку, которую пользователю нужно исправить?
+- back: T3 Вернитесь к выбору и результатам этого шага, прежде чем снова пробовать то же действие.
 
-### the tests pass
-- narrow "`npm test` fails.": What is the first failing test before later errors?
-- narrow "This repository has no": Does the practice copy still have its test script?
-- narrow "not an exit code.": Was a numeric command exit code recorded?
-- narrow "not 0.": Do the tests pass before their result is recorded?
-- back: T7 Revisit the decision and evidence from this step before trying the same action again.
+### тесты проходят
+- narrow "`npm test` завершается ошибкой.": Какой тест падает первым, до всех последующих ошибок?
+- narrow "В этом репозитории нет": Остался ли в учебной копии скрипт тестов?
+- narrow "а не код выхода.": Записан ли числовой код выхода команды?
+- narrow "а не 0.": Проходят ли тесты до того, как записан их результат?
+- back: T7 Вернитесь к выбору и результатам этого шага, прежде чем снова пробовать то же действие.
 
-### a committed CLAUDE.md names the test command, `npm test`
-- narrow "doesn't mention `npm test`": Does the committed project memory name the real test command?
-- narrow "There is no committed CLAUDE.md.": Were the project instructions committed before starting the fix?
+### закоммиченный CLAUDE.md называет команду тестов, `npm test`
+- narrow "не упоминает `npm test`": Называет ли закоммиченная память проекта настоящую команду тестов?
+- narrow "Закоммиченного CLAUDE.md нет.": Закоммичены ли инструкции проекта до начала исправления?
 
-### nothing is left uncommitted
-- narrow "These changes are uncommitted": Which files remain outside the reviewed fix commit?
-- hint: "Don't put a `linkcheck.json` in your copy, because the check counts it as a change."
-- back: T8 Revisit the decision and evidence from this step before trying the same action again.
+### не осталось незакоммиченных изменений
+- narrow "Эти изменения не закоммичены": Какие файлы остались за пределами проверенного коммита с исправлением?
+- hint: "Не кладите `linkcheck.json` в свою копию: проверка считает его изменением."
+- back: T8 Вернитесь к выбору и результатам этого шага, прежде чем снова пробовать то же действие.
 
 ## card
 - skill: review-diff
 - show: "git add -N <file>"
-- does: "leaves out a new file until you run `git add -N <file>`"
+- does: "не показывает новый файл, пока вы не выполните `git add -N <file>`"

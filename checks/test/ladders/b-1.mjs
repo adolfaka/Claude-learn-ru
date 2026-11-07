@@ -8,6 +8,6 @@ export const scenarios = [
   { item: 0, name: 'command fails', path: 'bin', command: '#!/bin/sh\nprintf "installation failed\\n" >&2\nexit 1\n' },
   { item: 1, name: 'wrong folder', files: {} },
   { item: 1, name: 'note removed', files: { 'checks/run.mjs': '' } },
-  { item: 1, name: 'claim is still wrong', files: { 'practice/b-1/onboarding.md': '- linkcheck exits 0 when it finds broken links.\n' } },
-  { item: 1, name: 'claim omitted', files: { 'practice/b-1/onboarding.md': '- linkcheck checks local links.\n' } },
+  { item: 1, name: 'claim is still wrong', files: { 'practice/b-1/onboarding.md': '- linkcheck завершается с кодом 0, когда находит битые ссылки.\n' } },
+  { item: 1, name: 'claim omitted', files: { 'practice/b-1/onboarding.md': '- linkcheck проверяет локальные ссылки.\n' } },
 ];

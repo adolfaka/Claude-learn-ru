@@ -1,11 +1,11 @@
-# Onboarding notes: linkcheck
+# Заметки для новичков: linkcheck
 
-Notes from a teammate for whoever joins next.
+Заметки коллеги для того, кто придёт в команду следующим.
 
-- linkcheck looks for links written `[text](target)` in Markdown files and reports each one whose target file is missing.
-- Check a folder with `npm run linkcheck -- <folder>`, for example `npm run linkcheck -- samples`.
-- Links with a scheme, such as `https:` and `mailto:`, are skipped, so a run makes no network requests.
-- Links inside fenced code blocks and inline code are ignored.
-- A `linkcheck.json` in the folder you check can set `files` and `ignore`. Both are optional.
-- linkcheck always exits with code 0, even when it finds broken links, so it can't fail a CI job on its own.
-- Run the tests with `npm test`.
+- linkcheck ищет в файлах Markdown ссылки вида `[text](target)` и сообщает о каждой, у которой нет целевого файла.
+- Проверить папку можно командой `npm run linkcheck -- <folder>`, например `npm run linkcheck -- samples`.
+- Ссылки со схемой, например `https:` и `mailto:`, пропускаются, поэтому запуск не делает сетевых запросов.
+- Ссылки внутри блоков кода и встроенного кода игнорируются.
+- `linkcheck.json` в проверяемой папке может задать `files` и `ignore`. Оба поля необязательны.
+- linkcheck всегда завершается с кодом 0, даже если находит битые ссылки, поэтому сам по себе не может провалить задание CI.
+- Тесты запускаются командой `npm test`.

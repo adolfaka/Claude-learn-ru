@@ -9,7 +9,7 @@
 import { spawnSync } from 'node:child_process';
 import { statusEntries, statusPaths } from '../paths.mjs';
 
-export const title = 'Keep a session on track';
+export const title = 'Удержать сессию в рабочем русле';
 
 const CHECK = 'src/check-links.js';
 const LINKS = 'src/links.js';
@@ -42,64 +42,64 @@ const hasExport = (text, name) => new RegExp(`export\\s+(async\\s+)?function\\s+
 
 export const items = [
   {
-    text: 'a commit after your copy\'s first one changes `src/check-links.js`, which still exports a synchronous `brokenLinks`',
+    text: 'коммит после первого коммита вашей копии меняет `src/check-links.js`, который по-прежнему экспортирует синхронный `brokenLinks`',
     check(repo) {
-      if (!laterCommits(repo, CHECK).length) return 'No commit since your copy\'s first one changes `src/check-links.js`. Finish the refactor in Worked example step 5 and commit it.';
+      if (!laterCommits(repo, CHECK).length) return 'Ни один коммит после первого коммита вашей копии не меняет `src/check-links.js`. Закончите рефакторинг из шага 5 разбора на примере и закоммитьте его.';
       const text = withoutComments(repo.gitLocal('show', `HEAD:${CHECK}`));
       if (!hasExport(text, 'brokenLinks')) {
-        return 'The last commit\'s `src/check-links.js` exports no `brokenLinks`, which `src/cli.js` imports by that name. Ask Claude to keep `brokenLinks` exported, as Worked example step 5 asks, and commit.';
+        return '`src/check-links.js` в последнем коммите не экспортирует `brokenLinks`, а `src/cli.js` импортирует его под этим именем. Попросите Claude оставить экспорт `brokenLinks`, как требует шаг 5 разбора на примере, и закоммитьте.';
       }
       if (/\basync\b|\bawait\b|fs\/promises|\.then\(/.test(text)) {
-        return 'The last commit\'s `src/check-links.js` is still asynchronous. Ask Claude to make `brokenLinks` synchronous again, as Worked example step 5 asks, and commit.';
+        return '`src/check-links.js` в последнем коммите всё ещё асинхронный. Попросите Claude снова сделать `brokenLinks` синхронным, как требует шаг 5 разбора на примере, и закоммитьте.';
       }
       return true;
     },
   },
   {
-    text: '`.practice/b-4-before-rewind.txt` lists `src/links.js` and `src/check-links.js`',
+    text: '`.practice/b-4-before-rewind.txt` перечисляет `src/links.js` и `src/check-links.js`',
     local: true,
     check(repo) {
       const before = repo.read('.practice/b-4-before-rewind.txt');
-      if (before === null) return `After Claude runs the rename script and updates its callers, run ${SAVE_BEFORE}.`;
+      if (before === null) return `Когда Claude запустит скрипт переименования и обновит вызывающий код, выполните ${SAVE_BEFORE}.`;
       const paths = statusPaths(before);
       const missing = [LINKS, CHECK].filter((p) => !paths.includes(p));
       if (!missing.length) return true;
-      return `It doesn't list ${missing.map((p) => `\`${p}\``).join(' or ')}. Save it once the script has renamed \`findLinks\` and Claude has updated \`src/check-links.js\`, before you rewind.`;
+      return `В нём нет ${missing.map((p) => `\`${p}\``).join(' и ')}. Сохраните снимок, когда скрипт переименует \`findLinks\`, а Claude обновит \`src/check-links.js\`, — до отката.`;
     },
   },
   {
-    text: '`.practice/b-4-after-rewind.txt` lists `src/links.js` and no other file in `src/` or `test/`',
+    text: '`.practice/b-4-after-rewind.txt` перечисляет `src/links.js` и больше ни одного файла из `src/` или `test/`',
     local: true,
     check(repo) {
       const after = repo.read('.practice/b-4-after-rewind.txt');
-      if (after === null) return `Right after rewinding with Restore code, run ${SAVE_AFTER}.`;
+      if (after === null) return `Сразу после отката через Restore code выполните ${SAVE_AFTER}.`;
       const paths = statusPaths(after).filter(inScope);
       const others = paths.filter((p) => p !== LINKS);
       if (others.length) {
         const list = others.map((p) => `\`${p}\``).join(', ');
-        return `${list} ${others.length > 1 ? 'are' : 'is'} still changed. Use Restore code, then ${SAVE_AFTER}. If a command made the edit, use \`git restore src test\` and repeat Your turn from step 2.`;
+        return `${list}: ${others.length > 1 ? 'файлы всё ещё изменены' : 'файл всё ещё изменён'}. Выберите Restore code, затем выполните ${SAVE_AFTER}. Если правку сделала команда, выполните \`git restore src test\` и повторите «Вашу очередь» с шага 2.`;
       }
-      if (!paths.includes(LINKS)) return `\`src/links.js\` isn't changed, so the script's rename is gone. If you restored it yourself, repeat step 2. Otherwise Claude had already edited it: run \`git restore src test\`, start a new session and repeat step 2.`;
+      if (!paths.includes(LINKS)) return `\`src/links.js\` не изменён, значит, переименования из скрипта больше нет. Если вы восстановили его сами, повторите шаг 2. Иначе Claude уже правил этот файл: выполните \`git restore src test\`, начните новую сессию и повторите шаг 2.`;
       return true;
     },
   },
   {
-    text: '`src/` and `test/` have no uncommitted changes, your last commit\'s `src/links.js` still exports `findLinks`, and `npm run linkcheck -- samples` runs without an error',
+    text: 'в `src/` и `test/` нет незакоммиченных изменений, `src/links.js` в вашем последнем коммите по-прежнему экспортирует `findLinks`, а `npm run linkcheck -- samples` выполняется без ошибки',
     check(repo) {
       const entries = statusEntries(repo.git('status', '--porcelain', '--', 'src', 'test')).filter((e) => inScope(e.path));
       if (entries.length) {
         const left = entries.map((e) => e.path);
         const tracked = entries.filter((e) => e.xy !== '??').map((e) => e.path);
-        const why = left.includes(LINKS) ? ' The rename script changed `src/links.js` with a command, and rewind leaves a command\'s change to a file Claude never edited.' : '';
-        const fix = tracked.length ? ` Put it back with \`git restore ${tracked.join(' ')}\`.` : '';
-        const extra = tracked.length < left.length ? ' Delete the new files you don\'t want.' : '';
-        return `Still changed: ${left.join(', ')}.${why}${fix}${extra}`;
+        const why = left.includes(LINKS) ? ' Скрипт переименования изменил `src/links.js` командой, а rewind не отменяет изменение, которое команда внесла в файл, не правленный Claude.' : '';
+        const fix = tracked.length ? ` Верните изменённое командой \`git restore ${tracked.join(' ')}\`.` : '';
+        const extra = tracked.length < left.length ? ' Удалите ненужные новые файлы.' : '';
+        return `Всё ещё изменены: ${left.join(', ')}.${why}${fix}${extra}`;
       }
       // The rename is dropped in Your turn: another tool imports findLinks by name.
-      if (!hasExport(repo.gitLocal('show', `HEAD:${LINKS}`), 'findLinks')) return 'Your last commit\'s `src/links.js` no longer exports `findLinks`. Undo the dropped rename with `git revert <sha>`; find that commit with `git log`.';
+      if (!hasExport(repo.gitLocal('show', `HEAD:${LINKS}`), 'findLinks')) return '`src/links.js` в вашем последнем коммите больше не экспортирует `findLinks`. Отмените отброшенное переименование командой `git revert <sha>`; найти этот коммит поможет `git log`.';
       const run = spawnSync(process.execPath, [CLI, 'samples'], { cwd: repo.dir, encoding: 'utf8', timeout: LINKCHECK_LIMIT });
       if ([0, 1].includes(run.status) && /\d+ broken link\(s\)|All relative links resolve\./.test(run.stdout)) return true;
-      return '`npm run linkcheck -- samples` stops with an error. Run it, read the error, and ask Claude to fix the code you committed.';
+      return '`npm run linkcheck -- samples` останавливается с ошибкой. Запустите его, прочитайте ошибку и попросите Claude исправить закоммиченный код.';
     },
   },
 ];
